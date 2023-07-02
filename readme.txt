@@ -42,11 +42,11 @@ Method analysis:
         count each bond variance
         remove the data that has variance less than 1
     file: 
-        source code: data_analysis.ipynb
-        table: data_analysis.ipynb
-3. Clustering
+        source code: feature_selection.ipynb
+        table: selected_data.csv
+4. Clustering
     explanation: group the data, and find each group's characteristics.
-        clustering using SOM algorithm, and save the cluster center (characteristics) in data
+        clustering using SOM algorithm with kernel density estimator optimization, and save the cluster center (characteristics) in data
     theorem: Self Organizing matrix
     steps:
         load cleaned data
@@ -56,7 +56,12 @@ Method analysis:
         save cluster center
     file: 
         source code: clustering.ipynb
-        table: 
-4. Cluster and Data analysis:
+        table: clustercenters.csv, clustercenters.xlsx
+5. Cluster and Data analysis:
     explanation: analyze the cluster and data characteristics
     theorem: correlation analysis
+    steps:
+        load selected_data.csv
+        analyze the correlation
+        variance analysis
+        save all data in "Datas" files
