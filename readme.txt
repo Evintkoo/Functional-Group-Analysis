@@ -1,13 +1,3 @@
-Several data that might be interesting:
- 1. CH bond
- 2. CC single bond 
- 3. CC 1.5 bond 
- 4. CN single bond
- 5. NH single bond
- 6. CO single bond
-?7. CN 1.5 bond
- 7. 10 highest data correlation
-
 Method analysis:
 1. Data gathering 
     explanation: collect and filter data that want to be use. 
@@ -65,3 +55,15 @@ Method analysis:
         analyze the correlation
         variance analysis
         save all data in "Datas" files
+
+What to Discuss:
+    1. Statistics analysis:
+        a. Why several bond has low variance?
+        b. What is the distribution of each bond data?
+        c. What is the characteristic of each cluster?
+    2. Bonding/Inorganic Chemistry analysis:
+        a. What is the bonding characteristic and atribute in these selected bond? ; strength, etc
+        b. What relation for each cluster to the molecular weight of compound?
+    3. Organic Chemistry analysis:
+        a. What functional group that might be represented by the selected bond?
+        b. What is the characteristic or atribute of these functional group?
