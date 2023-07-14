@@ -89,6 +89,8 @@ Functional-Group/Datas/selected_data.csv
 
 **Implement Self Organizing Matrix with K-Means++ as initiator to cluster the data**
 
+**Method Theorem**: Clustering (Self Organizing Matrix, K-Means++ - initiator)
+
 **Steps**
 1. Convert the data (.csv file extention) into a data digital data structure (multidimensonal list)
 2. Train the Self Organizing Matrix Model
