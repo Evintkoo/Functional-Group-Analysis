@@ -46,12 +46,19 @@ Atomic-Bond/Datas/encoded_data.csv
 **Method Theorem**: -
 
 **Files**
+
 Atomic-Bond/2-data_cleaning.ipynb
+
 Elements/1-data_gathering.ipynb
+
 Functional-Group/1-data_gathering.ipynb
+
 Atomic-Bond/Datas/cleared_data.csv
+
 Elements/Datas/cleared_encoded_data.csv
+
 Functional-Group/Datas/cleared_encoded_data.csv
+
 
 #### 3. Feature Selection
 ***Brief Expalantion***
@@ -64,11 +71,17 @@ Functional-Group/Datas/cleared_encoded_data.csv
 **Method Theorem**: Variance
 
 **Files**
+
 Atomic-Bond/3-feature_selection.ipynb
+
 Elements/2-feature_selection.ipynb
+
 Functional-Group/2-feature_selection.ipynb
+
 Atomic-Bond/Datas/selected_feature_data.csv
+
 Elements/Datas/selected_data.csv
+
 Functional-Group/Datas/selected_data.csv
 
 #### 4. Clustering
