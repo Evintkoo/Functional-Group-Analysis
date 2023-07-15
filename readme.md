@@ -24,13 +24,17 @@ These are the stages of the methodology in this paper:
 
 **Files**
 
-250k_rndm_zinc_drugs_clean_3.csv
+_Source code_
 
 Atomic-Bond/1-data_gathering.ipynb
 
 Elements/1-data_gathering.ipynb
 
 Functional-Group/1-data_gathering.ipynb
+
+_Supporting Files_
+
+250k_rndm_zinc_drugs_clean_3.csv
 
 Atomic-Bond/Datas/encoded_data.csv
 
@@ -47,11 +51,15 @@ Atomic-Bond/Datas/encoded_data.csv
 
 **Files**
 
+_Source code_
+
 Atomic-Bond/2-data_cleaning.ipynb
 
 Elements/1-data_gathering.ipynb
 
 Functional-Group/1-data_gathering.ipynb
+
+_Supporting Files_
 
 Atomic-Bond/Datas/cleared_data.csv
 
@@ -72,11 +80,15 @@ Functional-Group/Datas/cleared_encoded_data.csv
 
 **Files**
 
+_Source code_
+
 Atomic-Bond/3-feature_selection.ipynb
 
 Elements/2-feature_selection.ipynb
 
 Functional-Group/2-feature_selection.ipynb
+
+_Supporting Files_
 
 Atomic-Bond/Datas/selected_feature_data.csv
 
@@ -98,23 +110,27 @@ Functional-Group/Datas/selected_data.csv
 
 **Files**
 
-Atomic-Bond/4-clustering.ipynb
+_Source code_
 
-Elements/3-clustering.ipynb
+- Atomic-Bond/4-clustering.ipynb
 
-Functional-Group/3-clustering.ipynb
+- Elements/3-clustering.ipynb
 
-Atomic-Bond/Datas/Stats/clustercenters.xlsx
+- Functional-Group/3-clustering.ipynb
 
-Atomic-Bond/Datas/Stats/clustercenters.csv
+_Supporting Files_
 
-Elements/Datas/Stats/clustercenters.xlsx
+- Atomic-Bond/Datas/Stats/clustercenters.xlsx
 
-Elements/Datas/Stats/clustercenters.csv
+- Atomic-Bond/Datas/Stats/clustercenters.csv
 
-Functional-Group/Datas/Stats/clustercenters.xlsx
+- Elements/Datas/Stats/clustercenters.xlsx
 
-Functional-Group/Datas/Stats/clustercenters.csv
+- Elements/Datas/Stats/clustercenters.csv
+
+- Functional-Group/Datas/Stats/clustercenters.xlsx
+
+- Functional-Group/Datas/Stats/clustercenters.csv
 
 #### 5. Qualitative analysis
 ***Brief Expalantion***
@@ -129,35 +145,39 @@ Functional-Group/Datas/Stats/clustercenters.csv
 
 **Files**
 
-Atomic-Bond/5-data_analysis.ipynb
+_Source code_
 
-Elements/4-data_analysis.ipynb
+- Atomic-Bond/5-data_analysis.ipynb
 
-Functional-Group/4-data_analysis.ipynb
+- Elements/4-data_analysis.ipynb
 
-Atomic-Bond/Datas/Stats/Distribution
+- Functional-Group/4-data_analysis.ipynb
 
-Atomic-Bond/Datas/Stats/correlation_heatmap.png
+_Supporting Files_
 
-Atomic-Bond/Datas/Stats/variance_data.csv
+- Atomic-Bond/Datas/Stats/Distribution
 
-Atomic-Bond/Datas/Stats/variance_data.xlsx
+- Atomic-Bond/Datas/Stats/correlation_heatmap.png
 
-Elements/Datas/Stats/Distribution
+- Atomic-Bond/Datas/Stats/variance_data.csv
 
-Elements/Datas/Stats/correlation_heatmap.png
+- Atomic-Bond/Datas/Stats/variance_data.xlsx
 
-Elements/Datas/Stats/variance_data.csv
+- Elements/Datas/Stats/Distribution
 
-Elements/Datas/Stats/variance_data.xlsx
+- Elements/Datas/Stats/correlation_heatmap.png
 
-Functional-Group/Datas/Stats/Distribution
+- Elements/Datas/Stats/variance_data.csv
 
-Functional-Group/Datas/Stats/correlation_heatmap.png
+- Elements/Datas/Stats/variance_data.xlsx
 
-Functional-Group/Datas/Stats/variance_data.csv
+- Functional-Group/Datas/Stats/Distribution
 
-Functional-Group/Datas/Stats/variance_data.xlsx
+- Functional-Group/Datas/Stats/correlation_heatmap.png
+
+- Functional-Group/Datas/Stats/variance_data.csv
+
+- Functional-Group/Datas/Stats/variance_data.xlsx
 
 
 #### 6. Quantitative analysis
