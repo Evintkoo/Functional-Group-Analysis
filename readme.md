@@ -68,7 +68,7 @@ Elements/Datas/cleared_encoded_data.csv
 Functional-Group/Datas/cleared_encoded_data.csv
 
 
-#### 3. Feature Selection
+#### 3. Feature Selection (not updated)
 ***Brief Expalantion***
 
 **Select the columns that is reasonable to be further analyzed**
@@ -96,7 +96,7 @@ Elements/Datas/selected_data.csv
 
 Functional-Group/Datas/selected_data.csv
 
-#### 4. Clustering
+#### 4. Clustering 
 ***Brief Expalantion***
 
 **Implement Self Organizing Matrix with K-Means++ as initiator to cluster the data**
