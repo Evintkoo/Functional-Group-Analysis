@@ -1,0 +1,5 @@
+C,N,O,SP2,SP3,total_atom_in_ring,total_atom_in_aromatic_ring,total_CHI_UNSPECIFIED,total_CHI_TETRAHEDRAL_CW,total_CHI_TETRAHEDRAL_CCW,total_single,total_double,total_aromatic,total_conjugated_bond,total_bond_in_ring,total_STEREONONE
+24,4,1,26,4,28,23,30,0,0,11,1,24,29,30,36
+20,0,1,0,23,18,0,15,2,5,27,0,0,0,21,28
+7,5,1,14,0,9,9,14,0,0,3,1,10,16,10,15
+26,3,4,18,15,27,5,31,1,1,29,5,6,16,31,40

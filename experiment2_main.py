@@ -77,8 +77,9 @@ def get_atom_features(atom,
     
     covalent_radius_scaled = [float((Chem.GetPeriodicTable().GetRcovalent(atom.GetAtomicNum()) - 0.64)/0.76)]
 
-    atom_feature_vector = atom_type_enc + n_heavy_neighbors_enc + formal_charge_enc + hybridisation_type_enc + is_in_a_ring_enc + is_aromatic_enc + atomic_mass_scaled + vdw_radius_scaled + covalent_radius_scaled
-                                    
+    #atom_feature_vector = atom_type_enc + n_heavy_neighbors_enc + formal_charge_enc + hybridisation_type_enc + is_in_a_ring_enc + is_aromatic_enc + atomic_mass_scaled + vdw_radius_scaled + covalent_radius_scaled
+    atom_feature_vector = atom_type_enc + hybridisation_type_enc + is_in_a_ring_enc + is_aromatic_enc + atomic_mass_scaled 
+    
     if use_chirality == True:
         chirality_type_enc = one_hot_encoding(str(atom.GetChiralTag()), ["CHI_UNSPECIFIED", "CHI_TETRAHEDRAL_CW", "CHI_TETRAHEDRAL_CCW", "CHI_OTHER"])
         atom_feature_vector += chirality_type_enc
@@ -111,80 +112,29 @@ def get_bond_features(bond,
 
     return np.array(bond_feature_vector)
 
-def create_pytorch_geometric_graph_data_list_from_smiles_and_labels(x_smiles, y):
-    """
-    Inputs:
-    
-    x_smiles = [smiles_1, smiles_2, ....] ... a list of SMILES strings
-    y = [y_1, y_2, ...] ... a list of numerial labels for the SMILES strings (such as associated pKi values)
-    
-    Outputs:
-    
-    data_list = [G_1, G_2, ...] ... a list of torch_geometric.data.Data objects which represent labeled molecular graphs that can readily be used for machine learning
-    
-    """
-    
-    data_list = []
-    
-    for (smiles, y_val) in tqdm(zip(x_smiles, y)):
-        
-        # convert SMILES to RDKit mol object
-        mol = Chem.MolFromSmiles(smiles)
-
-        # get feature dimensions
-        n_nodes = mol.GetNumAtoms()
-        n_edges = 2*mol.GetNumBonds()
-        unrelated_smiles = "O=O"
-        unrelated_mol = Chem.MolFromSmiles(unrelated_smiles)
-        n_node_features = len(get_atom_features(unrelated_mol.GetAtomWithIdx(0)))
-        n_edge_features = len(get_bond_features(unrelated_mol.GetBondBetweenAtoms(0,1)))
-
-        # construct node feature matrix X of shape (n_nodes, n_node_features)
-        X = np.zeros((n_nodes, n_node_features))
-
-        for atom in mol.GetAtoms():
-            X[atom.GetIdx(), :] = get_atom_features(atom)
-            
-        X = torch.tensor(X, dtype = torch.float)
-        
-        # construct edge index array E of shape (2, n_edges)
-        (rows, cols) = np.nonzero(GetAdjacencyMatrix(mol))
-        torch_rows = torch.from_numpy(rows.astype(np.int64)).to(torch.long)
-        torch_cols = torch.from_numpy(cols.astype(np.int64)).to(torch.long)
-        E = torch.stack([torch_rows, torch_cols], dim = 0)
-        
-        # construct edge feature array EF of shape (n_edges, n_edge_features)
-        EF = np.zeros((n_edges, n_edge_features))
-        
-        for (k, (i,j)) in enumerate(zip(rows, cols)):
-            
-            EF[k] = get_bond_features(mol.GetBondBetweenAtoms(int(i),int(j)))
-        
-        EF = torch.tensor(EF, dtype = torch.float)
-        
-        # construct label tensor
-        y_tensor = torch.tensor(np.array([y_val]), dtype = torch.float)
-        
-        # construct Pytorch Geometric data object and append to data list
-        data_list.append(Data(x = X, edge_index = E, edge_attr = EF, y = y_tensor))
-
-    return data_list
-
-def resize_and_center_tensor(tensor, target_rows, target_cols):
-    # Get the dimensions of the original tensor
-    original_rows, original_cols = tensor.shape
-    
-    # Calculate the padding needed to center the tensor
-    pad_top = (target_rows - original_rows) // 2
-    pad_bottom = target_rows - original_rows - pad_top
-    pad_left = (target_cols - original_cols) // 2
-    pad_right = target_cols - original_cols - pad_left
-    
-    # Pad the tensor with zeros to center it
-    padding = (pad_left, pad_right, pad_top, pad_bottom)  # (left, right, top, bottom)
-    centered_tensor = torch.nn.functional.pad(tensor, padding, mode='constant', value=0)
-    
-    return centered_tensor
+def convert_smiles_to_matrix(smiles):
+    matrix = []
+    for smile in tqdm(smiles):
+        #Chem.MolFromSmiles(smiles[0]).GetBondBetweenAtoms(0, len()).GetSymbol()
+        mol = Chem.MolFromSmiles(smile)
+        total_atoms = len(mol.GetAtoms())-1
+        # atom hotencoding
+        atom_encoding = []
+        for i in range(total_atoms):
+            if len(atom_encoding) > 0:
+                atom_encoding += get_atom_features(mol.GetAtomWithIdx(i))
+            else:
+                atom_encoding = get_atom_features(mol.GetAtomWithIdx(i))
+        bond_encoding = []
+        for bonds in mol.GetBonds():
+            if len(bond_encoding) > 0:
+                bond_encoding += get_bond_features(bonds)
+            else :
+                bond_encoding = get_bond_features(bonds)
+        data = list(atom_encoding) + list(bond_encoding)
+        matrix.append(data)
+    matrix = np.array(matrix)
+    return matrix
 
 # Define the ANN model for tokenizing with specific input and output sizes using Sequential
 class TokenizerANN(nn.Module):
@@ -193,28 +143,28 @@ class TokenizerANN(nn.Module):
         super(TokenizerANN, self).__init__()
         
         self.encoder = nn.Sequential(
-            nn.Linear(input_size, 128),  # First hidden layer
+            nn.Linear(input_size, 256),  # First hidden layer
             nn.ReLU(),
-            nn.Linear(128, 128),       # Third hidden layer
+            nn.Linear(256, 256),       # Third hidden layer
             nn.ReLU(),
-            nn.Linear(128, 128),       # Fourth hidden layer
+            nn.Linear(256, 128),       # Fourth hidden layer
             nn.ReLU(),
-            nn.Linear(128, 64),        # Fifth hidden layer
+            nn.Linear(128, 128),        # Fifth hidden layer
             nn.ReLU(),
-            nn.Linear(64, output_size) ,
+            nn.Linear(128, output_size) ,
             nn.Softmax()# Encoder output layer
         )
        
         self.decoder = nn.Sequential(
-            nn.Linear(output_size, 64),          # Decoder input layer
+            nn.Linear(output_size, 128),          # Decoder input layer
             nn.ReLU(),
-            nn.Linear(64, 128),        # First hidden layer
+            nn.Linear(128, 128),        # First hidden layer
             nn.ReLU(),
-            nn.Linear(128, 128),       # Second hidden layer
+            nn.Linear(128, 256),       # Second hidden layer
             nn.ReLU(),
-            nn.Linear(128, 128),       # Third hidden layer
+            nn.Linear(256, 256),       # Third hidden layer
             nn.ReLU(),
-            nn.Linear(128, input_size)   # Decoder output layer
+            nn.Linear(256, input_size)   # Decoder output layer
         )
         
     def forward(self, x):
@@ -265,12 +215,15 @@ if __name__ == "__main__":
     # read the data
     df = pd.read_csv("C:/Users/Evint/Documents/Projects/Functional-Group-Analysis/250k_rndm_zinc_drugs_clean_3.csv")
     
+    # give the limit for each druglikeness group
     limit = []
     for i in range(len(edge_list)):
         lower_limit = edge_list[i-1] if i != 0 else 0
         upper_limit = 1 if i == len(edge_list) else edge_list[i] 
         limit.append((lower_limit,upper_limit))
     limit.append((limit[-1][1],1))
+    
+    
     counter = 0
     for lower_limit, upper_limit in tqdm(limit):
         filtered_df = df[(df['qed'] >= lower_limit) & (df['qed'] < upper_limit)]
@@ -278,32 +231,26 @@ if __name__ == "__main__":
         
         # read the smiles
         smiles = filtered_df['smiles']
-        y = filtered_df["qed"]
         
-        #create geometric graph
-        geometric_graph = create_pytorch_geometric_graph_data_list_from_smiles_and_labels(smiles,y)
-        
-        target_size = (38, 74)
-        
-        for data in geometric_graph:
-            data.x = resize_and_center_tensor(data.x, target_size[0], target_size[1])
-            
-        X = np.array([np.array(data.x).reshape(-1) for data in geometric_graph])
+        # vectorize the smiles
+        X = convert_smiles_to_matrix(smiles=smiles)
         
         # Check if GPU is available
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        print('Using device:', device)
+        print(X.shape)
         
-        # Create a new instance of the model
-        loaded_model = TokenizerANN(input_size = X.shape[1],
-                            output_size=4).to(device)
+        torch_X = torch.from_numpy(X).to(device)
+        target_size = 4
+        # Initialize the model
+        model = TokenizerANN(input_size = torch_X.shape[1],
+                            output_size=target_size).to(device)
         
         # Load the saved state dictionary into the new model instance
-        loaded_model.load_state_dict(torch.load("tokenizer_ann_with_decoder.pth"))
+        model.load_state_dict(torch.load("tokenizer_ann_with_decoder.pth"))
         tensor_X = torch.from_numpy(X).to(device)
         
         # tokenize data
-        tokenized = loaded_model.encoder(torch.tensor(tensor_X, dtype=torch.float32)).to("cpu").detach().numpy()
+        tokenized = model.encoder(torch.tensor(tensor_X, dtype=torch.float32)).to("cpu").detach().numpy()
         
         # cluster the data
         som_model = deep_som()
@@ -317,7 +264,7 @@ if __name__ == "__main__":
         # save the labeled data
         filtered_df.to_csv(f"data/experiment_2/group_{counter}/labeled_data.csv", index=False)
         # save the matrix data
-        pd.DataFrame(data).to_csv(f"data/experiment_2/group_{counter}/matrix_data.csv", index=False)
+        pd.DataFrame(np.array([np.array(i) for i in X])).to_csv(f"data/experiment_2/group_{counter}/matrix_data.csv", index=False)
         # save the tokenized data
         pd.DataFrame(tokenized).to_csv(f"data/experiment_2/group_{counter}/tokenized_data.csv", index=False)
         counter += 1
