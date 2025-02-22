@@ -1,5 +1,0 @@
-H,C,N,O,S,F,Si,P,Cl,Br,Mg,Na,Ca,Fe,As,Al,I,B,V,K,Tl,Yb,Sb,Sn,Ag,Pd,Co,Se,Ti,Zn,Li,Ge,Cu,Au,Ni,Cd,In,Mn,Zr,Cr,Pt,Hg,Pb,Unknown,S,SP,SP2,SP3,SP3D,SP3D2,OTHER,total_atom_in_ring,total_atom_in_aromatic_ring,atomic_mass,total_CHI_UNSPECIFIED,total_CHI_TETRAHEDRAL_CW,total_CHI_TETRAHEDRAL_CCW,total_CHI_OTHER,total_single,total_double,total_triple,total_aromatic,total_conjugated_bond,total_bond_in_ring,total_STEREOZ,total_STEREOE,toal_STEREOANY,total_STEREONONE
-0,22,4,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,22,7,0,0,0,26,16,0,28,0,0,0,15,1,0,17,23,29,0,0,0,35
-0,20,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,21,0,0,0,17,0,0,13,3,5,0,26,0,0,0,0,20,0,0,0,26
-0,13,3,2,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14,6,0,0,0,5,5,0,21,0,0,0,14,2,0,6,14,6,0,0,0,22
-0,23,3,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12,16,0,0,0,26,5,0,26,1,1,0,27,2,0,6,11,30,0,0,0,35
