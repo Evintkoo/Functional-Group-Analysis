@@ -8,6 +8,8 @@ mod gnn;
 mod autoencoder;
 #[allow(dead_code)]
 mod som;
+#[allow(dead_code)]
+mod functional_groups;
 mod pipeline;
 #[allow(dead_code)]
 mod io;

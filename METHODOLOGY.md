@@ -9,11 +9,12 @@ This project performs unsupervised discovery and characterization of functional-
 | Phase | Description | Implementation |
 |-------|-------------|----------------|
 | **0** | Data ingestion | CSV parsing (SMILES, logP, QED, SAS) via `serde` + `csv` |
-| **1** | Molecular graph construction | SMILES → `petgraph::Graph<Atom, Bond, Undirected>` |
+| **1** | Molecular graph construction + FG detection | SMILES → `petgraph::Graph<Atom, Bond, Undirected>` + 22-type substructure matching |
 | **2** | Graph featurization | Node features (29-dim) + Edge features (9-dim) |
 | **3** | Representation learning | Variational Graph Autoencoder (VGAE) with GAT encoder |
+| **3.5** | Importance analysis | Latent dim ↔ property correlation, FG ↔ dim correlation, FG ↔ property correlation |
 | **4** | Stratified clustering | QED-stratified Self-Organizing Map (SOM) on latent embeddings |
-| **5** | Interpretation | Cluster center decoding + functional group attribution |
+| **5** | Interpretation | FG enrichment per cluster, signature FGs, inter-cluster distances, representatives |
 
 ---
 
@@ -247,12 +248,46 @@ Training procedure:
 
 ## Phase 5 — Interpretation
 
-Cluster centers are decoded back through the VGAE decoder to produce 29-dim feature vectors, enabling interpretation of what each cluster represents in terms of:
-- Dominant atom types (C, N, O, S, halogens)
-- Hybridization distribution (aromatic vs. aliphatic)
-- Ring and aromaticity prevalence
-- Bond type distribution
-- Chirality patterns
+### 5a. Functional Group Detection
+
+Each molecule undergoes substructure pattern matching to identify 22 functional group types:
+
+| Category | Groups Detected |
+|----------|----------------|
+| **Oxygen-containing** | Hydroxyl (-OH), Carboxyl (-COOH), Ester (-COO-), Ether (C-O-C), Ketone (>C=O), Aldehyde (-CHO), Epoxide |
+| **Nitrogen-containing** | Primary amine (-NH₂), Secondary amine (>NH), Tertiary amine (>N<), Amide (-CONH-), Nitro (-NO₂), Nitrile (-C≡N), Imine (C=N) |
+| **Sulfur-containing** | Thiol (-SH), Thioether (C-S-C), Sulfonyl (-SO₂-), Sulfoxide (-SO-) |
+| **Halogens** | Halide (C-F, C-Cl, C-Br, C-I) |
+| **Ring systems** | Phenyl (aromatic carbocycle), Heterocycle (N/O/S in ring) |
+| **Phosphorus** | Phosphate (-PO₄) |
+
+Detection uses a two-pass algorithm:
+1. **Complex groups first** (COOH, amide, ester, nitro) — claims atoms to prevent double-counting
+2. **Simple groups** (OH, ketone, amine) — respects claimed atoms
+3. **Ring analysis** — connected component counting for aromatic rings, cycle detection for epoxides
+
+Implicit hydrogen counts are computed from valence rules for organic subset atoms (SMILES without brackets).
+
+### 5b. Feature Importance Analysis
+
+Three types of importance analysis are computed:
+
+1. **Latent dimension ↔ Property correlation**: Pearson correlation between each of the 16 latent dimensions and molecular properties (QED, logP, SAS). Identifies which dimensions encode drug-likeness information.
+
+2. **Functional group ↔ Latent dimension correlation**: Point-biserial correlation between FG presence (binary) and each latent dimension. Reveals which dimensions encode specific functional groups.
+
+3. **Functional group ↔ Property correlation**: Point-biserial correlation between FG presence and molecular properties. Quantifies how functional groups influence drug-likeness.
+
+### 5c. Cluster Characterization
+
+For each cluster in each QED stratum:
+
+- **FG census**: Prevalence and mean count of each functional group within the cluster
+- **Enrichment analysis**: Cluster FG prevalence vs. stratum population — ratio > 1.0 indicates over-representation
+- **Signature FGs**: Top functional groups with enrichment > 1.2× (distinguishing characteristics)
+- **Dominant FG**: Most prevalent functional group in the cluster
+- **Representative molecule**: SMILES closest to the cluster centroid in embedding space
+- **Inter-cluster distances**: Pairwise Euclidean distances between cluster centroids, identifying most similar and most distinct cluster pairs
 
 ---
 
@@ -273,14 +308,15 @@ Cluster centers are decoded back through the VGAE decoder to produce 29-dim feat
 
 ```
 src/
-├── main.rs           # Entry point and CLI
-├── smiles/mod.rs     # SMILES parser → molecular graph
-├── features/mod.rs   # Atom/bond feature extraction
-├── gnn/mod.rs        # GAT layers + global attention pooling
-├── autoencoder/mod.rs # VGAE (encode, reparameterize, decode)
-├── som/mod.rs        # Self-Organizing Map
-├── pipeline/mod.rs   # End-to-end pipeline orchestration
-└── io/mod.rs         # CSV loading and result output
+├── main.rs                    # Entry point and CLI
+├── smiles/mod.rs              # SMILES parser → molecular graph
+├── features/mod.rs            # Atom/bond feature extraction
+├── gnn/mod.rs                 # GAT layers + global attention pooling
+├── autoencoder/mod.rs         # VGAE (encode, reparameterize, decode)
+├── som/mod.rs                 # Self-Organizing Map
+├── functional_groups/mod.rs   # 22-type FG detection + enrichment analysis
+├── pipeline/mod.rs            # End-to-end pipeline orchestration
+└── io/mod.rs                  # CSV loading and result output
 ```
 
 ### Running
