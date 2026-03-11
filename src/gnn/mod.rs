@@ -112,7 +112,7 @@ impl<B: Backend> GatLayer<B> {
                 }
 
                 // Compute attention score via linear layer
-                let concat_t = Tensor::<B, 2>::from_floats(
+                let concat_t = Tensor::<B, 1>::from_floats(
                     &concat[..], &device,
                 ).reshape([1, out_dim * 3]);
                 let score: f32 = self.attn.forward(concat_t)
