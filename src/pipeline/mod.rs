@@ -386,6 +386,161 @@ fn inter_cluster_distances(cluster_infos: &[ClusterInfo]) -> Vec<ClusterDistance
     pairs
 }
 
+/// Compute simplified silhouette score for clustering quality.
+/// For each sample: s(i) = (b(i) - a(i)) / max(a(i), b(i))
+/// where a(i) = mean distance to same-cluster members, b(i) = min mean distance to other clusters.
+/// Subsampled for performance on large datasets.
+fn silhouette_score(
+    embeddings: &[Vec<f32>],
+    labels: &[usize],
+) -> ClusterQuality {
+    let n = embeddings.len();
+    if n < 2 { return ClusterQuality::default(); }
+
+    // Build cluster membership
+    let mut cluster_map: HashMap<usize, Vec<usize>> = HashMap::new();
+    for (i, &label) in labels.iter().enumerate() {
+        cluster_map.entry(label).or_default().push(i);
+    }
+
+    let num_clusters = cluster_map.len();
+    if num_clusters < 2 {
+        return ClusterQuality { silhouette_mean: 0.0, silhouette_std: 0.0, num_clusters, davies_bouldin: 0.0 };
+    }
+
+    // Subsample for speed — take up to 2000 samples
+    let sample_size = n.min(2000);
+    let step = n / sample_size;
+    let sample_indices: Vec<usize> = (0..n).step_by(step.max(1)).take(sample_size).collect();
+
+    let mut silhouettes = Vec::with_capacity(sample_size);
+
+    for &i in &sample_indices {
+        let my_label = labels[i];
+        let my_cluster = match cluster_map.get(&my_label) {
+            Some(c) => c,
+            None => continue,
+        };
+
+        // a(i): mean distance to same-cluster members
+        let a = if my_cluster.len() > 1 {
+            let sum: f64 = my_cluster.iter()
+                .filter(|&&j| j != i)
+                .map(|&j| euclidean_dist(&embeddings[i], &embeddings[j]))
+                .sum();
+            sum / (my_cluster.len() - 1) as f64
+        } else {
+            0.0
+        };
+
+        // b(i): min mean distance to nearest other cluster
+        let b = cluster_map.iter()
+            .filter(|(&label, _)| label != my_label)
+            .map(|(_, members)| {
+                let sum: f64 = members.iter()
+                    .map(|&j| euclidean_dist(&embeddings[i], &embeddings[j]))
+                    .sum();
+                sum / members.len().max(1) as f64
+            })
+            .fold(f64::MAX, f64::min);
+
+        let s = if a.max(b) > 0.0 { (b - a) / a.max(b) } else { 0.0 };
+        silhouettes.push(s);
+    }
+
+    let mean = silhouettes.iter().sum::<f64>() / silhouettes.len().max(1) as f64;
+    let std = if silhouettes.len() > 1 {
+        (silhouettes.iter().map(|s| (s - mean).powi(2)).sum::<f64>() / (silhouettes.len() - 1) as f64).sqrt()
+    } else { 0.0 };
+
+    // Davies-Bouldin index: average over clusters of max (s_i + s_j) / d(c_i, c_j)
+    let cluster_ids: Vec<usize> = cluster_map.keys().copied().collect();
+    let mut db_sum = 0.0;
+    for &ci in &cluster_ids {
+        let ci_members = &cluster_map[&ci];
+        let ci_centroid = centroid_of(ci_members, embeddings);
+        let si: f64 = ci_members.iter()
+            .map(|&j| euclidean_dist(&embeddings[j], &ci_centroid))
+            .sum::<f64>() / ci_members.len().max(1) as f64;
+
+        let mut max_ratio = 0.0f64;
+        for &cj in &cluster_ids {
+            if ci == cj { continue; }
+            let cj_members = &cluster_map[&cj];
+            let cj_centroid = centroid_of(cj_members, embeddings);
+            let sj: f64 = cj_members.iter()
+                .map(|&j| euclidean_dist(&embeddings[j], &cj_centroid))
+                .sum::<f64>() / cj_members.len().max(1) as f64;
+
+            let d = euclidean_dist_f32(&ci_centroid, &cj_centroid);
+            if d > 1e-10 {
+                max_ratio = max_ratio.max((si + sj) / d);
+            }
+        }
+        db_sum += max_ratio;
+    }
+    let davies_bouldin = db_sum / cluster_ids.len().max(1) as f64;
+
+    ClusterQuality { silhouette_mean: mean, silhouette_std: std, num_clusters, davies_bouldin }
+}
+
+fn euclidean_dist(a: &[f32], b: &[f32]) -> f64 {
+    a.iter().zip(b.iter())
+        .map(|(x, y)| ((*x - *y) as f64).powi(2))
+        .sum::<f64>()
+        .sqrt()
+}
+
+fn euclidean_dist_f32(a: &[f32], b: &[f32]) -> f64 {
+    euclidean_dist(a, b)
+}
+
+fn centroid_of(indices: &[usize], embeddings: &[Vec<f32>]) -> Vec<f32> {
+    if indices.is_empty() { return Vec::new(); }
+    let dim = embeddings[indices[0]].len();
+    let mut c = vec![0.0f32; dim];
+    for &i in indices {
+        for (d, v) in embeddings[i].iter().enumerate() {
+            c[d] += v;
+        }
+    }
+    let n = indices.len() as f32;
+    c.iter_mut().for_each(|v| *v /= n);
+    c
+}
+
+/// Compute cluster size distribution statistics.
+fn cluster_size_distribution(cluster_infos: &[ClusterInfo]) -> ClusterSizeStats {
+    let sizes: Vec<usize> = cluster_infos.iter().map(|c| c.size).collect();
+    if sizes.is_empty() { return ClusterSizeStats::default(); }
+
+    let mut sorted = sizes.clone();
+    sorted.sort();
+
+    let n = sorted.len();
+    let mean = sorted.iter().sum::<usize>() as f64 / n as f64;
+    let median = if n % 2 == 0 { (sorted[n/2 - 1] + sorted[n/2]) as f64 / 2.0 } else { sorted[n/2] as f64 };
+    let std = (sorted.iter().map(|&s| (s as f64 - mean).powi(2)).sum::<f64>() / n.max(1) as f64).sqrt();
+    let min = sorted[0];
+    let max = sorted[n - 1];
+    let p25 = sorted[n / 4];
+    let p75 = sorted[3 * n / 4];
+
+    // Gini coefficient for size inequality
+    let total: f64 = sorted.iter().sum::<usize>() as f64;
+    let mut gini_sum = 0.0;
+    for (i, &s) in sorted.iter().enumerate() {
+        gini_sum += (2.0 * (i + 1) as f64 - n as f64 - 1.0) * s as f64;
+    }
+    let gini = if total > 0.0 { gini_sum / (n as f64 * total) } else { 0.0 };
+
+    // Count singleton and large clusters
+    let singletons = sorted.iter().filter(|&&s| s == 1).count();
+    let large = sorted.iter().filter(|&&s| s as f64 > mean * 3.0).count();
+
+    ClusterSizeStats { mean, median, std, min, max, p25, p75, gini, singletons, large_clusters: large, total_clusters: n }
+}
+
 /// Run the complete analysis pipeline.
 pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults, Box<dyn std::error::Error>> {
     let pipeline_start = Instant::now();
@@ -404,9 +559,9 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
     let load_time = t0.elapsed();
     log::info!("Loaded {} molecules in {:.2}s", total, load_time.as_secs_f64());
 
-    let max_molecules = total.min(5000);
+    let max_molecules = total;
     let records = &all_records[..max_molecules];
-    log::info!("Experiment subset: {} molecules", max_molecules);
+    log::info!("Processing all {} molecules", max_molecules);
 
     let qed_vals: Vec<f64> = records.iter().map(|r| r.qed).collect();
     let logp_vals: Vec<f64> = records.iter().map(|r| r.log_p).collect();
@@ -596,7 +751,13 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
         used_clusters.sort();
         used_clusters.dedup();
 
+        // Cluster quality metrics
+        let cluster_quality = silhouette_score(&stratum_embeddings, &labels);
+        let size_stats = cluster_size_distribution(&cluster_infos);
+
         log::info!("  Active clusters: {}/100 | QE: {:.6}", used_clusters.len(), qe);
+        log::info!("  Silhouette: {:.4} | Davies-Bouldin: {:.4}", cluster_quality.silhouette_mean, cluster_quality.davies_bouldin);
+        log::info!("  Cluster sizes: mean={:.1}, median={:.0}, gini={:.3}", size_stats.mean, size_stats.median, size_stats.gini);
 
         // Show top clusters with their signature FGs
         let mut sorted_clusters = cluster_infos.clone();
@@ -629,6 +790,8 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
             cluster_infos,
             stratum_census,
             cluster_distances,
+            cluster_quality,
+            size_stats,
         });
     }
 
@@ -788,6 +951,29 @@ pub struct ClusterDistancePair {
     pub distance: f64,
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct ClusterQuality {
+    pub silhouette_mean: f64,
+    pub silhouette_std: f64,
+    pub num_clusters: usize,
+    pub davies_bouldin: f64,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct ClusterSizeStats {
+    pub mean: f64,
+    pub median: f64,
+    pub std: f64,
+    pub min: usize,
+    pub max: usize,
+    pub p25: usize,
+    pub p75: usize,
+    pub gini: f64,
+    pub singletons: usize,
+    pub large_clusters: usize,
+    pub total_clusters: usize,
+}
+
 #[derive(Debug)]
 pub struct Timings {
     pub load_secs: f64,
@@ -827,6 +1013,8 @@ pub struct StratumResult {
     pub cluster_infos: Vec<ClusterInfo>,
     pub stratum_census: FGCensus,
     pub cluster_distances: Vec<ClusterDistancePair>,
+    pub cluster_quality: ClusterQuality,
+    pub size_stats: ClusterSizeStats,
 }
 
 // ═══════════════════════════════════════════════════
@@ -1131,8 +1319,51 @@ impl PipelineResults {
             }
         }
 
-        // ── 9. Evaluation Summary ──
-        md.push_str("## 9. Evaluation Summary\n\n");
+        // ── 9. Cluster Quality Analysis ──
+        md.push_str("## 9. Cluster Quality Analysis\n\n");
+
+        // Per-stratum cluster quality
+        md.push_str("### 9.1 Per-Stratum Quality Metrics\n\n");
+        md.push_str("| Stratum | Silhouette | Davies-Bouldin | QE | Clusters | Gini | Singletons |\n");
+        md.push_str("|---|---|---|---|---|---|---|\n");
+        let qed_ranges = ["[0, 0.399)", "[0.399, 0.520)", "[0.520, 0.694)", "[0.694, 0.814)", "[0.814, 1.0]"];
+        for sr in &self.strata_results {
+            let range = qed_ranges.get(sr.group_id).unwrap_or(&"—");
+            md.push_str(&format!(
+                "| {} {} | {:.4} | {:.4} | {:.6} | {} | {:.3} | {} |\n",
+                sr.group_id, range,
+                sr.cluster_quality.silhouette_mean,
+                sr.cluster_quality.davies_bouldin,
+                sr.quantization_error,
+                sr.num_clusters_used,
+                sr.size_stats.gini,
+                sr.size_stats.singletons,
+            ));
+        }
+        md.push_str("\n");
+
+        md.push_str("**Interpretation guide:**\n");
+        md.push_str("- **Silhouette** ∈ [-1, 1]: higher = better separation (>0.5 strong, >0.25 reasonable)\n");
+        md.push_str("- **Davies-Bouldin**: lower = better separation (0 is optimal)\n");
+        md.push_str("- **Gini coefficient**: 0 = equal sizes, 1 = maximally unequal\n\n");
+
+        // Cluster size distributions
+        md.push_str("### 9.2 Cluster Size Distribution\n\n");
+        md.push_str("| Stratum | Mean | Median | Std | Min | P25 | P75 | Max | Large |\n");
+        md.push_str("|---|---|---|---|---|---|---|---|---|\n");
+        for sr in &self.strata_results {
+            md.push_str(&format!(
+                "| {} | {:.1} | {:.0} | {:.1} | {} | {} | {} | {} | {} |\n",
+                sr.group_id,
+                sr.size_stats.mean, sr.size_stats.median, sr.size_stats.std,
+                sr.size_stats.min, sr.size_stats.p25, sr.size_stats.p75, sr.size_stats.max,
+                sr.size_stats.large_clusters,
+            ));
+        }
+        md.push_str("\n");
+
+        // ── 10. Evaluation Summary ──
+        md.push_str("## 10. Evaluation Summary\n\n");
 
         let all_sizes: Vec<usize> = self.strata_results.iter()
             .flat_map(|sr| sr.cluster_infos.iter().map(|c| c.size))
@@ -1144,11 +1375,19 @@ impl PipelineResults {
             let active_clusters: usize = self.strata_results.iter().map(|sr| sr.num_clusters_used).sum();
             let total_neurons: usize = self.strata_results.len() * self.som_grid.0 * self.som_grid.1;
 
+            // Global averages
+            let avg_silhouette = self.strata_results.iter()
+                .map(|s| s.cluster_quality.silhouette_mean).sum::<f64>() / self.strata_results.len().max(1) as f64;
+            let avg_db = self.strata_results.iter()
+                .map(|s| s.cluster_quality.davies_bouldin).sum::<f64>() / self.strata_results.len().max(1) as f64;
+
             md.push_str("| Metric | Value |\n|---|---|\n");
             md.push_str(&format!("| Total active clusters | {} / {} neurons |\n", active_clusters, total_neurons));
             md.push_str(&format!("| Cluster size (mean) | {:.1} |\n", mean_size));
             md.push_str(&format!("| Cluster size (range) | {} – {} |\n", min_size, max_size));
             md.push_str(&format!("| Average quantization error | {:.6} |\n", avg_qe));
+            md.push_str(&format!("| Average silhouette score | {:.4} |\n", avg_silhouette));
+            md.push_str(&format!("| Average Davies-Bouldin index | {:.4} |\n", avg_db));
 
             let all_compactness: Vec<f64> = self.strata_results.iter()
                 .flat_map(|sr| sr.cluster_infos.iter().map(|c| c.compactness))
@@ -1156,11 +1395,9 @@ impl PipelineResults {
             let mean_compact = all_compactness.iter().sum::<f64>() / all_compactness.len().max(1) as f64;
             md.push_str(&format!("| Mean intra-cluster distance | {:.6} |\n", mean_compact));
 
-            // Functional group coverage
             let fg_types_detected = self.global_fg_census.sorted_by_prevalence().len();
             md.push_str(&format!("| Functional group types detected | {} / 22 |\n", fg_types_detected));
 
-            // Strongest property-FG correlation
             if let Some(best) = self.importance.fg_property_correlations.first() {
                 let max_r = best.qed_corr.abs().max(best.logp_corr.abs()).max(best.sas_corr.abs());
                 md.push_str(&format!("| Strongest FG-property |r| | {:.4} ({}) |\n", max_r, best.fg.name()));
@@ -1168,8 +1405,8 @@ impl PipelineResults {
             md.push_str("\n");
         }
 
-        // ── 10. Performance ──
-        md.push_str("## 10. Performance\n\n");
+        // ── 11. Performance ──
+        md.push_str("## 11. Performance\n\n");
         md.push_str("| Phase | Time |\n|---|---|\n");
         md.push_str(&format!("| Data loading | {:.2}s |\n", self.timings.load_secs));
         md.push_str(&format!("| Graph parsing + FG detection | {:.2}s |\n", self.timings.parse_secs));
@@ -1184,7 +1421,7 @@ impl PipelineResults {
         }
 
         // ── 11. Methodology Comparison ──
-        md.push_str("## 11. Methodology Comparison\n\n");
+        md.push_str("## 12. Methodology Comparison\n\n");
         md.push_str("| Aspect | Previous (Python) | Current (Rust + GNN) |\n");
         md.push_str("|---|---|---|\n");
         md.push_str("| Molecular representation | Flat 28-dim feature vector | Full molecular graph |\n");
@@ -1199,7 +1436,7 @@ impl PipelineResults {
         md.push_str("| Implementation | Python/PyTorch | Rust/Burn (memory-safe, zero-cost abstractions) |\n\n");
 
         // ── 12. Output Files ──
-        md.push_str("## 12. Output Files\n\n");
+        md.push_str("## 13. Output Files\n\n");
         md.push_str("```\nresults/\n");
         md.push_str("├── RESULTS.md              # This report\n");
         md.push_str("├── training_losses.csv     # Per-molecule reconstruction losses\n");
