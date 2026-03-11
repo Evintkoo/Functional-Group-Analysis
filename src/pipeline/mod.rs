@@ -11,6 +11,7 @@ use crate::functional_groups::{self, FunctionalGroup, FGProfile, FGCensus, fg_en
 use crate::io::{self, MoleculeRecord};
 use crate::smiles;
 use crate::som::{Som, SomConfig};
+use crate::visualization::{self, VisualizationData};
 
 type B = NdArray<f32>;
 
@@ -56,6 +57,8 @@ fn process_molecules(records: &[&MoleculeRecord]) -> (Vec<(MolecularFeatures, us
                     stats.max_atoms = stats.max_atoms.max(feats.num_atoms);
                     stats.min_bonds = stats.min_bonds.min(feats.num_bonds);
                     stats.max_bonds = stats.max_bonds.max(feats.num_bonds);
+                    stats.per_mol_atoms.push(feats.num_atoms);
+                    stats.per_mol_bonds.push(feats.num_bonds);
                     stats.molecule_count += 1;
                     results.push((feats, i, fg_profile));
                 }
@@ -780,6 +783,14 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
             output_dir, group_id, &stratum_records, &stratum_labels_for_save, &stratum_embeddings,
         )?;
 
+        // Compute stratum property stats
+        let s_qed: Vec<f64> = stratum_records.iter().map(|r| r.qed).collect();
+        let s_logp: Vec<f64> = stratum_records.iter().map(|r| r.log_p).collect();
+        let s_sas: Vec<f64> = stratum_records.iter().map(|r| r.sas).collect();
+        let s_qed_mean = s_qed.iter().sum::<f64>() / s_qed.len().max(1) as f64;
+        let s_logp_mean = s_logp.iter().sum::<f64>() / s_logp.len().max(1) as f64;
+        let s_sas_mean = s_sas.iter().sum::<f64>() / s_sas.len().max(1) as f64;
+
         strata_results.push(StratumResult {
             group_id,
             num_molecules: stratum_embeddings.len(),
@@ -792,10 +803,91 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
             cluster_distances,
             cluster_quality,
             size_stats,
+            u_matrix,
+            stratum_property_stats: (s_qed_mean, stat_std(&s_qed), s_logp_mean, stat_std(&s_logp), s_sas_mean, stat_std(&s_sas)),
         });
     }
 
     let cluster_time = t3.elapsed();
+
+    // ═══════════════════════════════════════════════════
+    // Phase 5: Generate visualizations
+    // ═══════════════════════════════════════════════════
+    log::info!("════════════════════════════════════════════");
+    log::info!("  Phase 5: Generating visualizations");
+    log::info!("════════════════════════════════════════════");
+    let t_viz = Instant::now();
+
+    // Build stratum labels for each embedding
+    let mut emb_stratum_labels = vec![0usize; embeddings.len()];
+    for sr in &strata_results {
+        for (orig_idx_ref, stratum_idx) in strata[sr.group_id].iter().zip(std::iter::repeat(sr.group_id)) {
+            if let Some(emb_pos) = valid_indices.iter().position(|&vi| vi == *orig_idx_ref) {
+                emb_stratum_labels[emb_pos] = stratum_idx;
+            }
+        }
+    }
+
+    // Build visualization data
+    let viz_data = VisualizationData {
+        qed_vals: qed_vals.clone(),
+        logp_vals: logp_vals.clone(),
+        sas_vals: sas_vals.clone(),
+        atom_counts: graph_stats.per_mol_atoms.clone(),
+        bond_counts: graph_stats.per_mol_bonds.clone(),
+        embeddings: embeddings.clone(),
+        stratum_labels: emb_stratum_labels,
+        recon_losses: recon_losses.clone(),
+        dim_correlations: importance.dim_correlations.iter()
+            .map(|dc| (dc.dim, dc.qed_corr, dc.logp_corr, dc.sas_corr))
+            .collect(),
+        dim_variances: importance.dim_correlations.iter()
+            .map(|dc| (dc.dim, dc.variance))
+            .collect(),
+        fg_prevalence: global_fg_census.sorted_by_prevalence().iter()
+            .map(|(fg, _count, pct)| (fg.name().to_string(), *pct))
+            .collect(),
+        fg_property_corr: importance.fg_property_correlations.iter()
+            .map(|fpc| (fpc.fg.name().to_string(), fpc.qed_corr, fpc.logp_corr, fpc.sas_corr))
+            .collect(),
+        strata_quality: strata_results.iter()
+            .map(|sr| (sr.group_id, sr.cluster_quality.silhouette_mean, sr.cluster_quality.davies_bouldin, sr.quantization_error, sr.size_stats.gini))
+            .collect(),
+        strata_cluster_sizes: strata_results.iter()
+            .map(|sr| sr.cluster_infos.iter().map(|c| c.size).collect())
+            .collect(),
+        strata_property_stats: strata_results.iter()
+            .map(|sr| {
+                let (mq, sq, ml, sl, ms, ss) = sr.stratum_property_stats;
+                (sr.group_id, mq, sq, ml, sl, ms, ss)
+            })
+            .collect(),
+        u_matrices: strata_results.iter().map(|sr| sr.u_matrix.clone()).collect(),
+        strata_fg_enrichments: strata_results.iter().map(|sr| {
+            let cluster_enrichments: Vec<(usize, Vec<(String, f64)>)> = sr.cluster_infos.iter()
+                .take(20)  // top 20 clusters for readability
+                .map(|ci| {
+                    let fgs: Vec<(String, f64)> = ci.signature_fgs.iter()
+                        .map(|(fg, enrichment)| (fg.short_name().to_string(), *enrichment))
+                        .collect();
+                    (ci.cluster_id, fgs)
+                })
+                .collect();
+            (sr.group_id, cluster_enrichments)
+        }).collect(),
+        strata_distances: strata_results.iter().map(|sr| {
+            let dists: Vec<(usize, usize, f64)> = sr.cluster_distances.iter()
+                .map(|d| (d.cluster_a, d.cluster_b, d.distance))
+                .collect();
+            (sr.group_id, dists, sr.num_clusters_used)
+        }).collect(),
+    };
+
+    let figures = visualization::generate_all_figures(&viz_data, output_dir);
+
+    let viz_time = t_viz.elapsed();
+    log::info!("Visualization complete in {:.2}s ({} figures)", viz_time.as_secs_f64(), figures.len());
+
     let total_time = pipeline_start.elapsed();
 
     log::info!("════════════════════════════════════════════");
@@ -825,6 +917,7 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
             cluster_secs: cluster_time.as_secs_f64(),
             total_secs: total_time.as_secs_f64(),
         },
+        figures,
     })
 }
 
@@ -856,6 +949,8 @@ pub struct GraphStats {
     pub min_bonds: usize,
     pub max_bonds: usize,
     pub parse_failures: usize,
+    pub per_mol_atoms: Vec<usize>,
+    pub per_mol_bonds: Vec<usize>,
 }
 
 impl Default for GraphStats {
@@ -869,6 +964,8 @@ impl Default for GraphStats {
             min_bonds: usize::MAX,
             max_bonds: 0,
             parse_failures: 0,
+            per_mol_atoms: Vec::new(),
+            per_mol_bonds: Vec::new(),
         }
     }
 }
@@ -1000,6 +1097,7 @@ pub struct PipelineResults {
     pub global_fg_census: FGCensus,
     pub importance: ImportanceAnalysis,
     pub timings: Timings,
+    pub figures: Vec<(String, String)>,
 }
 
 #[derive(Debug)]
@@ -1015,6 +1113,8 @@ pub struct StratumResult {
     pub cluster_distances: Vec<ClusterDistancePair>,
     pub cluster_quality: ClusterQuality,
     pub size_stats: ClusterSizeStats,
+    pub u_matrix: Vec<Vec<f64>>,
+    pub stratum_property_stats: (f64, f64, f64, f64, f64, f64),  // mean_qed, std_qed, mean_logp, std_logp, mean_sas, std_sas
 }
 
 // ═══════════════════════════════════════════════════
@@ -1047,6 +1147,12 @@ impl PipelineResults {
         md.push_str(&format!("| SAS | {:.4} | {:.4} | — | — |\n\n",
             self.dataset_stats.sas_mean, self.dataset_stats.sas_std));
 
+        md.push_str("![Property Distributions](figures/property_distributions_combined.svg)\n\n");
+        md.push_str("*Figure 1: Distribution of QED, logP, and SAS across the full dataset. Red vertical lines indicate means.*\n\n");
+        md.push_str("| | | |\n|---|---|---|\n");
+        md.push_str("| ![QED](figures/qed_distribution.svg) | ![logP](figures/logp_distribution.svg) | ![SAS](figures/sas_distribution.svg) |\n\n");
+        md.push_str("*Figure 2: Individual property distributions with 50-bin histograms and mean indicators.*\n\n");
+
         // ── 2. Molecular Graph Statistics ──
         md.push_str("## 2. Molecular Graph Statistics\n\n");
         md.push_str("| Property | Value |\n|---|---|\n");
@@ -1060,6 +1166,9 @@ impl PipelineResults {
         md.push_str(&format!("| Total bonds processed | {} |\n", self.graph_stats.total_bonds));
         md.push_str(&format!("| Node feature dimension | {} |\n", NODE_FEATURE_DIM));
         md.push_str(&format!("| Edge feature dimension | {} |\n\n", EDGE_FEATURE_DIM));
+
+        md.push_str("![Molecular Complexity](figures/molecule_complexity.svg)\n\n");
+        md.push_str("*Figure 3: Molecular graph complexity — atoms vs. bonds colored by QED score (red=low, green=high).*\n\n");
 
         // ── 3. Functional Group Census ──
         md.push_str("## 3. Functional Group Census\n\n");
@@ -1095,6 +1204,9 @@ impl PipelineResults {
             md.push_str(&format!("- **Rare groups** (<5%): {}\n", rare.join(", ")));
         }
         md.push_str("\n");
+
+        md.push_str("![FG Prevalence](figures/fg_prevalence.svg)\n\n");
+        md.push_str("*Figure 4: Functional group prevalence across the dataset. Blue (>50%), green (10–50%), purple (<10%).*\n\n");
 
         // ── 4. Model Configuration ──
         md.push_str("## 4. Model Configuration\n\n");
@@ -1145,6 +1257,11 @@ impl PipelineResults {
         }
         md.push_str("\n");
 
+        md.push_str("![Reconstruction Loss](figures/reconstruction_loss_dist.svg)\n\n");
+        md.push_str("*Figure 5: Distribution of VGAE reconstruction losses across all molecules.*\n\n");
+        md.push_str("![Embedding Variance](figures/embedding_dim_variance.svg)\n\n");
+        md.push_str("*Figure 6: Variance of each latent dimension — higher variance indicates more discriminative dimensions.*\n\n");
+
         // ── 6. Feature Importance Analysis ──
         md.push_str("## 6. Feature Importance Analysis\n\n");
 
@@ -1187,6 +1304,11 @@ impl PipelineResults {
         }
         md.push_str("\n");
 
+        md.push_str("![Dim-Property Heatmap](figures/dim_property_heatmap.svg)\n\n");
+        md.push_str("*Figure 7: Heatmap of Pearson correlations between latent dimensions and molecular properties. Blue = negative, red = positive.*\n\n");
+        md.push_str("![FG-Property Correlations](figures/fg_property_correlations.svg)\n\n");
+        md.push_str("*Figure 8: Point-biserial correlations between functional group presence and drug-likeness properties.*\n\n");
+
         // ── 7. Stratified Clustering Results ──
         md.push_str("## 7. Stratified Clustering Results\n\n");
         md.push_str("### Per-Stratum Overview\n\n");
@@ -1207,6 +1329,13 @@ impl PipelineResults {
             self.strata_results.iter().map(|s| s.quantization_error).sum::<f64>() / self.strata_results.len() as f64
         };
         md.push_str(&format!("\n**Total clustered**: {} molecules | **Avg QE**: {:.6}\n\n", total_clustered, avg_qe));
+
+        md.push_str("![Latent Space PCA](figures/latent_space_pca.svg)\n\n");
+        md.push_str("*Figure 9: PCA projection of 16-dimensional VGAE embeddings colored by QED stratum.*\n\n");
+        md.push_str("![Stratum Properties](figures/stratum_property_comparison.svg)\n\n");
+        md.push_str("*Figure 10: Mean ± std of molecular properties across QED strata.*\n\n");
+        md.push_str("![U-Matrix](figures/umatrix_heatmaps.svg)\n\n");
+        md.push_str("*Figure 11: SOM U-matrix heatmaps showing topological organization per stratum. Darker regions indicate cluster boundaries.*\n\n");
 
         // ── Per-stratum detailed analysis ──
         for sr in &self.strata_results {
@@ -1362,6 +1491,11 @@ impl PipelineResults {
         }
         md.push_str("\n");
 
+        md.push_str("![Cluster Quality](figures/cluster_quality_comparison.svg)\n\n");
+        md.push_str("*Figure 12: Comparison of cluster quality metrics across QED strata — silhouette score, Davies-Bouldin index, quantization error, and Gini coefficient.*\n\n");
+        md.push_str("![Cluster Sizes](figures/cluster_size_distribution.svg)\n\n");
+        md.push_str("*Figure 13: Distribution of cluster sizes within each QED stratum.*\n\n");
+
         // ── 10. Evaluation Summary ──
         md.push_str("## 10. Evaluation Summary\n\n");
 
@@ -1440,12 +1574,47 @@ impl PipelineResults {
         md.push_str("```\nresults/\n");
         md.push_str("├── RESULTS.md              # This report\n");
         md.push_str("├── training_losses.csv     # Per-molecule reconstruction losses\n");
+        md.push_str("├── figures/                # SVG visualizations\n");
+        for (path, desc) in &self.figures {
+            md.push_str(&format!("│   ├── {}  # {}\n", path.replace("figures/", ""), desc));
+        }
         for sr in &self.strata_results {
             md.push_str(&format!("└── group_{}/\n", sr.group_id));
             md.push_str("    ├── labeled_data.csv    # SMILES + properties + cluster label\n");
             md.push_str("    └── embeddings.csv      # 16-dim latent embeddings\n");
         }
-        md.push_str("```\n");
+        md.push_str("```\n\n");
+
+        // Figure index
+        md.push_str("## 14. Figure Index\n\n");
+        md.push_str("| # | Figure | Description |\n|---|---|---|\n");
+        let figure_descriptions = [
+            ("Figure 1", "figures/property_distributions_combined.svg", "Molecular property distributions (QED, logP, SAS)"),
+            ("Figure 2", "figures/qed_distribution.svg", "Individual property histograms with mean indicators"),
+            ("Figure 3", "figures/molecule_complexity.svg", "Molecular graph complexity scatter (atoms vs bonds)"),
+            ("Figure 4", "figures/fg_prevalence.svg", "Functional group prevalence bar chart"),
+            ("Figure 5", "figures/reconstruction_loss_dist.svg", "VGAE reconstruction loss distribution"),
+            ("Figure 6", "figures/embedding_dim_variance.svg", "Latent dimension variance analysis"),
+            ("Figure 7", "figures/dim_property_heatmap.svg", "Dimension–property correlation heatmap"),
+            ("Figure 8", "figures/fg_property_correlations.svg", "FG–property correlation heatmap"),
+            ("Figure 9", "figures/latent_space_pca.svg", "PCA projection of latent space by stratum"),
+            ("Figure 10", "figures/stratum_property_comparison.svg", "Stratum property comparison (mean ± std)"),
+            ("Figure 11", "figures/umatrix_heatmaps.svg", "SOM U-matrix heatmaps per stratum"),
+            ("Figure 12", "figures/cluster_quality_comparison.svg", "Cluster quality metrics comparison"),
+            ("Figure 13", "figures/cluster_size_distribution.svg", "Cluster size distributions per stratum"),
+        ];
+        for (num, path, desc) in &figure_descriptions {
+            md.push_str(&format!("| {} | [{}]({}) | {} |\n", num, path, path, desc));
+        }
+        for (stratum_id, _, _) in &self.strata_results.iter()
+            .map(|sr| (sr.group_id, &sr.cluster_distances, sr.num_clusters_used))
+            .collect::<Vec<_>>()
+        {
+            let fig_num = 14 + stratum_id;
+            let path = format!("figures/fg_enrichment_stratum_{}.svg", stratum_id);
+            md.push_str(&format!("| Figure {} | [{}]({}) | FG enrichment heatmap — Stratum {} |\n", fig_num, path, path, stratum_id));
+        }
+        md.push_str("\n");
 
         md
     }

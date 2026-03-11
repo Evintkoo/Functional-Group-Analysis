@@ -13,6 +13,8 @@ mod functional_groups;
 mod pipeline;
 #[allow(dead_code)]
 mod io;
+#[allow(dead_code)]
+mod visualization;
 
 use std::env;
 
