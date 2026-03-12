@@ -150,31 +150,31 @@ Average number of distinct functional group types per molecule and distribution.
 
 | Metric | Value |
 |---|---|
-| Mean reconstruction loss | 0.050403 |
-| Mean pairwise embedding distance | 1.254438 |
-| Embedding std (mean across dims) | 0.137565 |
-| Embedding std range | [0.0046, 0.9227] |
+| Mean reconstruction loss | 0.050459 |
+| Mean pairwise embedding distance | 1.372703 |
+| Embedding std (mean across dims) | 0.172888 |
+| Embedding std range | [0.0212, 0.9755] |
 
 ### Latent Dimension Statistics
 
 | Dim | Mean | Std | Min | Max |
 |---|---|---|---|---|
-| 0 | 0.0039 | 0.0268 | -0.0751 | 0.1039 |
-| 1 | -0.0388 | 0.2844 | -1.3614 | 1.2468 |
-| 2 | 0.0150 | 0.0449 | -0.1806 | 0.1972 |
-| 3 | 0.0126 | 0.0046 | -0.0094 | 0.0373 |
-| 4 | -0.0003 | 0.0654 | -0.2844 | 0.1907 |
-| 5 | -0.0054 | 0.0133 | -0.0555 | 0.0429 |
-| 6 | -0.0802 | 0.3516 | -1.6629 | 1.5254 |
-| 7 | -0.0006 | 0.0791 | -0.2477 | 0.2228 |
-| 8 | -0.0046 | 0.0149 | -0.0840 | 0.0516 |
-| 9 | -0.0130 | 0.0287 | -0.1426 | 0.0795 |
-| 10 | -0.0151 | 0.0435 | -0.1711 | 0.0987 |
-| 11 | -0.0437 | 0.2258 | -1.0964 | 0.9649 |
-| 12 | 0.0291 | 0.9227 | -2.7192 | 2.9403 |
-| 13 | 0.0014 | 0.0181 | -0.0646 | 0.0832 |
-| 14 | 0.0093 | 0.0224 | -0.0762 | 0.0992 |
-| 15 | -0.0326 | 0.0547 | -0.2655 | 0.2261 |
+| 0 | 0.1060 | 0.9755 | -3.3241 | 2.9081 |
+| 1 | 0.1234 | 0.2987 | -1.1649 | 1.3984 |
+| 2 | 0.0005 | 0.0212 | -0.0795 | 0.0646 |
+| 3 | -0.0559 | 0.1483 | -0.6948 | 0.5090 |
+| 4 | -0.0067 | 0.0718 | -0.3646 | 0.2523 |
+| 5 | -0.0070 | 0.1199 | -0.3652 | 0.4375 |
+| 6 | 0.1750 | 0.3883 | -1.4129 | 1.8295 |
+| 7 | 0.0041 | 0.0443 | -0.1196 | 0.1994 |
+| 8 | -0.0444 | 0.1606 | -0.7276 | 0.6199 |
+| 9 | 0.0255 | 0.0610 | -0.2744 | 0.2653 |
+| 10 | -0.0123 | 0.0863 | -0.3669 | 0.2586 |
+| 11 | 0.0575 | 0.1968 | -0.6325 | 0.8779 |
+| 12 | 0.0096 | 0.0362 | -0.1206 | 0.1464 |
+| 13 | -0.0221 | 0.0840 | -0.3732 | 0.3675 |
+| 14 | 0.0091 | 0.0358 | -0.1448 | 0.1374 |
+| 15 | -0.0138 | 0.0376 | -0.1952 | 0.1365 |
 
 ![Reconstruction Loss](results/figures/reconstruction_loss_dist.svg)
 
@@ -193,22 +193,22 @@ Dimensions sorted by |r(QED)|.
 
 | Dim | Variance | r(QED) | r(logP) | r(SAS) |
 |---|---|---|---|---|
-| 0 | 0.000717 | +0.3049 | -0.4192 | +0.6353 |
-| 9 | 0.000824 | -0.3031 | +0.3408 | -0.6178 |
-| 4 | 0.004274 | -0.3016 | +0.3517 | -0.6203 |
-| 10 | 0.001892 | -0.3008 | +0.4355 | -0.6291 |
-| 7 | 0.006265 | -0.2970 | +0.4446 | -0.6183 |
-| 12 | 0.851453 | -0.2833 | +0.4618 | -0.5931 |
-| 8 | 0.000223 | -0.2804 | +0.2141 | -0.5605 |
-| 5 | 0.000178 | -0.2168 | +0.4714 | -0.4605 |
-| 11 | 0.050998 | -0.1816 | +0.0317 | -0.3563 |
-| 1 | 0.080866 | -0.1746 | +0.0125 | -0.3367 |
-| 14 | 0.000502 | +0.1609 | -0.4486 | +0.3910 |
-| 6 | 0.123634 | -0.1504 | -0.0261 | -0.2895 |
-| 15 | 0.002992 | -0.1180 | -0.0764 | -0.2229 |
-| 13 | 0.000327 | +0.1160 | -0.3539 | +0.2299 |
-| 2 | 0.002019 | -0.0815 | +0.3455 | -0.1830 |
-| 3 | 0.000021 | +0.0765 | -0.0364 | +0.2066 |
+| 5 | 0.014373 | +0.3215 | -0.4184 | +0.6307 |
+| 7 | 0.001959 | +0.3145 | -0.3383 | +0.6274 |
+| 2 | 0.000449 | -0.2974 | +0.4238 | -0.6131 |
+| 0 | 0.951615 | +0.2907 | -0.4610 | +0.5782 |
+| 12 | 0.001312 | +0.2724 | -0.4322 | +0.5216 |
+| 10 | 0.007442 | +0.2507 | -0.4608 | +0.4940 |
+| 15 | 0.001414 | -0.2287 | +0.0958 | -0.4499 |
+| 4 | 0.005155 | -0.2180 | +0.1091 | -0.4249 |
+| 9 | 0.003717 | -0.1971 | +0.0908 | -0.4124 |
+| 14 | 0.001282 | +0.1894 | -0.4280 | +0.3819 |
+| 13 | 0.007058 | +0.1642 | -0.0020 | +0.3144 |
+| 1 | 0.089221 | -0.1171 | -0.0698 | -0.2299 |
+| 8 | 0.025803 | +0.0976 | +0.1004 | +0.1912 |
+| 6 | 0.150819 | -0.0913 | -0.1066 | -0.1816 |
+| 3 | 0.022001 | +0.0642 | +0.1425 | +0.1316 |
+| 11 | 0.038722 | -0.0212 | -0.2029 | -0.0421 |
 
 ### 6.2 Functional Group ↔ Latent Space Encoding
 
@@ -216,23 +216,23 @@ Which latent dimensions best encode each functional group's presence.
 
 | Functional Group | Prevalence (%) | Best Dim | |r| |
 |---|---|---|---|
-| Phenyl (aromatic ring) | 83.0 | 12 | 0.5567 |
-| Heterocycle | 58.0 | 12 | 0.4526 |
-| Tertiary Amine (>N<) | 21.6 | 3 | 0.2691 |
-| Halide (C-X) | 35.1 | 3 | 0.2181 |
-| Amide (-CONH-) | 68.0 | 15 | 0.1624 |
-| Ketone (>C=O) | 10.5 | 10 | 0.1528 |
-| Sulfonyl (-SO₂-) | 10.9 | 8 | 0.1497 |
-| Ether (C-O-C) | 37.3 | 9 | 0.1435 |
-| Nitro (-NO₂) | 4.3 | 9 | 0.1409 |
-| Carboxyl (-COOH) | 3.8 | 2 | 0.1391 |
-| Secondary Amine (>NH) | 27.4 | 7 | 0.1390 |
-| Ester (-COO-) | 7.3 | 15 | 0.1291 |
-| Hydroxyl (-OH) | 11.1 | 12 | 0.1237 |
-| Imine (C=N) | 2.7 | 9 | 0.1060 |
-| Nitrile (-C≡N) | 5.2 | 3 | 0.0922 |
-| Primary Amine (-NH₂) | 7.1 | 12 | 0.0695 |
-| Thioether (C-S-C) | 11.0 | 5 | 0.0324 |
+| Phenyl (aromatic ring) | 83.0 | 0 | 0.5431 |
+| Heterocycle | 58.0 | 10 | 0.4763 |
+| Tertiary Amine (>N<) | 21.6 | 4 | 0.2645 |
+| Halide (C-X) | 35.1 | 7 | 0.1819 |
+| Amide (-CONH-) | 68.0 | 15 | 0.1812 |
+| Sulfonyl (-SO₂-) | 10.9 | 15 | 0.1732 |
+| Ketone (>C=O) | 10.5 | 12 | 0.1580 |
+| Hydroxyl (-OH) | 11.1 | 12 | 0.1468 |
+| Secondary Amine (>NH) | 27.4 | 12 | 0.1455 |
+| Ether (C-O-C) | 37.3 | 7 | 0.1381 |
+| Nitro (-NO₂) | 4.3 | 7 | 0.1330 |
+| Carboxyl (-COOH) | 3.8 | 11 | 0.1288 |
+| Ester (-COO-) | 7.3 | 15 | 0.1281 |
+| Imine (C=N) | 2.7 | 7 | 0.1157 |
+| Nitrile (-C≡N) | 5.2 | 9 | 0.1083 |
+| Primary Amine (-NH₂) | 7.1 | 12 | 0.0840 |
+| Thioether (C-S-C) | 11.0 | 2 | 0.0314 |
 
 ### 6.3 Functional Group ↔ Molecular Property Correlations
 
@@ -272,17 +272,17 @@ Point-biserial correlation between FG presence and drug-likeness properties.
 
 | Stratum | QED Range | Molecules | Active Clusters | QE | U-Matrix Mean | U-Matrix Max |
 |---|---|---|---|---|---|---|
-| 0 | [0, 0.399) | 6830 | 612 | 0.175076 | 0.0551 | 0.1110 |
-| 1 | [0.399, 0.520) | 17622 | 896 | 0.181768 | 0.0485 | 0.1106 |
-| 2 | [0.520, 0.694) | 60427 | 900 | 0.201201 | 0.0550 | 0.1413 |
-| 3 | [0.694, 0.814) | 83673 | 900 | 0.197898 | 0.0556 | 0.1093 |
-| 4 | [0.814, 1.0] | 80903 | 900 | 0.151176 | 0.0434 | 0.0738 |
+| 0 | [0, 0.399) | 6830 | 612 | 1.096530 | 0.0551 | 0.1110 |
+| 1 | [0.399, 0.520) | 17622 | 896 | 1.048350 | 0.0485 | 0.1106 |
+| 2 | [0.520, 0.694) | 60427 | 900 | 0.969829 | 0.0550 | 0.1413 |
+| 3 | [0.694, 0.814) | 83673 | 900 | 0.935341 | 0.0556 | 0.1093 |
+| 4 | [0.814, 1.0] | 80903 | 900 | 0.739544 | 0.0434 | 0.0738 |
 
-**Total clustered**: 249455 molecules | **Avg QE**: 0.181424
+**Total clustered**: 249455 molecules | **Avg QE**: 0.957919
 
-![Latent Space PCA](results/figures/latent_space_pca.svg)
+![Latent Space UMAP](results/figures/latent_space_umap.svg)
 
-*Figure 9: PCA projection of 16-dimensional VGAE embeddings colored by QED stratum.*
+*Figure 9: UMAP projection of 16-dimensional VGAE embeddings colored by QED stratum.*
 
 ![Stratum Properties](results/figures/stratum_property_comparison.svg)
 
@@ -313,16 +313,16 @@ Point-biserial correlation between FG presence and drug-likeness properties.
 
 | Cluster | Size | QED μ±σ | logP | SAS | Compact | Dominant FG | Signature FGs | Representative |
 |---|---|---|---|---|---|---|---|---|
-| 24 | 454 | 0.345±0.048 | 4.46 | 2.45 | 0.2402 | Ph | HetCyc(1.4×) | `O=C(Cc1n[nH]c(=O)c2ccccc12)NCc` |
-| 600 | 302 | 0.328±0.052 | -0.19 | 4.28 | 0.7041 | NH2 | NH2(3.8×), OH(3.7×), COOH(2.5×) | `CCC(CC)(NC(=O)N1CCCCCC1)/C(N)=` |
-| 624 | 91 | 0.347±0.052 | 4.41 | 3.02 | 0.1577 | Ph | N<(3.3×), C-O-C(1.6×), C-S-C(1.4×) | `Cc1c(OC(=O)C2CCOCC2)ccc2c(-c3c` |
-| 324 | 90 | 0.342±0.047 | 4.53 | 2.75 | 0.1532 | Ph | N<(1.7×), HetCyc(1.4×), C-O-C(1.3×) | `COc1ccccc1/C=C/C(=O)Nc1nc2n(n1` |
-| 12 | 79 | 0.324±0.055 | 4.11 | 2.43 | 0.1163 | Ph | COOH(1.7×), NO2(1.5×), C=O(1.3×) | `CCOc1ccc(C(=O)CSc2nnc3sc4ccccc` |
-| 0 | 78 | 0.348±0.046 | 2.71 | 2.64 | 0.1693 | Ph | SO2(2.8×), COOH(2.6×), CN(2.0×) | `CCOC(=O)c1cc2cc(NC(=O)c3ccccc3` |
-| 11 | 72 | 0.334±0.059 | 3.97 | 2.36 | 0.1019 | Ph | NO2(1.5×), C=N(1.3×), HetCyc(1.2×) | `O=C(Cn1c([S-])nnc1-c1cccs1)NCC` |
-| 275 | 68 | 0.320±0.060 | 1.82 | 2.69 | 0.2037 | Ph | C=N(2.1×), NO2(1.8×), NH2(1.7×) | `COC(=O)/C(=N\Nc1ccccc1N)C(C)=O` |
-| 18 | 63 | 0.324±0.063 | 4.02 | 2.42 | 0.0886 | Ph | CN(1.7×), C=O(1.5×), HetCyc(1.3×) | `COC(=O)c1ccc(/C=N/NC(=O)c2nn(C` |
-| 20 | 62 | 0.326±0.056 | 3.83 | 2.54 | 0.1531 | Ph | C=O(1.4×), HetCyc(1.4×) | `CC(=O)Nc1ccc(-n2c(/C=C\c3ccc([` |
+| 24 | 454 | 0.345±0.048 | 4.46 | 2.45 | 0.3120 | Ph | HetCyc(1.4×) | `COc1ccc2nc(N(Cc3cccnc3)C(=O)c3` |
+| 600 | 302 | 0.328±0.052 | -0.19 | 4.28 | 0.7424 | NH2 | NH2(3.8×), OH(3.7×), COOH(2.5×) | `CCC(CC)(NC(=O)N1CCCCCC1)/C(N)=` |
+| 624 | 91 | 0.347±0.052 | 4.41 | 3.02 | 0.2004 | Ph | N<(3.3×), C-O-C(1.6×), C-S-C(1.4×) | `O=C1/C(=C\c2cn(-c3ccccc3)nc2-c` |
+| 324 | 90 | 0.342±0.047 | 4.53 | 2.75 | 0.2175 | Ph | N<(1.7×), HetCyc(1.4×), C-O-C(1.3×) | `NC(=O)c1c(NC(=O)c2ccc(-c3ccccc` |
+| 12 | 79 | 0.324±0.055 | 4.11 | 2.43 | 0.1318 | Ph | COOH(1.7×), NO2(1.5×), C=O(1.3×) | `O=C(Cn1c(CCNC(=O)c2cccc(Br)c2)` |
+| 0 | 78 | 0.348±0.046 | 2.71 | 2.64 | 0.1900 | Ph | SO2(2.8×), COOH(2.6×), CN(2.0×) | `Cc1ncc(/C=C/C(=O)OCCCn2nc3cccc` |
+| 11 | 72 | 0.334±0.059 | 3.97 | 2.36 | 0.1169 | Ph | NO2(1.5×), C=N(1.3×), HetCyc(1.2×) | `CCOC(=O)c1ccc(-c2ccc(/C=N/n3c(` |
+| 275 | 68 | 0.320±0.060 | 1.82 | 2.69 | 0.2244 | Ph | C=N(2.1×), NO2(1.8×), NH2(1.7×) | `CCO/C([O-])=C(\C#N)C(=O)c1cccc` |
+| 18 | 63 | 0.324±0.063 | 4.02 | 2.42 | 0.1003 | Ph | CN(1.7×), C=O(1.5×), HetCyc(1.3×) | `CC(=O)Oc1ccc(-c2ccc(C(=O)Nc3cc` |
+| 20 | 62 | 0.326±0.056 | 3.83 | 2.54 | 0.1723 | Ph | C=O(1.4×), HetCyc(1.4×) | `O=C(Nc1ccc(C(=O)Nc2ccccc2[N-]S` |
 
 #### Inter-Cluster Distance Analysis
 
@@ -330,23 +330,23 @@ Point-biserial correlation between FG presence and drug-likeness properties.
 
 | Cluster A | Cluster B | Distance |
 |---|---|---|
-| 29 | 55 | 0.014418 |
-| 44 | 69 | 0.017179 |
-| 72 | 98 | 0.019456 |
-| 97 | 98 | 0.019804 |
-| 49 | 74 | 0.019886 |
+| 221 | 247 | 0.007301 |
+| 40 | 65 | 0.007413 |
+| 90 | 115 | 0.008612 |
+| 496 | 521 | 0.008838 |
+| 298 | 323 | 0.009612 |
 
 **Most distant cluster pairs**:
 
 | Cluster A | Cluster B | Distance |
 |---|---|---|
-| 24 | 600 | 3.704390 |
-| 23 | 600 | 3.508928 |
-| 20 | 600 | 3.508710 |
-| 22 | 600 | 3.501918 |
-| 49 | 600 | 3.447059 |
+| 24 | 600 | 4.185544 |
+| 24 | 575 | 4.167718 |
+| 23 | 600 | 3.874031 |
+| 22 | 600 | 3.857116 |
+| 49 | 600 | 3.850152 |
 
-Inter-cluster distance: mean=0.763624, min=0.014418, max=3.704390, 186966 pairs
+Inter-cluster distance: mean=0.885972, min=0.007301, max=4.185544, 186966 pairs
 
 ### Stratum 1 ([0.399, 0.520)) — Detailed Analysis
 
@@ -369,16 +369,16 @@ Inter-cluster distance: mean=0.763624, min=0.014418, max=3.704390, 186966 pairs
 
 | Cluster | Size | QED μ±σ | logP | SAS | Compact | Dominant FG | Signature FGs | Representative |
 |---|---|---|---|---|---|---|---|---|
-| 29 | 982 | 0.471±0.036 | 3.97 | 2.39 | 0.2466 | Ph | HetCyc(1.4×) | `O=C(NCCc1ccc(-c2ccccc2)cc1)c1c` |
-| 870 | 756 | 0.475±0.034 | -0.16 | 4.49 | 0.6927 | CONH | COOH(4.4×), OH(2.9×), NH2(2.2×) | `CC(=O)O[C@H]1[C@@H](C)[C@H]2CC` |
-| 14 | 194 | 0.469±0.031 | 3.49 | 2.41 | 0.1018 | Ph | SO2(1.9×), C=N(1.6×), HetCyc(1.3×) | `CCOc1ccc(-c2cc3c(=O)n(CC(=O)Nc` |
-| 479 | 191 | 0.468±0.036 | 3.94 | 2.76 | 0.1650 | Ph | N<(2.7×), HetCyc(1.4×) | `COc1cc([C@@H]2CC(=O)Nc3[nH]nc(` |
-| 0 | 163 | 0.470±0.034 | 2.76 | 2.52 | 0.1634 | Ph | SO2(2.1×), NO2(2.0×), C=N(1.8×) | `COC(=O)COc1ccc(NC(=O)/C=C/c2nc` |
-| 13 | 157 | 0.469±0.036 | 3.39 | 2.42 | 0.1202 | Ph | SO2(1.9×), C=N(1.7×), HetCyc(1.3×) | `Cc1ccc(-n2ncc3c(NCCc4ccc(S(N)(` |
-| 899 | 147 | 0.471±0.033 | 3.95 | 3.28 | 0.1508 | Ph | N<(2.6×), NH(1.4×), OH(1.3×) | `Cc1ccc(Cl)cc1N1CCN(C(=O)c2ccc(` |
-| 15 | 143 | 0.470±0.035 | 3.88 | 2.41 | 0.1127 | Ph | SO2(2.0×), CN(1.3×), C-X(1.2×) | `Cc1ccc(-n2c(SCC(=O)Nc3ccc(Br)c` |
-| 885 | 139 | 0.469±0.033 | 2.42 | 3.46 | 0.2146 | Ph | N<(2.8×), NH2(1.4×), NH(1.3×) | `O=C(c1ccc(Cl)cc1)[C@@H]1[C@@H]` |
-| 21 | 119 | 0.468±0.039 | 3.61 | 2.36 | 0.1482 | Ph | SO2(1.6×), C=N(1.5×), HetCyc(1.4×) | `Cc1ccc(Sc2c(C(=O)NCc3cccnc3)[n` |
+| 29 | 982 | 0.471±0.036 | 3.97 | 2.39 | 0.3233 | Ph | HetCyc(1.4×) | `O=C(NCCc1ccc(-c2ccccc2)cc1)c1c` |
+| 870 | 756 | 0.475±0.034 | -0.16 | 4.49 | 0.7341 | CONH | COOH(4.4×), OH(2.9×), NH2(2.2×) | `COC[C@@]1(C)C[NH+]=C(N)N1C` |
+| 14 | 194 | 0.469±0.031 | 3.49 | 2.41 | 0.1171 | Ph | SO2(1.9×), C=N(1.6×), HetCyc(1.3×) | `O=C(CCNC(=O)c1c[nH]c2nc(-c3ccc` |
+| 479 | 191 | 0.468±0.036 | 3.94 | 2.76 | 0.2222 | Ph | N<(2.7×), HetCyc(1.4×) | `Cn1cc(C(=O)N2CCN(c3ccc(F)cc3)C` |
+| 0 | 163 | 0.470±0.034 | 2.76 | 2.52 | 0.1591 | Ph | SO2(2.1×), NO2(2.0×), C=N(1.8×) | `C=CCOC(=O)/C(=C\c1ccco1)NC(=O)` |
+| 13 | 157 | 0.469±0.036 | 3.39 | 2.42 | 0.1380 | Ph | SO2(1.9×), C=N(1.7×), HetCyc(1.3×) | `Cc1nc2cc(C(=O)OCC(=O)Nc3ccc(F)` |
+| 899 | 147 | 0.471±0.033 | 3.95 | 3.28 | 0.1921 | Ph | N<(2.6×), NH(1.4×), OH(1.3×) | `O=C(CSc1nc(=O)n(Cc2ccncc2)c2c1` |
+| 15 | 143 | 0.470±0.035 | 3.88 | 2.41 | 0.1205 | Ph | SO2(2.0×), CN(1.3×), C-X(1.2×) | `O=C(Cc1csc(-c2cccs2)n1)NCCn1cc` |
+| 885 | 139 | 0.469±0.033 | 2.42 | 3.46 | 0.2482 | Ph | N<(2.8×), NH2(1.4×), NH(1.3×) | `Cc1ccc(N2C(=O)[C@@H]([C@H]3NCC` |
+| 21 | 119 | 0.468±0.039 | 3.61 | 2.36 | 0.1520 | Ph | SO2(1.6×), C=N(1.5×), HetCyc(1.4×) | `Cc1sc2ncn3nc(Cn4cc([N+](=O)[O-` |
 
 #### Inter-Cluster Distance Analysis
 
@@ -386,23 +386,23 @@ Inter-cluster distance: mean=0.763624, min=0.014418, max=3.704390, 186966 pairs
 
 | Cluster A | Cluster B | Distance |
 |---|---|---|
-| 71 | 102 | 0.016989 |
-| 56 | 87 | 0.018371 |
-| 805 | 836 | 0.018627 |
-| 111 | 141 | 0.019663 |
-| 838 | 868 | 0.019757 |
+| 85 | 86 | 0.006379 |
+| 266 | 268 | 0.006628 |
+| 42 | 72 | 0.008580 |
+| 49 | 80 | 0.008980 |
+| 187 | 217 | 0.009071 |
 
 **Most distant cluster pairs**:
 
 | Cluster A | Cluster B | Distance |
 |---|---|---|
-| 29 | 870 | 3.876483 |
-| 29 | 840 | 3.769782 |
-| 28 | 870 | 3.687159 |
-| 27 | 870 | 3.623376 |
-| 59 | 870 | 3.619462 |
+| 29 | 840 | 4.496827 |
+| 29 | 870 | 4.350712 |
+| 29 | 810 | 4.349072 |
+| 59 | 840 | 4.224448 |
+| 29 | 780 | 4.218035 |
 
-Inter-cluster distance: mean=0.821452, min=0.016989, max=3.876483, 400960 pairs
+Inter-cluster distance: mean=0.941964, min=0.006379, max=4.496827, 400960 pairs
 
 ### Stratum 2 ([0.520, 0.694)) — Detailed Analysis
 
@@ -425,16 +425,16 @@ Inter-cluster distance: mean=0.821452, min=0.016989, max=3.876483, 400960 pairs
 
 | Cluster | Size | QED μ±σ | logP | SAS | Compact | Dominant FG | Signature FGs | Representative |
 |---|---|---|---|---|---|---|---|---|
-| 0 | 3712 | 0.633±0.045 | 0.20 | 4.68 | 0.5549 | NH | NH2(2.8×), OH(2.4×), COOH(2.3×) | `C[C@H](O)CN(C)C(=O)NC[C@@H]1CC` |
-| 899 | 3350 | 0.594±0.052 | 3.28 | 2.39 | 0.3019 | Ph | HetCyc(1.6×) | `Cc1ccc(-n2cc(C=O)c(-c3ccco3)n2` |
-| 884 | 710 | 0.631±0.046 | 3.67 | 2.80 | 0.1704 | Ph | N<(1.7×), HetCyc(1.3×) | `O=[N+]([O-])c1c(NC[C@@H]2CCN(c` |
-| 16 | 695 | 0.621±0.043 | 1.45 | 2.88 | 0.1696 | Ph | COOH(2.4×), NO2(2.0×), NH2(1.9×) | `CCNC(=O)NC(=O)C[NH+](C)CCOc1cc` |
-| 449 | 564 | 0.620±0.050 | 2.88 | 2.36 | 0.1776 | Ph | C=N(2.6×), NO2(2.2×), SO2(1.8×) | `COc1ccccc1Cc1nnc(NC(=O)CN2C(=O` |
-| 870 | 518 | 0.621±0.045 | 3.23 | 3.15 | 0.1894 | Ph | N<(2.6×), C-O-C(1.4×), HetCyc(1.3×) | `O=S(=O)(c1ccc2nc(N3CCN(c4cccc(` |
-| 450 | 500 | 0.635±0.042 | 1.97 | 3.69 | 0.2286 | Ph | N<(2.1×), NH2(1.7×), C-S-C(1.4×) | `O=C(NC[C@@H](c1ccco1)[NH+]1CCC` |
-| 15 | 464 | 0.619±0.044 | 1.60 | 3.09 | 0.1691 | Ph | OH(2.1×), NO2(2.0×), NH2(2.0×) | `Cc1csc(NC(=O)NCCC[NH+](C)C)n1` |
-| 659 | 428 | 0.605±0.053 | 3.32 | 2.34 | 0.1322 | Ph | CN(1.8×), SO2(1.7×), C=N(1.5×) | `Cc1cc(O)c(S(=O)(=O)c2ccccc2)c(` |
-| 269 | 404 | 0.623±0.047 | 2.71 | 2.46 | 0.1523 | Ph | C=N(2.9×), COO(1.9×), NO2(1.9×) | `Cc1ccccc1C(=O)NC(=S)NNC(=O)c1c` |
+| 0 | 3712 | 0.633±0.045 | 0.20 | 4.68 | 0.6137 | NH | NH2(2.8×), OH(2.4×), COOH(2.3×) | `CC[NH2+][C@@]1(C(=O)[O-])CCC[C` |
+| 899 | 3350 | 0.594±0.052 | 3.28 | 2.39 | 0.3823 | Ph | HetCyc(1.6×) | `Cc1ccccc1C(=O)Nc1ccc2c(=O)oc(-` |
+| 884 | 710 | 0.631±0.046 | 3.67 | 2.80 | 0.2284 | Ph | N<(1.7×), HetCyc(1.3×) | `Cc1ccccc1-n1nnnc1S[C@@H](C(=O)` |
+| 16 | 695 | 0.621±0.043 | 1.45 | 2.88 | 0.1864 | Ph | COOH(2.4×), NO2(2.0×), NH2(1.9×) | `COc1ccnc(COC(=O)/C=C(/C)C(C)(C` |
+| 449 | 564 | 0.620±0.050 | 2.88 | 2.36 | 0.1764 | Ph | C=N(2.6×), NO2(2.2×), SO2(1.8×) | `COc1ccccc1Cc1nnc(NC(=O)CN2C(=O` |
+| 870 | 518 | 0.621±0.045 | 3.23 | 3.15 | 0.2371 | Ph | N<(2.6×), C-O-C(1.4×), HetCyc(1.3×) | `O=c1occ(C[NH+]2CCc3ccccc3C2)c(` |
+| 450 | 500 | 0.635±0.042 | 1.97 | 3.69 | 0.2634 | Ph | N<(2.1×), NH2(1.7×), C-S-C(1.4×) | `C1=C(CC[NH2+]Cc2ccco2)CCCC1` |
+| 15 | 464 | 0.619±0.044 | 1.60 | 3.09 | 0.2079 | Ph | OH(2.1×), NO2(2.0×), NH2(2.0×) | `O=[N+]([O-])c1ccc(CN(CCO)CCO)c` |
+| 659 | 428 | 0.605±0.053 | 3.32 | 2.34 | 0.1370 | Ph | CN(1.8×), SO2(1.7×), C=N(1.5×) | `O=C(CNC(=O)c1ccc2[nH]c(=S)oc2c` |
+| 269 | 404 | 0.623±0.047 | 2.71 | 2.46 | 0.1524 | Ph | C=N(2.9×), COO(1.9×), NO2(1.9×) | `O=C(NNc1cccc(C(F)(F)F)n1)c1cc2` |
 
 #### Inter-Cluster Distance Analysis
 
@@ -442,23 +442,23 @@ Inter-cluster distance: mean=0.821452, min=0.016989, max=3.876483, 400960 pairs
 
 | Cluster A | Cluster B | Distance |
 |---|---|---|
-| 537 | 538 | 0.024607 |
-| 567 | 568 | 0.025551 |
-| 747 | 748 | 0.025726 |
-| 328 | 357 | 0.025840 |
-| 416 | 417 | 0.026599 |
+| 87 | 116 | 0.006094 |
+| 743 | 772 | 0.006301 |
+| 57 | 58 | 0.008883 |
+| 837 | 838 | 0.011145 |
+| 820 | 849 | 0.012396 |
 
 **Most distant cluster pairs**:
 
 | Cluster A | Cluster B | Distance |
 |---|---|---|
-| 0 | 899 | 4.040463 |
-| 4 | 899 | 3.903287 |
-| 0 | 869 | 3.831553 |
-| 1 | 899 | 3.807200 |
-| 6 | 899 | 3.722411 |
+| 4 | 899 | 4.512288 |
+| 0 | 899 | 4.342086 |
+| 6 | 899 | 4.322716 |
+| 1 | 899 | 4.305764 |
+| 5 | 899 | 4.297295 |
 
-Inter-cluster distance: mean=0.935363, min=0.024607, max=4.040463, 404550 pairs
+Inter-cluster distance: mean=1.033282, min=0.006094, max=4.512288, 404550 pairs
 
 ### Stratum 3 ([0.694, 0.814)) — Detailed Analysis
 
@@ -481,16 +481,16 @@ Inter-cluster distance: mean=0.935363, min=0.024607, max=4.040463, 404550 pairs
 
 | Cluster | Size | QED μ±σ | logP | SAS | Compact | Dominant FG | Signature FGs | Representative |
 |---|---|---|---|---|---|---|---|---|
-| 870 | 5072 | 0.754±0.033 | 1.18 | 4.40 | 0.4596 | CONH | NH2(2.1×), OH(1.5×), N<(1.4×) | `CC[C@H]1CN(C(=O)[C@@H]2CCO[C@@` |
-| 29 | 4622 | 0.748±0.031 | 2.91 | 2.33 | 0.2465 | Ph | HetCyc(1.8×), C=O(1.2×), Ph(1.2×) | `COc1cccc(-c2nc(CC(=O)Nc3ccccc3` |
-| 420 | 1028 | 0.775±0.030 | 1.82 | 3.75 | 0.2395 | Ph | NH2(1.9×), N<(1.6×), C-S-C(1.3×) | `O=C(COCC1CC1)N1CCCCC[C@@H]1c1c` |
-| 479 | 923 | 0.758±0.036 | 2.56 | 2.48 | 0.1429 | Ph | SO2(2.1×), CN(1.8×), C-X(1.4×) | `CCNC(=O)Nc1cccc(NC(=O)C/C=C/c2` |
-| 871 | 855 | 0.749±0.033 | 1.22 | 3.90 | 0.1778 | CONH | NH2(1.9×), C-S-C(1.6×), OH(1.6×) | `CC(C)=CCC[C@H](C)[NH2+]CC1(O)C` |
-| 14 | 796 | 0.749±0.034 | 2.75 | 3.18 | 0.1938 | Ph | N<(2.0×), HetCyc(1.6×) | `C[C@H](c1ccccn1)[C@@H](Br)c1cc` |
-| 59 | 794 | 0.742±0.030 | 2.94 | 2.35 | 0.1565 | Ph | C=O(1.8×), HetCyc(1.7×), Ph(1.2×) | `Cc1nc(CNC(=O)Cn2nc(-c3ccc(F)cc` |
-| 509 | 768 | 0.764±0.033 | 2.87 | 2.42 | 0.1168 | Ph | SO2(1.8×), COO(1.7×), CN(1.6×) | `Cc1ccc(S(C)(=O)=O)cc1C(=O)N(C)` |
-| 569 | 743 | 0.762±0.035 | 2.90 | 2.47 | 0.0805 | Ph | SO2(2.0×), C-X(1.6×), COO(1.4×) | `C[C@@H](CCc1cccc(F)c1)C(=O)N(C` |
-| 899 | 740 | 0.766±0.032 | 1.35 | 2.75 | 0.1600 | Ph | COOH(5.5×), COO(2.2×), SO2(2.2×) | `CC(C)CN(C)S(=O)(=O)c1ccc(C(=O)` |
+| 870 | 5072 | 0.754±0.033 | 1.18 | 4.40 | 0.5119 | CONH | NH2(2.1×), OH(1.5×), N<(1.4×) | `C[C@H]1C[C@@H](C)CN(C(=O)C[NH+` |
+| 29 | 4622 | 0.748±0.031 | 2.91 | 2.33 | 0.3161 | Ph | HetCyc(1.8×), C=O(1.2×), Ph(1.2×) | `O=C(Cc1noc(-c2ccncc2)n1)Nc1cc(` |
+| 420 | 1028 | 0.775±0.030 | 1.82 | 3.75 | 0.2875 | Ph | NH2(1.9×), N<(1.6×), C-S-C(1.3×) | `C[C@H]1CC(C(=O)N2CCc3ccc(F)cc3` |
+| 479 | 923 | 0.758±0.036 | 2.56 | 2.48 | 0.1407 | Ph | SO2(2.1×), CN(1.8×), C-X(1.4×) | `COC(=O)c1ccc(=O)n(CC(=O)N(c2cc` |
+| 871 | 855 | 0.749±0.033 | 1.22 | 3.90 | 0.2218 | CONH | NH2(1.9×), C-S-C(1.6×), OH(1.6×) | `CCN(C)C(=O)NCCCOC1CCOCC1` |
+| 14 | 796 | 0.749±0.034 | 2.75 | 3.18 | 0.2595 | Ph | N<(2.0×), HetCyc(1.6×) | `CCc1nc([C@H]2CCC[NH+]2Cc2nc([O` |
+| 59 | 794 | 0.742±0.030 | 2.94 | 2.35 | 0.1692 | Ph | C=O(1.8×), HetCyc(1.7×), Ph(1.2×) | `CN(C)c1ncc(-c2nccn2Cc2ccc(S(N)` |
+| 509 | 768 | 0.764±0.033 | 2.87 | 2.42 | 0.1196 | Ph | SO2(1.8×), COO(1.7×), CN(1.6×) | `COc1ccccc1CNC(=O)NCc1ccc(C(N)=` |
+| 569 | 743 | 0.762±0.035 | 2.90 | 2.47 | 0.0938 | Ph | SO2(2.0×), C-X(1.6×), COO(1.4×) | `COc1ccccc1NCC(=O)NNC(=O)c1cc(C` |
+| 899 | 740 | 0.766±0.032 | 1.35 | 2.75 | 0.1664 | Ph | COOH(5.5×), COO(2.2×), SO2(2.2×) | `COC(=O)[C@@H](C)[C@H](C)S(=O)(` |
 
 #### Inter-Cluster Distance Analysis
 
@@ -498,23 +498,23 @@ Inter-cluster distance: mean=0.935363, min=0.024607, max=4.040463, 404550 pairs
 
 | Cluster A | Cluster B | Distance |
 |---|---|---|
-| 776 | 777 | 0.028619 |
-| 782 | 813 | 0.028770 |
-| 41 | 71 | 0.029451 |
-| 537 | 538 | 0.029542 |
-| 621 | 652 | 0.029783 |
+| 836 | 837 | 0.010562 |
+| 773 | 774 | 0.010668 |
+| 647 | 677 | 0.012180 |
+| 746 | 777 | 0.012513 |
+| 843 | 844 | 0.012832 |
 
 **Most distant cluster pairs**:
 
 | Cluster A | Cluster B | Distance |
 |---|---|---|
-| 29 | 870 | 3.830293 |
-| 29 | 871 | 3.674964 |
-| 28 | 870 | 3.618880 |
-| 59 | 870 | 3.612651 |
-| 29 | 872 | 3.549287 |
+| 29 | 871 | 3.993193 |
+| 29 | 870 | 3.947579 |
+| 29 | 876 | 3.866070 |
+| 29 | 873 | 3.852270 |
+| 28 | 871 | 3.848481 |
 
-Inter-cluster distance: mean=0.946461, min=0.028619, max=3.830293, 404550 pairs
+Inter-cluster distance: mean=1.030866, min=0.010562, max=3.993193, 404550 pairs
 
 ### Stratum 4 ([0.814, 1.0]) — Detailed Analysis
 
@@ -537,16 +537,16 @@ Inter-cluster distance: mean=0.946461, min=0.028619, max=3.830293, 404550 pairs
 
 | Cluster | Size | QED μ±σ | logP | SAS | Compact | Dominant FG | Signature FGs | Representative |
 |---|---|---|---|---|---|---|---|---|
-| 899 | 3347 | 0.871±0.034 | 2.51 | 2.25 | 0.2144 | Ph | COOH(3.7×), SO(1.6×), SO2(1.5×) | `Cn1cc(CNc2ncc(C(N)=O)cc2Cl)cn1` |
-| 29 | 1651 | 0.851±0.026 | 2.30 | 3.00 | 0.1599 | CONH | COOH(2.2×), COO(2.1×), SO(1.8×) | `COc1cc(C)c(N)cc1S(=O)(=O)N(C)[` |
-| 0 | 1615 | 0.847±0.026 | 1.81 | 4.24 | 0.5721 | C-O-C | C-S-C(1.9×), N<(1.8×), C-O-C(1.4×) | `CC[C@H]1CCCCN1C(=O)N[C@H]1CC(=` |
-| 870 | 1313 | 0.877±0.036 | 2.37 | 3.33 | 0.1869 | Ph | NH2(1.4×), HetCyc(1.4×), N<(1.4×) | `c1ccc2cc(OCC[NH+]3CCCC3)ccc2c1` |
-| 180 | 1054 | 0.874±0.032 | 1.97 | 3.94 | 0.2048 | Ph | C-S-C(1.7×), NH2(1.6×), N<(1.6×) | `Cn1cccc1C(=O)N1CCCC[C@H]1CN1CC` |
-| 15 | 987 | 0.855±0.028 | 2.16 | 3.50 | 0.2351 | CONH | C-O-C(1.3×), NH(1.2×), COO(1.2×) | `C[C@H]([NH2+]C[C@H]1CCN(C(=O)O` |
-| 14 | 872 | 0.860±0.030 | 2.19 | 3.46 | 0.1468 | CONH | N<(1.6×), OH(1.5×), C-O-C(1.4×) | `CSC[C@@H](C)N(C)C(=O)N[C@H](C)` |
-| 30 | 862 | 0.870±0.031 | 1.75 | 4.28 | 0.2032 | HetCyc | N<(2.1×), C-O-C(1.4×), NH(1.4×) | `C[C@H]([NH2+]C1CCN([C@H](C)c2c` |
-| 479 | 771 | 0.857±0.031 | 2.58 | 2.64 | 0.1257 | Ph | SO(2.0×), SO2(1.9×), COO(1.8×) | `CCN(Cc1cccc(NC(=O)N(C)CCc2cccc` |
-| 884 | 710 | 0.883±0.037 | 2.52 | 2.68 | 0.1628 | Ph | C=O(1.4×) | `O=C(c1cccc(Cl)c1)N1CCN(C(=O)c2` |
+| 899 | 3347 | 0.871±0.034 | 2.51 | 2.25 | 0.2647 | Ph | COOH(3.7×), SO(1.6×), SO2(1.5×) | `CCOc1ccc(-c2nc(C(=O)[O-])cc(=O` |
+| 29 | 1651 | 0.851±0.026 | 2.30 | 3.00 | 0.1768 | CONH | COOH(2.2×), COO(2.1×), SO(1.8×) | `C[NH+](C/C=C/c1ccco1)CCC(F)(F)` |
+| 0 | 1615 | 0.847±0.026 | 1.81 | 4.24 | 0.5733 | C-O-C | C-S-C(1.9×), N<(1.8×), C-O-C(1.4×) | `N#C[C@@H](NC(=O)N1CCCCC1)C1CCC` |
+| 870 | 1313 | 0.877±0.036 | 2.37 | 3.33 | 0.2338 | Ph | NH2(1.4×), HetCyc(1.4×), N<(1.4×) | `O=C(NC1CCSCC1)C1=NN(c2ccccc2)[` |
+| 180 | 1054 | 0.874±0.032 | 1.97 | 3.94 | 0.2486 | Ph | C-S-C(1.7×), NH2(1.6×), N<(1.6×) | `CC(C)c1ccnc(N2CCC3(CC2)C[C@@H]` |
+| 15 | 987 | 0.855±0.028 | 2.16 | 3.50 | 0.2653 | CONH | C-O-C(1.3×), NH(1.2×), COO(1.2×) | `CCC[NH+](C)C[C@@H]1CCN(C(=O)NC` |
+| 14 | 872 | 0.860±0.030 | 2.19 | 3.46 | 0.1694 | CONH | N<(1.6×), OH(1.5×), C-O-C(1.4×) | `CC(C)[C@H](C)NC(=O)C[NH+](C)C1` |
+| 30 | 862 | 0.870±0.031 | 1.75 | 4.28 | 0.2403 | HetCyc | N<(2.1×), C-O-C(1.4×), NH(1.4×) | `Cc1ccc(O)c(CN2CCC[C@@H](C[NH+]` |
+| 479 | 771 | 0.857±0.031 | 2.58 | 2.64 | 0.1412 | Ph | SO(2.0×), SO2(1.9×), COO(1.8×) | `CC[C@H](CNC(=O)c1cc(C#N)cn1C)O` |
+| 884 | 710 | 0.883±0.037 | 2.52 | 2.68 | 0.2091 | Ph | C=O(1.4×) | `CNc1nc(C(=O)N2CC=C(c3cccc(C)c3` |
 
 #### Inter-Cluster Distance Analysis
 
@@ -554,23 +554,23 @@ Inter-cluster distance: mean=0.946461, min=0.028619, max=3.830293, 404550 pairs
 
 | Cluster A | Cluster B | Distance |
 |---|---|---|
-| 835 | 865 | 0.017571 |
-| 800 | 830 | 0.022192 |
-| 791 | 821 | 0.022423 |
-| 812 | 842 | 0.022458 |
-| 838 | 868 | 0.022491 |
+| 829 | 859 | 0.005331 |
+| 837 | 868 | 0.006307 |
+| 56 | 57 | 0.008813 |
+| 504 | 534 | 0.009622 |
+| 146 | 147 | 0.009999 |
 
 **Most distant cluster pairs**:
 
 | Cluster A | Cluster B | Distance |
 |---|---|---|
-| 0 | 899 | 3.070510 |
-| 0 | 898 | 3.065633 |
-| 0 | 896 | 2.942362 |
-| 0 | 897 | 2.928090 |
-| 0 | 869 | 2.922021 |
+| 0 | 898 | 3.072985 |
+| 0 | 899 | 3.025156 |
+| 0 | 896 | 2.931030 |
+| 0 | 897 | 2.901108 |
+| 0 | 869 | 2.836731 |
 
-Inter-cluster distance: mean=0.773400, min=0.017571, max=3.070510, 404550 pairs
+Inter-cluster distance: mean=0.832364, min=0.005331, max=3.072985, 404550 pairs
 
 ## 8. Cluster Functional Group Characterization
 
@@ -579,7 +579,7 @@ Enrichment ratio shows over-representation relative to the stratum population.
 
 ### Stratum 0 ([0, 0.399)) — Cluster FG Signatures
 
-**Cluster 24 (454 molecules)** — representative: `O=C(Cc1n[nH]c(=O)c2ccccc12)NCc1cn(-c2ccc`
+**Cluster 24 (454 molecules)** — representative: `COc1ccc2nc(N(Cc3cccnc3)C(=O)c3cc(=O)c4cc`
 
 | Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
 |---|---|---|---|
@@ -605,7 +605,7 @@ Enrichment ratio shows over-representation relative to the stratum population.
 | Tertiary Amine (>N<) | 21.9 | 11.6 | 1.88× ⬆ |
 | Ester (-COO-) | 16.6 | 18.5 | 0.89× |
 
-**Cluster 624 (91 molecules)** — representative: `Cc1c(OC(=O)C2CCOCC2)ccc2c(-c3ccccc3)cc(=`
+**Cluster 624 (91 molecules)** — representative: `O=C1/C(=C\c2cn(-c3ccccc3)nc2-c2cccs2)SC(`
 
 | Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
 |---|---|---|---|
@@ -618,7 +618,7 @@ Enrichment ratio shows over-representation relative to the stratum population.
 | Halide (C-X) | 30.8 | 36.2 | 0.85× |
 | Ketone (>C=O) | 29.7 | 31.6 | 0.94× |
 
-**Cluster 324 (90 molecules)** — representative: `COc1ccccc1/C=C/C(=O)Nc1nc2n(n1)[C@@H](c1`
+**Cluster 324 (90 molecules)** — representative: `NC(=O)c1c(NC(=O)c2ccc(-c3ccccc3)cc2)sc2c`
 
 | Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
 |---|---|---|---|
@@ -631,7 +631,7 @@ Enrichment ratio shows over-representation relative to the stratum population.
 | Halide (C-X) | 26.7 | 36.2 | 0.74× |
 | Tertiary Amine (>N<) | 20.0 | 11.6 | 1.72× ⬆ |
 
-**Cluster 12 (79 molecules)** — representative: `CCOc1ccc(C(=O)CSc2nnc3sc4ccccc4n23)cc1`
+**Cluster 12 (79 molecules)** — representative: `O=C(Cn1c(CCNC(=O)c2cccc(Br)c2)nc2ccccc21`
 
 | Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
 |---|---|---|---|
@@ -659,7 +659,7 @@ Enrichment ratio shows over-representation relative to the stratum population.
 | Ether (C-O-C) | 14.9 | 36.0 | 0.41× ⬇ |
 | Secondary Amine (>NH) | 11.1 | 21.2 | 0.52× |
 
-**Cluster 870 (756 molecules)** — representative: `CC(=O)O[C@H]1[C@@H](C)[C@H]2CC[C@@]13CC=`
+**Cluster 870 (756 molecules)** — representative: `COC[C@@]1(C)C[NH+]=C(N)N1C`
 
 | Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
 |---|---|---|---|
@@ -672,7 +672,7 @@ Enrichment ratio shows over-representation relative to the stratum population.
 | Primary Amine (-NH₂) | 17.6 | 8.0 | 2.21× ⬆ |
 | Carboxyl (-COOH) | 12.0 | 2.8 | 4.36× ⬆ |
 
-**Cluster 14 (194 molecules)** — representative: `CCOc1ccc(-c2cc3c(=O)n(CC(=O)Nc4ccc(Cl)cc`
+**Cluster 14 (194 molecules)** — representative: `O=C(CCNC(=O)c1c[nH]c2nc(-c3ccccc3)ccc12)`
 
 | Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
 |---|---|---|---|
@@ -685,7 +685,7 @@ Enrichment ratio shows over-representation relative to the stratum population.
 | Secondary Amine (>NH) | 17.0 | 21.2 | 0.80× |
 | Imine (C=N) | 16.5 | 10.3 | 1.61× ⬆ |
 
-**Cluster 479 (191 molecules)** — representative: `COc1cc([C@@H]2CC(=O)Nc3[nH]nc(-c4ccccc4)`
+**Cluster 479 (191 molecules)** — representative: `Cn1cc(C(=O)N2CCN(c3ccc(F)cc3)CC2)c2nn(-c`
 
 | Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
 |---|---|---|---|
@@ -698,7 +698,7 @@ Enrichment ratio shows over-representation relative to the stratum population.
 | Ketone (>C=O) | 20.4 | 24.0 | 0.85× |
 | Secondary Amine (>NH) | 13.6 | 21.2 | 0.64× |
 
-**Cluster 0 (163 molecules)** — representative: `COC(=O)COc1ccc(NC(=O)/C=C/c2nc3ccccc3s2)`
+**Cluster 0 (163 molecules)** — representative: `C=CCOC(=O)/C(=C\c1ccco1)NC(=O)c1ccc(Br)c`
 
 | Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
 |---|---|---|---|
@@ -713,7 +713,7 @@ Enrichment ratio shows over-representation relative to the stratum population.
 
 ### Stratum 2 ([0.520, 0.694)) — Cluster FG Signatures
 
-**Cluster 0 (3712 molecules)** — representative: `C[C@H](O)CN(C)C(=O)NC[C@@H]1CCC[NH+]1CC1`
+**Cluster 0 (3712 molecules)** — representative: `CC[NH2+][C@@]1(C(=O)[O-])CCC[C@@H]1CC[NH`
 
 | Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
 |---|---|---|---|
@@ -726,7 +726,7 @@ Enrichment ratio shows over-representation relative to the stratum population.
 | Carboxyl (-COOH) | 9.9 | 4.3 | 2.29× ⬆ |
 | Ester (-COO-) | 6.7 | 10.0 | 0.67× |
 
-**Cluster 899 (3350 molecules)** — representative: `Cc1ccc(-n2cc(C=O)c(-c3ccco3)n2)c(C)c1`
+**Cluster 899 (3350 molecules)** — representative: `Cc1ccccc1C(=O)Nc1ccc2c(=O)oc(-c3ccccc3C)`
 
 | Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
 |---|---|---|---|
@@ -739,7 +739,7 @@ Enrichment ratio shows over-representation relative to the stratum population.
 | Ether (C-O-C) | 14.1 | 35.0 | 0.40× ⬇ |
 | Thioether (C-S-C) | 7.8 | 13.2 | 0.59× |
 
-**Cluster 884 (710 molecules)** — representative: `O=[N+]([O-])c1c(NC[C@@H]2CCN(c3ccccc3)C2`
+**Cluster 884 (710 molecules)** — representative: `Cc1ccccc1-n1nnnc1S[C@@H](C(=O)N1CCCC1)c1`
 
 | Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
 |---|---|---|---|
@@ -752,7 +752,7 @@ Enrichment ratio shows over-representation relative to the stratum population.
 | Secondary Amine (>NH) | 22.7 | 25.3 | 0.89× |
 | Ketone (>C=O) | 15.9 | 14.4 | 1.10× |
 
-**Cluster 16 (695 molecules)** — representative: `CCNC(=O)NC(=O)C[NH+](C)CCOc1ccccc1`
+**Cluster 16 (695 molecules)** — representative: `COc1ccnc(COC(=O)/C=C(/C)C(C)(C)C)c1`
 
 | Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
 |---|---|---|---|
@@ -780,7 +780,7 @@ Enrichment ratio shows over-representation relative to the stratum population.
 
 ### Stratum 3 ([0.694, 0.814)) — Cluster FG Signatures
 
-**Cluster 870 (5072 molecules)** — representative: `CC[C@H]1CN(C(=O)[C@@H]2CCO[C@@H]2C)[C@@H`
+**Cluster 870 (5072 molecules)** — representative: `C[C@H]1C[C@@H](C)CN(C(=O)C[NH+](C)CC2CC[`
 
 | Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
 |---|---|---|---|
@@ -793,7 +793,7 @@ Enrichment ratio shows over-representation relative to the stratum population.
 | Thioether (C-S-C) | 11.5 | 9.1 | 1.27× |
 | Ester (-COO-) | 6.5 | 7.0 | 0.94× |
 
-**Cluster 29 (4622 molecules)** — representative: `COc1cccc(-c2nc(CC(=O)Nc3ccccc3)no2)n1`
+**Cluster 29 (4622 molecules)** — representative: `O=C(Cc1noc(-c2ccncc2)n1)Nc1cc(Cl)cc(Cl)c`
 
 | Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
 |---|---|---|---|
@@ -806,7 +806,7 @@ Enrichment ratio shows over-representation relative to the stratum population.
 | Ketone (>C=O) | 11.2 | 9.0 | 1.24× |
 | Primary Amine (-NH₂) | 8.2 | 6.6 | 1.23× |
 
-**Cluster 420 (1028 molecules)** — representative: `O=C(COCC1CC1)N1CCCCC[C@@H]1c1ccccc1`
+**Cluster 420 (1028 molecules)** — representative: `C[C@H]1CC(C(=O)N2CCc3ccc(F)cc3C2)C[C@H](`
 
 | Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
 |---|---|---|---|
@@ -819,7 +819,7 @@ Enrichment ratio shows over-representation relative to the stratum population.
 | Secondary Amine (>NH) | 25.2 | 28.2 | 0.89× |
 | Hydroxyl (-OH) | 12.5 | 11.8 | 1.05× |
 
-**Cluster 479 (923 molecules)** — representative: `CCNC(=O)Nc1cccc(NC(=O)C/C=C/c2ccc(C)cc2)`
+**Cluster 479 (923 molecules)** — representative: `COC(=O)c1ccc(=O)n(CC(=O)N(c2ccccc2)C(C)C`
 
 | Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
 |---|---|---|---|
@@ -832,7 +832,7 @@ Enrichment ratio shows over-representation relative to the stratum population.
 | Sulfonyl (-SO₂-) | 24.1 | 11.3 | 2.13× ⬆ |
 | Ketone (>C=O) | 11.8 | 9.0 | 1.31× |
 
-**Cluster 871 (855 molecules)** — representative: `CC(C)=CCC[C@H](C)[NH2+]CC1(O)CCOCC1`
+**Cluster 871 (855 molecules)** — representative: `CCN(C)C(=O)NCCCOC1CCOCC1`
 
 | Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
 |---|---|---|---|
@@ -847,7 +847,7 @@ Enrichment ratio shows over-representation relative to the stratum population.
 
 ### Stratum 4 ([0.814, 1.0]) — Cluster FG Signatures
 
-**Cluster 899 (3347 molecules)** — representative: `Cn1cc(CNc2ncc(C(N)=O)cc2Cl)cn1`
+**Cluster 899 (3347 molecules)** — representative: `CCOc1ccc(-c2nc(C(=O)[O-])cc(=O)[nH]2)cc1`
 
 | Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
 |---|---|---|---|
@@ -860,7 +860,7 @@ Enrichment ratio shows over-representation relative to the stratum population.
 | Sulfonyl (-SO₂-) | 16.8 | 11.0 | 1.53× ⬆ |
 | Carboxyl (-COOH) | 11.5 | 3.1 | 3.67× ⬆ |
 
-**Cluster 29 (1651 molecules)** — representative: `COc1cc(C)c(N)cc1S(=O)(=O)N(C)[C@H](C)C(C`
+**Cluster 29 (1651 molecules)** — representative: `C[NH+](C/C=C/c1ccco1)CCC(F)(F)F`
 
 | Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
 |---|---|---|---|
@@ -873,7 +873,7 @@ Enrichment ratio shows over-representation relative to the stratum population.
 | Hydroxyl (-OH) | 17.5 | 11.6 | 1.50× ⬆ |
 | Tertiary Amine (>N<) | 17.5 | 24.2 | 0.72× |
 
-**Cluster 0 (1615 molecules)** — representative: `CC[C@H]1CCCCN1C(=O)N[C@H]1CC(=O)N(C2CC2)`
+**Cluster 0 (1615 molecules)** — representative: `N#C[C@@H](NC(=O)N1CCCCC1)C1CCCCC1`
 
 | Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
 |---|---|---|---|
@@ -886,7 +886,7 @@ Enrichment ratio shows over-representation relative to the stratum population.
 | Thioether (C-S-C) | 14.0 | 7.4 | 1.89× ⬆ |
 | Phenyl (aromatic ring) | 11.5 | 83.0 | 0.14× ⬇ |
 
-**Cluster 870 (1313 molecules)** — representative: `c1ccc2cc(OCC[NH+]3CCCC3)ccc2c1`
+**Cluster 870 (1313 molecules)** — representative: `O=C(NC1CCSCC1)C1=NN(c2ccccc2)[C@@H](c2cc`
 
 | Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
 |---|---|---|---|
@@ -899,7 +899,7 @@ Enrichment ratio shows over-representation relative to the stratum population.
 | Halide (C-X) | 25.4 | 37.1 | 0.68× |
 | Primary Amine (-NH₂) | 10.4 | 7.2 | 1.44× |
 
-**Cluster 180 (1054 molecules)** — representative: `Cn1cccc1C(=O)N1CCCC[C@H]1CN1CCOCC1`
+**Cluster 180 (1054 molecules)** — representative: `CC(C)c1ccnc(N2CCC3(CC2)C[C@@H](O)CO3)n1`
 
 | Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
 |---|---|---|---|
@@ -918,11 +918,11 @@ Enrichment ratio shows over-representation relative to the stratum population.
 
 | Stratum | Silhouette | Davies-Bouldin | QE | Clusters | Gini | Singletons |
 |---|---|---|---|---|---|---|
-| 0 [0, 0.399) | 0.0039 | 1.3546 | 0.175076 | 612 | 0.566 | 41 |
-| 1 [0.399, 0.520) | 0.0119 | 1.4401 | 0.181768 | 896 | 0.554 | 8 |
-| 2 [0.520, 0.694) | 0.0297 | 1.4717 | 0.201201 | 900 | 0.557 | 4 |
-| 3 [0.694, 0.814) | 0.0323 | 1.5025 | 0.197898 | 900 | 0.615 | 4 |
-| 4 [0.814, 1.0] | -0.0058 | 1.4878 | 0.151176 | 900 | 0.584 | 0 |
+| 0 [0, 0.399) | -0.2384 | 3.7045 | 1.096530 | 612 | 0.566 | 41 |
+| 1 [0.399, 0.520) | -0.2302 | 4.2907 | 1.048350 | 896 | 0.554 | 8 |
+| 2 [0.520, 0.694) | -0.1930 | 3.7107 | 0.969829 | 900 | 0.557 | 4 |
+| 3 [0.694, 0.814) | -0.1654 | 3.9224 | 0.935341 | 900 | 0.615 | 4 |
+| 4 [0.814, 1.0] | -0.2002 | 4.4723 | 0.739544 | 900 | 0.584 | 0 |
 
 **Interpretation guide:**
 - **Silhouette** ∈ [-1, 1]: higher = better separation (>0.5 strong, >0.25 reasonable)
@@ -954,10 +954,10 @@ Enrichment ratio shows over-representation relative to the stratum population.
 | Total active clusters | 4208 / 4225 neurons |
 | Cluster size (mean) | 59.3 |
 | Cluster size (range) | 1 – 5072 |
-| Average quantization error | 0.181424 |
-| Average silhouette score | 0.0144 |
-| Average Davies-Bouldin index | 1.4513 |
-| Mean intra-cluster distance | 0.038681 |
+| Average quantization error | 0.957919 |
+| Average silhouette score | -0.2054 |
+| Average Davies-Bouldin index | 4.0201 |
+| Mean intra-cluster distance | 0.076976 |
 | Functional group types detected | 22 / 22 |
 | Strongest FG-property |r| | 0.1057 (Hydroxyl (-OH)) |
 
@@ -966,13 +966,13 @@ Enrichment ratio shows over-representation relative to the stratum population.
 | Phase | Time |
 |---|---|
 | Data loading | 0.12s |
-| Graph parsing + FG detection | 2.05s |
-| VGAE encoding | 1387.47s |
-| Importance analysis | 0.40s |
-| SOM clustering + FG analysis | 249.73s |
-| **Total** | **1648.06s** |
+| Graph parsing + FG detection | 1.83s |
+| VGAE encoding | 0.10s |
+| Importance analysis | 0.33s |
+| SOM clustering + FG analysis | 13.96s |
+| **Total** | **62.25s** |
 
-**Throughput**: 151 molecules/second
+**Throughput**: 4008 molecules/second
 
 ## 12. Methodology Comparison
 
@@ -1001,7 +1001,7 @@ results/
 │   ├── sas_distribution.svg  # Property distribution
 │   ├── property_distributions_combined.svg  # Property distribution
 │   ├── fg_prevalence.svg  # Functional group prevalence
-│   ├── latent_space_pca.svg  # Latent space PCA projection
+│   ├── latent_space_umap.svg  # Latent space UMAP projection
 │   ├── cluster_size_distribution.svg  # Cluster size distributions
 │   ├── dim_property_heatmap.svg  # Dimension-property heatmap
 │   ├── fg_property_correlations.svg  # FG-property correlations
@@ -1050,7 +1050,7 @@ results/
 | Figure 6 | [figures/embedding_dim_variance.svg](results/figures/embedding_dim_variance.svg) | Latent dimension variance analysis |
 | Figure 7 | [figures/dim_property_heatmap.svg](results/figures/dim_property_heatmap.svg) | Dimension–property correlation heatmap |
 | Figure 8 | [figures/fg_property_correlations.svg](results/figures/fg_property_correlations.svg) | FG–property correlation heatmap |
-| Figure 9 | [figures/latent_space_pca.svg](results/figures/latent_space_pca.svg) | PCA projection of latent space by stratum |
+| Figure 9 | [figures/latent_space_umap.svg](results/figures/latent_space_umap.svg) | UMAP projection of latent space by stratum |
 | Figure 10 | [figures/stratum_property_comparison.svg](results/figures/stratum_property_comparison.svg) | Stratum property comparison (mean ± std) |
 | Figure 11 | [figures/umatrix_heatmaps.svg](results/figures/umatrix_heatmaps.svg) | SOM U-matrix heatmaps per stratum |
 | Figure 12 | [figures/cluster_quality_comparison.svg](results/figures/cluster_quality_comparison.svg) | Cluster quality metrics comparison |

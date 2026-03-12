@@ -4,6 +4,7 @@
 use plotters::prelude::*;
 use std::path::Path;
 use std::collections::HashMap;
+use rag_umap::convert_to_2d;
 
 // ═══════════════════════════════════════════════════
 // Color palettes
@@ -247,24 +248,32 @@ pub fn plot_fg_prevalence(
 }
 
 // ═══════════════════════════════════════════════════
-// 3. Latent space PCA scatter plot
+// 3. Latent space UMAP scatter plot
 // ═══════════════════════════════════════════════════
 
-pub fn plot_latent_space_pca(
+pub fn plot_latent_space_umap(
     embeddings: &[Vec<f32>],
     stratum_labels: &[usize],
     output_dir: &str,
 ) -> Result<String, Box<dyn std::error::Error>> {
-    let path = format!("{}/figures/latent_space_pca.svg", output_dir);
+    let path = format!("{}/figures/latent_space_umap.svg", output_dir);
     ensure_parent_dir(&path);
 
-    let (pc1, pc2) = simple_pca_2d(embeddings);
+    // Subsample for UMAP (max 15000 points for performance)
+    let step = (embeddings.len() / 15000).max(1);
+    let sampled: Vec<Vec<f32>> = embeddings.iter().step_by(step).cloned().collect();
+    let sampled_strata: Vec<usize> = stratum_labels.iter().step_by(step).copied().collect();
 
-    // Subsample for plotting (max 10000 points)
-    let step = (pc1.len() / 10000).max(1);
-    let points: Vec<(f64, f64, usize)> = pc1.iter().zip(pc2.iter()).zip(stratum_labels.iter())
-        .step_by(step)
-        .map(|((&x, &y), &s)| (x, y, s))
+    // Run UMAP 2D projection
+    let umap_input: Vec<Vec<f64>> = sampled.iter()
+        .map(|e| e.iter().map(|&v| v as f64).collect())
+        .collect();
+    let umap_result = convert_to_2d(umap_input)
+        .map_err(|e| format!("UMAP failed: {:?}", e))?;
+
+    let points: Vec<(f64, f64, usize)> = umap_result.iter()
+        .zip(sampled_strata.iter())
+        .map(|(coords, &s)| (coords[0], coords[1], s))
         .collect();
 
     let x_min = points.iter().map(|p| p.0).fold(f64::MAX, f64::min);
@@ -278,7 +287,7 @@ pub fn plot_latent_space_pca(
     root.fill(&WHITE)?;
 
     let mut chart = ChartBuilder::on(&root)
-        .caption("Latent Space (PCA Projection)", ("sans-serif", 22).into_font())
+        .caption("Latent Space (UMAP Projection)", ("sans-serif", 22).into_font())
         .margin(15)
         .x_label_area_size(45)
         .y_label_area_size(55)
@@ -288,8 +297,8 @@ pub fn plot_latent_space_pca(
         )?;
 
     chart.configure_mesh()
-        .x_desc("PC1")
-        .y_desc("PC2")
+        .x_desc("UMAP 1")
+        .y_desc("UMAP 2")
         .x_label_style(("sans-serif", 14))
         .y_label_style(("sans-serif", 14))
         .draw()?;
@@ -322,7 +331,7 @@ pub fn plot_latent_space_pca(
         .draw()?;
 
     root.present()?;
-    Ok("figures/latent_space_pca.svg".to_string())
+    Ok("figures/latent_space_umap.svg".to_string())
 }
 
 // ═══════════════════════════════════════════════════
@@ -964,6 +973,7 @@ fn compute_histogram(data: &[f64], num_bins: usize) -> (Vec<f64>, Vec<usize>) {
     (bins, counts)
 }
 
+#[allow(dead_code)]
 fn simple_pca_2d(embeddings: &[Vec<f32>]) -> (Vec<f64>, Vec<f64>) {
     let n = embeddings.len();
     if n == 0 || embeddings[0].is_empty() {
@@ -992,6 +1002,7 @@ fn simple_pca_2d(embeddings: &[Vec<f32>]) -> (Vec<f64>, Vec<f64>) {
     (proj1, proj2)
 }
 
+#[allow(dead_code)]
 fn power_iteration(data: &[Vec<f64>], d: usize, deflate: Option<&[f64]>, iterations: usize) -> Vec<f64> {
     use rand::Rng;
     let mut rng = rand::thread_rng();
@@ -1072,9 +1083,9 @@ pub fn generate_all_figures(data: &VisualizationData, output_dir: &str) -> Vec<(
         Err(e) => log::warn!("  ✗ FG prevalence: {}", e),
     }
 
-    match plot_latent_space_pca(&data.embeddings, &data.stratum_labels, output_dir) {
-        Ok(p) => { figures.push((p, "Latent space PCA projection".to_string())); log::info!("  ✓ Latent space PCA"); }
-        Err(e) => log::warn!("  ✗ Latent space PCA: {}", e),
+    match plot_latent_space_umap(&data.embeddings, &data.stratum_labels, output_dir) {
+        Ok(p) => { figures.push((p, "Latent space UMAP projection".to_string())); log::info!("  ✓ Latent space UMAP"); }
+        Err(e) => log::warn!("  ✗ Latent space UMAP: {}", e),
     }
 
     match plot_cluster_size_distributions(&data.strata_cluster_sizes, output_dir) {
@@ -1291,7 +1302,7 @@ mod tests {
     }
 
     #[test]
-    fn test_plot_latent_space_pca_creates_file() {
+    fn test_plot_latent_space_umap_creates_file() {
         let embeddings: Vec<Vec<f32>> = (0..50)
             .map(|i| vec![i as f32 * 0.1; 4])
             .collect();
@@ -1300,9 +1311,9 @@ mod tests {
                           0, 0, 1, 1, 2, 2, 3, 3, 4, 4,
                           0, 0, 1, 1, 2, 2, 3, 3, 4, 4,
                           0, 0, 1, 1, 2, 2, 3, 3, 4, 4];
-        let dir = "/tmp/fga_test_pca";
+        let dir = "/tmp/fga_test_umap";
         let _ = std::fs::create_dir_all(format!("{}/figures", dir));
-        let result = plot_latent_space_pca(&embeddings, &labels, dir);
+        let result = plot_latent_space_umap(&embeddings, &labels, dir);
         assert!(result.is_ok());
         let _ = std::fs::remove_dir_all(dir);
     }

@@ -51,7 +51,7 @@ pub struct PipelineState {
 }
 
 /// Per-stratum SOM state for serialization.
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct SomState {
     pub stratum_id: usize,
     pub som: Som,
@@ -73,6 +73,46 @@ impl PipelineState {
         log::info!("Pipeline state loaded from {} (phase {}, {} molecules, {} embeddings)",
             path, state.phase_completed, state.total_molecules, state.embeddings.len());
         Ok(state)
+    }
+}
+
+// ═══════════════════════════════════════════════════
+// Per-phase checkpoints for resumption
+// ═══════════════════════════════════════════════════
+
+#[derive(Serialize, Deserialize)]
+struct Phase2Checkpoint {
+    embeddings: Vec<Vec<f32>>,
+    valid_indices: Vec<usize>,
+    recon_losses: Vec<f32>,
+    train_losses: Vec<f32>,
+    val_losses: Vec<f32>,
+}
+
+fn save_phase_checkpoint(output_dir: &str, phase: u8, data: &impl serde::Serialize) -> Result<(), Box<dyn std::error::Error>> {
+    let dir = format!("{}/checkpoints", output_dir);
+    std::fs::create_dir_all(&dir)?;
+    let path = format!("{}/phase_{}.json", dir, phase);
+    let json = serde_json::to_string(data)?;
+    std::fs::write(&path, &json)?;
+    log::info!("Checkpoint saved: {} ({:.1} MB)", path, json.len() as f64 / 1_048_576.0);
+    Ok(())
+}
+
+fn load_phase_checkpoint<T: serde::de::DeserializeOwned>(output_dir: &str, phase: u8) -> Option<T> {
+    let path = format!("{}/checkpoints/phase_{}.json", output_dir, phase);
+    match std::fs::read_to_string(&path) {
+        Ok(json) => match serde_json::from_str(&json) {
+            Ok(data) => {
+                log::info!("Loaded checkpoint: {}", path);
+                Some(data)
+            }
+            Err(e) => {
+                log::warn!("Failed to parse checkpoint {}: {}", path, e);
+                None
+            }
+        }
+        Err(_) => None,
     }
 }
 
@@ -709,6 +749,15 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
     flush_log();
     let t2 = Instant::now();
 
+    // Try to load Phase 2 checkpoint
+    let phase2_loaded = load_phase_checkpoint::<Phase2Checkpoint>(output_dir, 2);
+
+    let (embeddings, valid_indices, recon_losses, train_losses_per_epoch, val_losses_per_epoch, phase2_was_cached) =
+    if let Some(ckpt) = phase2_loaded {
+        log::info!("  ✓ Phase 2 loaded from checkpoint ({} embeddings)", ckpt.embeddings.len());
+        (ckpt.embeddings, ckpt.valid_indices, ckpt.recon_losses, ckpt.train_losses, ckpt.val_losses, true)
+    } else {
+
     let vgae_config = VgaeConfig::new(NODE_FEATURE_DIM, EDGE_FEATURE_DIM)
         .with_hidden_dim(64)
         .with_gnn_output_dim(32)
@@ -845,16 +894,32 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
         recon_losses.push(loss.into_scalar());
     }
 
+    log::info!("Encoding complete in {:.2}s (inference: {:.2}s)",
+        t2.elapsed().as_secs_f64(), t_enc.elapsed().as_secs_f64());
+    flush_log();
+
+    (embeddings, valid_indices, recon_losses, train_losses_per_epoch, val_losses_per_epoch, false)
+    }; // end Phase 2 checkpoint check
+
     let encode_time = t2.elapsed();
     let avg_recon_loss = recon_losses.iter().sum::<f32>() / recon_losses.len().max(1) as f32;
     let emb_stats = embedding_stats(&embeddings);
 
-    log::info!("Encoding complete in {:.2}s (inference: {:.2}s)",
-        encode_time.as_secs_f64(), t_enc.elapsed().as_secs_f64());
-    flush_log();
+    log::info!("Phase 2 complete in {:.2}s", encode_time.as_secs_f64());
     log::info!("  Mean reconstruction loss: {:.6}", avg_recon_loss);
 
-    io::save_training_losses(output_dir, &train_losses_per_epoch, &val_losses_per_epoch)?;
+    // Save Phase 2 checkpoint (only if freshly computed)
+    if !phase2_was_cached {
+        let phase2_ckpt = Phase2Checkpoint {
+            embeddings: embeddings.clone(),
+            valid_indices: valid_indices.clone(),
+            recon_losses: recon_losses.clone(),
+            train_losses: train_losses_per_epoch.clone(),
+            val_losses: val_losses_per_epoch.clone(),
+        };
+        let _ = save_phase_checkpoint(output_dir, 2, &phase2_ckpt);
+        io::save_training_losses(output_dir, &train_losses_per_epoch, &val_losses_per_epoch)?;
+    }
 
     // ═══════════════════════════════════════════════════
     // Phase 3: Importance Analysis
@@ -894,6 +959,101 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
 
     let qed_edges = vec![0.399, 0.520, 0.694, 0.814];
     let strata = io::stratify_by_qed(records, &qed_edges);
+
+    // Try to load Phase 4 from existing pipeline_state.json
+    let phase4_state = {
+        let state_path = format!("{}/pipeline_state.json", output_dir);
+        match PipelineState::load(&state_path) {
+            Ok(state) if state.phase_completed >= 4 => {
+                log::info!("  ✓ Phase 4 loaded from checkpoint ({} labels, {} SOM states)",
+                    state.labels.len(), state.som_states.len());
+                Some(state)
+            }
+            _ => None,
+        }
+    };
+
+    let (all_labels, strata_results, autotune_results, som_states) = if let Some(ref state) = phase4_state {
+        // Restore labels and SOM states; re-derive strata_results using restored SOMs
+        let mut all_labels = state.labels.clone();
+        let mut strata_results = Vec::new();
+        let autotune_results = state.autotune_results.clone();
+        let som_states_restored = std::mem::take(&mut { state.som_states.clone() });
+
+        for ss in &som_states_restored {
+            let group_id = ss.stratum_id;
+            let stratum_indices = &strata[group_id];
+            let stratum_emb_indices: Vec<usize> = stratum_indices.iter()
+                .filter_map(|&orig_idx| valid_indices.iter().position(|&vi| vi == orig_idx))
+                .collect();
+
+            if stratum_emb_indices.is_empty() { continue; }
+
+            let stratum_embeddings: Vec<Vec<f32>> = stratum_emb_indices.iter()
+                .map(|&i| embeddings[i].clone())
+                .collect();
+
+            log::info!("─── Stratum {} (restored) ───  {} molecules", group_id, stratum_embeddings.len());
+
+            let labels: Vec<usize> = stratum_emb_indices.iter()
+                .map(|&emb_idx| all_labels[emb_idx])
+                .collect();
+            let qe = ss.som.quantization_error(&stratum_embeddings);
+            let u_matrix = ss.som.u_matrix();
+            let u_vals: Vec<f64> = u_matrix.iter().flatten().copied().collect();
+            let u_mean = u_vals.iter().sum::<f64>() / u_vals.len() as f64;
+            let u_max = u_vals.iter().copied().fold(f64::MIN, f64::max);
+
+            let stratum_fg_profiles: Vec<FGProfile> = stratum_emb_indices.iter()
+                .map(|&i| all_fg_profiles[i].clone())
+                .collect();
+            let stratum_census = FGCensus::from_profiles(&stratum_fg_profiles);
+
+            let stratum_records: Vec<&MoleculeRecord> = stratum_emb_indices.iter()
+                .filter_map(|&emb_idx| {
+                    let orig_idx = valid_indices[emb_idx];
+                    records.get(orig_idx)
+                })
+                .collect();
+
+            let cluster_infos = cluster_stats(&labels, &stratum_embeddings, &stratum_records, &stratum_fg_profiles, &stratum_census);
+            let cluster_distances = inter_cluster_distances(&cluster_infos);
+
+            let mut used_clusters: Vec<usize> = labels.clone();
+            used_clusters.sort();
+            used_clusters.dedup();
+
+            let cluster_quality = silhouette_score(&stratum_embeddings, &labels);
+            let size_stats = cluster_size_distribution(&cluster_infos);
+
+            log::info!("  Active clusters: {}/{} | QE: {:.6}", used_clusters.len(), ss.best_grid.0 * ss.best_grid.1, qe);
+
+            let s_qed: Vec<f64> = stratum_records.iter().map(|r| r.qed).collect();
+            let s_logp: Vec<f64> = stratum_records.iter().map(|r| r.log_p).collect();
+            let s_sas: Vec<f64> = stratum_records.iter().map(|r| r.sas).collect();
+            let s_qed_mean = s_qed.iter().sum::<f64>() / s_qed.len().max(1) as f64;
+            let s_logp_mean = s_logp.iter().sum::<f64>() / s_logp.len().max(1) as f64;
+            let s_sas_mean = s_sas.iter().sum::<f64>() / s_sas.len().max(1) as f64;
+
+            strata_results.push(StratumResult {
+                group_id,
+                num_molecules: stratum_embeddings.len(),
+                num_clusters_used: used_clusters.len(),
+                quantization_error: qe,
+                u_matrix_mean: u_mean,
+                u_matrix_max: u_max,
+                cluster_infos,
+                stratum_census,
+                cluster_distances,
+                cluster_quality,
+                size_stats,
+                u_matrix,
+                stratum_property_stats: (s_qed_mean, stat_std(&s_qed), s_logp_mean, stat_std(&s_logp), s_sas_mean, stat_std(&s_sas)),
+            });
+        }
+
+        (all_labels, strata_results, autotune_results, som_states_restored)
+    } else {
 
     let mut all_labels = vec![0usize; embeddings.len()];
     let mut strata_results = Vec::new();
@@ -1025,25 +1185,30 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
         });
     }
 
+    (all_labels, strata_results, autotune_results, som_states)
+    }; // end Phase 4 checkpoint check
+
     let cluster_time = t3.elapsed();
 
-    // Save pipeline state checkpoint after clustering
-    let state_path = format!("{}/pipeline_state.json", output_dir);
-    let pipeline_state = PipelineState {
-        version: "1.0".to_string(),
-        csv_path: csv_path.to_string(),
-        total_molecules: total,
-        processed_molecules: embeddings.len(),
-        embeddings: embeddings.clone(),
-        valid_indices: valid_indices.clone(),
-        recon_losses: recon_losses.clone(),
-        labels: all_labels.clone(),
-        som_states,
-        autotune_results: autotune_results.clone(),
-        phase_completed: 4,
-    };
-    if let Err(e) = pipeline_state.save(&state_path) {
-        log::warn!("Failed to save pipeline state: {}", e);
+    // Save pipeline state checkpoint after clustering (only if not loaded from checkpoint)
+    if phase4_state.is_none() {
+        let state_path = format!("{}/pipeline_state.json", output_dir);
+        let pipeline_state = PipelineState {
+            version: "1.0".to_string(),
+            csv_path: csv_path.to_string(),
+            total_molecules: total,
+            processed_molecules: embeddings.len(),
+            embeddings: embeddings.clone(),
+            valid_indices: valid_indices.clone(),
+            recon_losses: recon_losses.clone(),
+            labels: all_labels.clone(),
+            som_states,
+            autotune_results: autotune_results.clone(),
+            phase_completed: 4,
+        };
+        if let Err(e) = pipeline_state.save(&state_path) {
+            log::warn!("Failed to save pipeline state: {}", e);
+        }
     }
 
     // ═══════════════════════════════════════════════════
@@ -1585,8 +1750,8 @@ impl PipelineResults {
         };
         md.push_str(&format!("\n**Total clustered**: {} molecules | **Avg QE**: {:.6}\n\n", total_clustered, avg_qe));
 
-        md.push_str("![Latent Space PCA](figures/latent_space_pca.svg)\n\n");
-        md.push_str("*Figure 9: PCA projection of 16-dimensional VGAE embeddings colored by QED stratum.*\n\n");
+        md.push_str("![Latent Space UMAP](figures/latent_space_umap.svg)\n\n");
+        md.push_str("*Figure 9: UMAP projection of 16-dimensional VGAE embeddings colored by QED stratum.*\n\n");
         md.push_str("![Stratum Properties](figures/stratum_property_comparison.svg)\n\n");
         md.push_str("*Figure 10: Mean ± std of molecular properties across QED strata.*\n\n");
         md.push_str("![U-Matrix](figures/umatrix_heatmaps.svg)\n\n");
@@ -1855,7 +2020,7 @@ impl PipelineResults {
             ("Figure 6", "figures/embedding_dim_variance.svg", "Latent dimension variance analysis"),
             ("Figure 7", "figures/dim_property_heatmap.svg", "Dimension–property correlation heatmap"),
             ("Figure 8", "figures/fg_property_correlations.svg", "FG–property correlation heatmap"),
-            ("Figure 9", "figures/latent_space_pca.svg", "PCA projection of latent space by stratum"),
+            ("Figure 9", "figures/latent_space_umap.svg", "UMAP projection of latent space by stratum"),
             ("Figure 10", "figures/stratum_property_comparison.svg", "Stratum property comparison (mean ± std)"),
             ("Figure 11", "figures/umatrix_heatmaps.svg", "SOM U-matrix heatmaps per stratum"),
             ("Figure 12", "figures/cluster_quality_comparison.svg", "Cluster quality metrics comparison"),

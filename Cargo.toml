@@ -21,6 +21,7 @@ env_logger = "0.11"
 rayon = "1.10"
 plotters = "0.3"
 plotters-svg = "0.3"
+rag-umap = "0.0.0"
 
 [[bin]]
 name = "functional_group_analysis"
