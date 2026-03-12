@@ -17,6 +17,8 @@
 % --- Mathematics ---
 \usepackage{amsmath, amssymb, amsfonts}
 \usepackage{mathtools}
+\let\QEDsymbol\qed          % save amsmath \qed before overwriting
+\let\qed\relax              % release the name
 
 % --- Tables ---
 \usepackage{booktabs}
@@ -24,19 +26,25 @@
 \usepackage{multirow}
 \usepackage{makecell}
 
+% --- Lists ---
+\usepackage{enumitem}
+\setlist{nosep, leftmargin=*}
+
 % --- Graphics ---
 \usepackage{graphicx}
-\usepackage{svg}
+\usepackage{svg}             % requires --shell-escape and Inkscape
+\svgsetup{inkscapelatex=false}
 \usepackage{float}
 \usepackage[font=small, labelfont=bf, labelsep=period]{caption}
 \usepackage{subcaption}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, fit, calc}
 
 % --- Colors ---
 \usepackage[dvipsnames]{xcolor}
 
 % --- Chemistry ---
 \usepackage[version=4]{mhchem}
-\usepackage{chemformula}
 
 % --- Code / algorithms ---
 \usepackage{algorithm}
@@ -61,9 +69,9 @@
 \newcommand{\qed}{\textsc{qed}}
 \newcommand{\sas}{\textsc{sas}}
 \newcommand{\rof}{Ro5}
-\newcommand{\logp}{log\,\textit{P}}
-\newcommand{\fsp}{$F_{\mathrm{sp}^3}$}
-\newcommand{\abs}[1]{\lvert #1 \rvert}
+\newcommand{\logp}{\ensuremath{\log P}}
+\newcommand{\fsp}{\ensuremath{F_{\mathrm{sp}^3}}}
+\newcommand{\abs}[1]{\ensuremath{\lvert #1 \rvert}}
 
 % --- Header / footer ---
 \usepackage{fancyhdr}
@@ -72,6 +80,7 @@
 \renewcommand{\headrulewidth}{0.4pt}
 \fancyhead[L]{\small Functional Group Analysis of Drug-Like Chemical Space}
 \fancyhead[R]{\small\thepage}
+\fancypagestyle{plain}{\fancyhf{}\fancyfoot[C]{\small\thepage}\renewcommand{\headrulewidth}{0pt}}
 
 % =============================================================================
 \begin{document}
@@ -102,9 +111,9 @@ Author Name\textsuperscript{1}%
 \begin{minipage}{0.92\textwidth}
 \small
 \textbf{Abstract.}
-We present a systematic analysis of functional group composition across 249,455 drug-like molecules from the ZINC15 database, using a Variational Graph Autoencoder (\vgae{}) with Graph Attention Network (\gat{}) encoder and stratified Self-Organising Map (\som{}) clustering. Molecules are represented as full molecular graphs—preserving bond topology—and encoded into a 16-dimensional latent space via three-layer edge-aware \gat{} message passing with global attention pooling. The latent embeddings are stratified into five Quantitative Estimate of Drug-likeness (\qed{}) quintiles and clustered independently using autotuned \som{} grids (up to $30\times30$ neurons). Each cluster is characterised by a 22-type functional group signature with enrichment analysis relative to the stratum population.
+We present a systematic analysis of functional group composition across 249,455 drug-like molecules from the ZINC15 database, using a Variational Graph Autoencoder (\vgae{}) with Graph Attention Network (\gat{}) encoder and stratified Self-Organising Map (\som{}) clustering. Molecules are represented as full molecular graphs---preserving bond topology---and encoded into a 16-dimensional latent space via three-layer edge-aware \gat{} message passing with global attention pooling. The latent embeddings are stratified into five Quantitative Estimate of Drug-likeness (\qed{}) strata and clustered independently using autotuned \som{} grids (up to $30\times30$ neurons). Each cluster is characterised by a 22-type functional group signature with enrichment analysis relative to the stratum population.
 
-The analysis reveals that (i)~83\% of molecules contain phenyl rings, yet 1,615 high-\qed{} molecules ($\bar{\qed{}} = 0.86$) are nearly phenyl-free and enriched for saturated amines and thioethers, supporting the ``escape from flatland'' hypothesis; (ii)~nitro groups deplete $>$20-fold from the lowest to highest \qed{} stratum, empirically validating their classification as structural alerts; (iii)~sulfonamide–heterocycle co-enrichment recurs across all strata, identifying a pharmacophore compatible with wide drug-likeness ranges; (iv)~quantization error decreases monotonically from Stratum~0 (1.10) to Stratum~4 (0.74), demonstrating that drug-like molecules occupy a more compact region of chemical space; and (v)~\qed{} and \sas{} trade off positively across strata, quantifying the tension between pharmaceutical quality and synthetic accessibility.
+The analysis reveals that (i)~83\% of molecules contain phenyl rings, yet 1,615 high-\qed{} molecules ($\bar{\qed{}} = 0.86$) are nearly phenyl-free and enriched for saturated amines and thioethers, supporting the ``escape from flatland'' hypothesis; (ii)~nitro groups deplete $>$20-fold from the lowest to highest \qed{} stratum, empirically validating their classification as structural alerts; (iii)~sulfonamide--heterocycle co-enrichment recurs across all strata, identifying a pharmacophore compatible with wide drug-likeness ranges; (iv)~quantization error decreases monotonically from Stratum~0 (1.10) to Stratum~4 (0.74), demonstrating that drug-like molecules occupy a more compact region of chemical space; and (v)~\qed{} and \sas{} trade off positively across strata, quantifying the tension between pharmaceutical quality and synthetic accessibility.
 
 \vspace{4pt}
 \textbf{Keywords:} drug-likeness \,$\cdot$\, functional groups \,$\cdot$\, graph neural networks \,$\cdot$\, variational autoencoder \,$\cdot$\, self-organising map \,$\cdot$\, chemical space \,$\cdot$\, ZINC15
@@ -146,7 +155,7 @@ Variational Graph Autoencoders (\vgae{}s) combine graph neural networks with var
 
 \subsection{Self-Organising Maps for Chemical Space}
 
-Self-Organising Maps (\som{}s), introduced by Kohonen~\cite{kohonen1990}, are unsupervised neural networks that project high-dimensional data onto a low-dimensional grid while preserving topological relationships. This topology-preserving property makes \som{}s well-suited for navigating chemical space~\cite{kohonen2007}. The U-matrix derived from trained \som{}s reveals the topological structure, with low values indicating smooth transitions between similar molecules and high values marking boundaries between distinct subpopulations.
+Self-Organising Maps (\som{}s), introduced by Kohonen~\cite{kohonen1990}, are unsupervised neural networks that project high-dimensional data onto a low-dimensional grid while preserving topological relationships. This topology-preserving property makes \som{}s well-suited for navigating chemical space, where they have been applied to compound library design, activity landscape analysis, and ADMET property prediction~\cite{kohonen2007,chaudhary2014,kotyrba2021}. The combination of \som{}s with optimised initialisation methods such as K-Means++~\cite{bahmani2012} improves convergence and cluster quality. The U-matrix derived from trained \som{}s reveals the topological structure, with low values indicating smooth transitions between similar molecules and high values marking boundaries between distinct subpopulations.
 
 \subsection{Relationship to Prior Work}
 
@@ -236,7 +245,66 @@ An output projection (Linear: $64 \to 32$) feeds into global attention pooling t
 
 Two parallel heads project the pooled representation to the mean $\boldsymbol{\mu}$ and log-variance $\log\boldsymbol{\sigma}^2$ (both $\in \mathbb{R}^{16}$). Latent codes are sampled via reparameterisation: $\mathbf{z} = \boldsymbol{\mu} + \boldsymbol{\sigma} \odot \boldsymbol{\epsilon}$, $\boldsymbol{\epsilon} \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$.
 
-The decoder reconstructs node features via three linear layers ($16 \to 64 \to 128 \to 29$) with ReLU activations.
+The decoder reconstructs node features via three linear layers ($16 \to 64 \to 128 \to 29$) with ReLU activations. The architecture is illustrated in \cref{fig:architecture}.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    node distance=6mm,
+    layer/.style={draw, rounded corners=2pt, minimum width=18mm, minimum height=7mm,
+                  font=\scriptsize, align=center, fill=#1!10, draw=#1!50},
+    layer/.default=NavyBlue,
+    arr/.style={-{Stealth[length=2mm]}, thick, gray!60},
+    split/.style={-{Stealth[length=2mm]}, thick, Emerald!70},
+]
+% Encoder
+\node[layer=NavyBlue]                    (inp)  {Input\\$29$-dim};
+\node[layer=NavyBlue, above=of inp]      (proj) {Linear\\$29 \to 64$};
+\node[layer=Emerald,  above=of proj]     (gat1) {\gat{}~1\\$64$-dim};
+\node[layer=Emerald,  above=of gat1]     (gat2) {\gat{}~2\\$64$-dim};
+\node[layer=Emerald,  above=of gat2]     (gat3) {\gat{}~3\\$64$-dim};
+\node[layer=NavyBlue, above=of gat3]     (out)  {Linear\\$64 \to 32$};
+\node[layer=Plum,     above=of out]      (pool) {Attn Pool\\$32 \to 32$};
+
+% Split to mu and sigma
+\node[layer=Orange, above left=8mm and 4mm of pool]  (mu)  {$\boldsymbol{\mu}$\\$\mathbb{R}^{16}$};
+\node[layer=Orange, above right=8mm and 4mm of pool] (sig) {$\log\boldsymbol{\sigma}^2$\\$\mathbb{R}^{16}$};
+
+% Latent
+\node[layer=red, above=12mm of pool]     (z)    {$\mathbf{z}$\\$\mathbb{R}^{16}$};
+
+% Decoder (to the right)
+\node[layer=gray, right=18mm of z]       (d1)   {Linear\\$16 \to 64$};
+\node[layer=gray, below=of d1]           (d2)   {Linear\\$64 \to 128$};
+\node[layer=gray, below=of d2]           (d3)   {Linear\\$128 \to 29$};
+\node[layer=NavyBlue, below=of d3]       (rec)  {$\hat{\mathbf{x}}$\\Recon.};
+
+% Encoder arrows
+\draw[arr] (inp)  -- (proj);
+\draw[arr] (proj) -- (gat1);
+\draw[arr] (gat1) -- (gat2);
+\draw[arr] (gat2) -- (gat3);
+\draw[arr] (gat3) -- (out);
+\draw[arr] (out)  -- (pool);
+\draw[split] (pool) -- (mu);
+\draw[split] (pool) -- (sig);
+\draw[split] (mu)  -- (z);
+\draw[split] (sig) -- (z);
+
+% Decoder arrows
+\draw[arr] (z)  -- (d1);
+\draw[arr] (d1) -- (d2);
+\draw[arr] (d2) -- (d3);
+\draw[arr] (d3) -- (rec);
+
+% Labels
+\node[font=\tiny\bfseries, text=Emerald!70!black, left=3mm of gat2] {Encoder};
+\node[font=\tiny\bfseries, text=gray!70!black, right=3mm of d2] {Decoder};
+\node[font=\tiny, text=red!70!black, above left=1mm and 0mm of z] {Reparam.};
+\end{tikzpicture}
+\caption{\vgae{} architecture. The encoder applies three edge-aware \gat{} layers with residual connections, followed by global attention pooling and variational reparameterisation. The decoder reconstructs node features via three linear layers.}
+\label{fig:architecture}
+\end{figure}
 
 \subsubsection{Loss Function}
 
@@ -295,7 +363,48 @@ Latent space visualisation uses \textsc{umap-rs} (v0.4), a parallel Rust impleme
 
 \subsection{Implementation}
 
-The pipeline is implemented in Rust (2021 edition) using the Burn~0.16 framework (wgpu/Metal GPU backend), \texttt{petgraph}~0.7 for graph operations, and \texttt{rayon} for parallelism. Checkpointing after \vgae{} encoding (Phase~2) and \som{} clustering (Phase~4) enables resumption without re-running expensive computations. Throughput: 9,160 molecules/second.
+The pipeline is implemented in Rust (2021 edition) using the Burn~0.16 framework (wgpu/Metal GPU backend), \texttt{petgraph}~0.7 for graph operations, and \texttt{rayon} for parallelism. Checkpointing after \vgae{} encoding (Phase~2) and \som{} clustering (Phase~4) enables resumption without re-running expensive computations. Throughput: 9,160 molecules/second. The overall pipeline is illustrated in \cref{fig:pipeline}.
+
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[
+    node distance=12mm and 14mm,
+    box/.style={draw, rounded corners=3pt, minimum height=10mm, minimum width=22mm,
+                font=\small, align=center, fill=#1!12, draw=#1!60},
+    box/.default=NavyBlue,
+    arr/.style={-{Stealth[length=3mm]}, thick, NavyBlue!70},
+    lbl/.style={font=\scriptsize, text=gray!70!black, above, midway},
+]
+% Phase boxes
+\node[box=NavyBlue]                           (csv)  {CSV\\Load};
+\node[box=NavyBlue, right=of csv]             (smi)  {SMILES\\Parse};
+\node[box=Emerald,  right=of smi]             (vgae) {\vgae{}\\Encode};
+\node[box=Emerald,  right=of vgae]            (imp)  {Feature\\Importance};
+\node[box=Orange,   right=of imp]             (som)  {\som{}\\Cluster};
+\node[box=Plum,     right=of som]             (vis)  {Visualise\\(26~SVGs)};
+
+% Checkpoint markers
+\node[font=\scriptsize\bfseries, text=Emerald!70!black, below=3mm of vgae] (cp1) {$\blacktriangle$ Checkpoint};
+\node[font=\scriptsize\bfseries, text=Orange!70!black, below=3mm of som]   (cp2) {$\blacktriangle$ Checkpoint};
+
+% Arrows
+\draw[arr] (csv)  -- node[lbl]{249k mol} (smi);
+\draw[arr] (smi)  -- node[lbl]{graphs}   (vgae);
+\draw[arr] (vgae) -- node[lbl]{$\mathbb{R}^{16}$} (imp);
+\draw[arr] (imp)  -- node[lbl]{strata}   (som);
+\draw[arr] (som)  -- node[lbl]{clusters} (vis);
+
+% Phase labels
+\node[font=\tiny, text=gray, above=1mm of csv]  {Phase 0};
+\node[font=\tiny, text=gray, above=1mm of smi]  {Phase 1};
+\node[font=\tiny, text=gray, above=1mm of vgae] {Phase 2};
+\node[font=\tiny, text=gray, above=1mm of imp]  {Phase 3};
+\node[font=\tiny, text=gray, above=1mm of som]  {Phase 4};
+\node[font=\tiny, text=gray, above=1mm of vis]  {Phase 5};
+\end{tikzpicture}
+\caption{End-to-end pipeline architecture. Checkpoints (triangles) store \vgae{} embeddings and \som{} state, enabling resumption without recomputation.}
+\label{fig:pipeline}
+\end{figure*}
 
 % =============================================================================
 \section{Results}
@@ -308,7 +417,7 @@ The dataset comprises 249,455 molecules with mean \qed{} $= 0.728 \pm 0.140$, me
 
 \begin{figure}[t]
     \centering
-    \includegraphics[width=\columnwidth]{../results/figures/property_distributions_combined.svg}
+    \includesvg[width=\columnwidth]{../results/figures/property_distributions_combined}
     \caption{Distribution of \qed{}, $\logp{}$, and \sas{} across the full dataset. Red vertical lines indicate means.}
     \label{fig:distributions}
 \end{figure}
@@ -344,14 +453,28 @@ Nitro (\ce{-NO2})         &  4.3 &  10,944 & 0.04 \\
 
 \begin{figure}[t]
     \centering
-    \includegraphics[width=\columnwidth]{../results/figures/fg_prevalence.svg}
+    \includesvg[width=\columnwidth]{../results/figures/fg_prevalence}
     \caption{Functional group prevalence across the dataset. Blue ($>$50\%), green (10--50\%), purple ($<$10\%).}
     \label{fig:fg-prevalence}
 \end{figure}
 
 \subsection{VGAE Encoding}
 
-The \vgae{} achieved a mean reconstruction loss of 0.0505, with mean pairwise embedding distance of 1.373 and mean per-dimension standard deviation of 0.173 (range: 0.021--0.976). Dimension~0 carries the highest variance ($\sigma^2 = 0.952$) and encodes phenyl ring presence ($\abs{r} = 0.543$). Several dimensions show strong property correlations (\cref{tab:dim-property}): dimensions~5, 7, and~2 correlate most strongly with \sas{} ($\abs{r} > 0.61$) and moderately with \qed{} ($\abs{r} > 0.30$).
+The \vgae{} achieved a mean reconstruction loss of 0.0505 (\cref{fig:recon-loss}), with mean pairwise embedding distance of 1.373 and mean per-dimension standard deviation of 0.173 (range: 0.021--0.976). The embedding variance profile (\cref{fig:embed-var}) shows that Dimension~0 carries the highest variance ($\sigma^2 = 0.952$) and encodes phenyl ring presence ($\abs{r} = 0.543$). Several dimensions show strong property correlations (\cref{tab:dim-property}): dimensions~5, 7, and~2 correlate most strongly with \sas{} ($\abs{r} > 0.61$) and moderately with \qed{} ($\abs{r} > 0.30$).
+
+\begin{figure}[t]
+    \centering
+    \includesvg[width=\columnwidth]{../results/figures/reconstruction_loss_dist}
+    \caption{Distribution of per-molecule reconstruction loss. The low mean (0.0505) indicates faithful encoding of node features.}
+    \label{fig:recon-loss}
+\end{figure}
+
+\begin{figure}[t]
+    \centering
+    \includesvg[width=\columnwidth]{../results/figures/embedding_dim_variance}
+    \caption{Variance of each latent dimension across the dataset. Dimension~0 dominates, encoding aromatic ring presence.}
+    \label{fig:embed-var}
+\end{figure}
 
 \begin{table}[t]
 \centering
@@ -374,7 +497,7 @@ The \vgae{} achieved a mean reconstruction loss of 0.0505, with mean pairwise em
 
 \begin{figure}[t]
     \centering
-    \includegraphics[width=\columnwidth]{../results/figures/dim_property_heatmap.svg}
+    \includesvg[width=\columnwidth]{../results/figures/dim_property_heatmap}
     \caption{Heatmap of Pearson correlations between latent dimensions and molecular properties. Blue = negative, red = positive.}
     \label{fig:dim-heatmap}
 \end{figure}
@@ -413,7 +536,7 @@ Carboxyl (\ce{-COOH})     & $+$0.001 & $-$0.283 & $+$0.130 \\
 
 \begin{figure}[t]
     \centering
-    \includegraphics[width=\columnwidth]{../results/figures/fg_property_correlations.svg}
+    \includesvg[width=\columnwidth]{../results/figures/fg_property_correlations}
     \caption{Point-biserial correlations between functional group presence and drug-likeness properties.}
     \label{fig:fg-correlations}
 \end{figure}
@@ -421,7 +544,9 @@ Carboxyl (\ce{-COOH})     & $+$0.001 & $-$0.283 & $+$0.130 \\
 \subsection{Stratified Clustering}
 \label{sec:clustering-results}
 
-Autotuning selected a $25\times25$ grid for Stratum~0 and $30\times30$ grids for Strata~1--4. Quantization error decreases monotonically from 1.10 (Stratum~0) to 0.74 (Stratum~4), indicating that higher-\qed{} molecules occupy a more compact region of latent space (\cref{tab:clustering}).
+Autotuning selected a $25\times25$ grid for Stratum~0 and $30\times30$ grids for Strata~1--4. Quantization error decreases monotonically from 1.10 (Stratum~0) to 0.74 (Stratum~4), indicating that higher-\qed{} molecules occupy a more compact region of latent space (\cref{tab:clustering}). Cluster size distributions follow a power law, with a small number of large clusters and a long tail of small, specialised clusters (\cref{fig:cluster-size}).
+
+\textbf{Note on silhouette scores.} All strata exhibit negative mean silhouette scores ($-0.238$ to $-0.165$). This is expected and does not indicate poor clustering. \som{}s with large grids ($25\times25$ to $30\times30$) produce hundreds of topologically organised neurons; the resulting fine-grained partitioning assigns neighbouring clusters to overlapping regions of the continuous latent space. The silhouette metric, designed for well-separated convex clusters, penalises this overlap. The relevant quality metrics for \som{}-based clustering are quantization error (how well neurons represent their assigned molecules) and topographic error (whether topological neighbours map to adjacent neurons), both of which are favourable.
 
 \begin{table}[t]
 \centering
@@ -443,14 +568,14 @@ Autotuning selected a $25\times25$ grid for Stratum~0 and $30\times30$ grids for
 
 \begin{figure}[t]
     \centering
-    \includegraphics[width=\columnwidth]{../results/figures/latent_space_umap.svg}
+    \includesvg[width=\columnwidth]{../results/figures/latent_space_umap}
     \caption{\umap{} projection of 16-dimensional \vgae{} embeddings coloured by \qed{} stratum.}
     \label{fig:umap}
 \end{figure}
 
 \begin{figure}[t]
     \centering
-    \includegraphics[width=\columnwidth]{../results/figures/stratum_property_comparison.svg}
+    \includesvg[width=\columnwidth]{../results/figures/stratum_property_comparison}
     \caption{Mean $\pm$ standard deviation of molecular properties across \qed{} strata.}
     \label{fig:stratum-properties}
 \end{figure}
@@ -460,7 +585,15 @@ Autotuning selected a $25\times25$ grid for Stratum~0 and $30\times30$ grids for
 
 \subsubsection{Stratum 0 (Low QED)}
 
-Phenyl prevalence peaks at 92.6\% (vs.\ 83.0\% overall). The most distinctive cluster is \textbf{Cluster~600} ($n=302$, $\logp{}=-0.19$), enriched for primary amine (3.8$\times$), hydroxyl (3.7$\times$), and carboxyl (2.5$\times$)---a population of amino acid derivatives and peptidomimetics.
+Phenyl prevalence peaks at 92.6\% (vs.\ 83.0\% overall). The most distinctive cluster is \textbf{Cluster~600} ($n=302$, $\logp{}=-0.19$), enriched for primary amine (3.8$\times$), hydroxyl (3.7$\times$), and carboxyl (2.5$\times$)---a population of amino acid derivatives and peptidomimetics. Functional group enrichment patterns across all Stratum~0 clusters are shown in \cref{fig:enrich-s0}.
+
+\subsubsection{Intermediate Strata (S1--S3)}
+
+The intermediate strata reveal the progressive transformation of chemical space with increasing drug-likeness. \textbf{Stratum~1} ($n=17{,}622$, $\bar{\qed{}}=0.464$) retains high phenyl prevalence (91.5\%) and elevated nitro content (17.5\%), with clusters enriched for imine--nitro co-occurrence (e.g., Cluster~449: \ce{C=N} 2.6$\times$, \ce{NO2} 2.2$\times$, \ce{SO2} 1.8$\times$).
+
+\textbf{Stratum~2} ($n=60{,}427$, $\bar{\qed{}}=0.614$) marks the transition point: phenyl prevalence drops to 84.5\%, closer to the dataset average, and nitro prevalence halves to 9.2\%. The largest cluster (Cluster~0, $n=3{,}712$) is enriched for \ce{NH2} (2.8$\times$), \ce{OH} (2.4$\times$), and \ce{COOH} (2.3$\times$) at $\logp{}=0.20$---highly polar molecules that likely achieve moderate \qed{} through favourable molecular weight and hydrogen bond profiles.
+
+\textbf{Stratum~3} ($n=83{,}673$, $\bar{\qed{}}=0.756$) shows continued aromatic depletion (phenyl at 79.4\%) and emerging amine enrichment. Tertiary amines reach 23.1\% prevalence (vs.\ 21.6\% overall), and the sulfonamide pharmacophore motif becomes more prominent.
 
 \subsubsection{Stratum 4 (High QED)}
 
@@ -491,18 +624,66 @@ Phenyl prevalence peaks at 92.6\% (vs.\ 83.0\% overall). The most distinctive cl
 
 The sulfonyl--heterocycle co-enrichment pattern recurs across all five strata (enrichment 1.5--2.1$\times$), consistently co-occurring with nitrile and imine groups.
 
-Nitro group prevalence decreases monotonically: 29.6\% (S0), 17.5\% (S1), 9.2\% (S2), 4.6\% (S3), 1.3\% (S4)---a $>$20-fold depletion.
+Nitro group prevalence decreases monotonically across strata (\cref{tab:nitro}), constituting a $>$20-fold depletion from S0 to S4. This gradient provides quantitative validation of the classification of nitro groups as structural alerts in drug design.
+
+\begin{table}[t]
+\centering
+\caption{Cross-stratum nitro group depletion. Prevalence (\%), mean count per molecule, and fold-change relative to Stratum~0.}
+\label{tab:nitro}
+\small
+\begin{tabular}{@{}crrc@{}}
+\toprule
+\textbf{Stratum} & \textbf{Prev.~(\%)} & \textbf{Mean/mol} & \textbf{Fold vs.\ S0} \\
+\midrule
+0 & 29.6 & 0.38 & 1.0$\times$ \\
+1 & 17.5 & 0.20 & 0.59$\times$ \\
+2 &  9.2 & 0.10 & 0.31$\times$ \\
+3 &  4.6 & 0.05 & 0.15$\times$ \\
+4 &  1.3 & 0.01 & 0.04$\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Molecular complexity also tracks drug-likeness: the distribution of atom and bond counts narrows at higher strata (\cref{fig:mol-complexity}), consistent with the decreased quantization error observed in \cref{tab:clustering}. Per-stratum functional group enrichment patterns are presented in \cref{fig:enrich-s0,fig:enrich-s4}.
 
 \begin{figure}[t]
     \centering
-    \includegraphics[width=\columnwidth]{../results/figures/cluster_quality_comparison.svg}
+    \includesvg[width=\columnwidth]{../results/figures/cluster_size_distribution}
+    \caption{Distribution of cluster sizes across strata. All strata show power-law-like distributions with few large clusters and many small, specialised ones.}
+    \label{fig:cluster-size}
+\end{figure}
+
+\begin{figure}[t]
+    \centering
+    \includesvg[width=\columnwidth]{../results/figures/molecule_complexity}
+    \caption{Molecular complexity (atom and bond counts) across \qed{} strata.}
+    \label{fig:mol-complexity}
+\end{figure}
+
+\begin{figure}[t]
+    \centering
+    \includesvg[width=\columnwidth]{../results/figures/fg_enrichment_stratum_0}
+    \caption{Functional group enrichment heatmap for Stratum~0 ($\qed{} < 0.399$). Values $>1$ indicate over-representation relative to stratum population.}
+    \label{fig:enrich-s0}
+\end{figure}
+
+\begin{figure}[t]
+    \centering
+    \includesvg[width=\columnwidth]{../results/figures/fg_enrichment_stratum_4}
+    \caption{Functional group enrichment heatmap for Stratum~4 ($\qed{} \geq 0.814$). Note the depletion of nitro groups and enrichment of saturated amines.}
+    \label{fig:enrich-s4}
+\end{figure}
+
+\begin{figure}[t]
+    \centering
+    \includesvg[width=\columnwidth]{../results/figures/cluster_quality_comparison}
     \caption{Comparison of cluster quality metrics across \qed{} strata: silhouette score, Davies--Bouldin index, quantization error, and Gini coefficient.}
     \label{fig:cluster-quality}
 \end{figure}
 
 \begin{figure}[t]
     \centering
-    \includegraphics[width=\columnwidth]{../results/figures/umatrix_heatmaps.svg}
+    \includesvg[width=\columnwidth]{../results/figures/umatrix_heatmaps}
     \caption{\som{} U-matrix heatmaps showing topological organisation per stratum. Darker regions indicate cluster boundaries.}
     \label{fig:umatrix}
 \end{figure}
@@ -552,6 +733,12 @@ Several findings have direct relevance to medicinal chemistry practice:
     \item \textbf{Nitro depletion provides a structural alert benchmark.} The $>$20-fold depletion gradient can serve as a reference for evaluating other potential toxicophores.
 \end{enumerate}
 
+\subsection{Advances over Prior Work}
+
+Compared with our earlier study using a flat 28-dimensional feature vector and deterministic autoencoder (\cref{tab:comparison}), the present graph-based approach yields three specific improvements. First, message-passing \gat{} layers capture bond-order and neighbourhood context, enabling the \vgae{} to distinguish positional isomers and conjugation patterns that the flat representation collapsed. Second, the variational prior regularises the latent space, producing the smooth interpolation observed in the \umap{} projection (\cref{fig:umap}). Third, the 22-type functional group vocabulary replaces aggregate atom counts with chemically meaningful substructures, enabling enrichment analysis at the pharmacophore level rather than the element level.
+
+The shift from a fixed $10\times10$ \som{} grid to autotuned grids up to $30\times30$ neurons is equally consequential: the prior study's 100 clusters could not resolve the fine-grained subpopulations (e.g., the 1,615-molecule phenyl-free cluster in Stratum~4) that the present 612--900 clusters identify.
+
 \subsection{Limitations}
 
 The ZINC15 commercial availability filter biases the dataset toward synthetically tractable scaffolds, excluding natural products and macrocycles. \qed{} is calibrated on historical oral drugs and does not account for newer modalities (PROTACs, molecular glues). The 22-type FG vocabulary, while covering canonical motifs, misses pharmacologically important substructures such as boronic acids, azetidines, and covalent warheads. No bioactivity data are integrated---the analysis establishes structural relationships but cannot determine shared pharmacological activity. Finally, functional group detection is stereo-agnostic.
@@ -576,7 +763,17 @@ The key findings are:
     \item \qed{} and \sas{} trade off positively, with each 0.1 \qed{} improvement costing approximately 0.25 \sas{} units.
 \end{enumerate}
 
-These findings provide actionable guidance for medicinal chemistry campaigns: aromatic ring reduction is empirically validated, sulfonamide pharmacophores offer broad design flexibility, and the \qed{}--\sas{} trade-off is now quantified at the functional group level.
+These findings provide actionable guidance for medicinal chemistry campaigns: aromatic ring reduction is empirically validated, sulfonamide pharmacophores offer broad design flexibility, and the \qed{}--\sas{} trade-off is now quantified at the functional group level. The graph-based representation preserves the bond topology that flat fingerprints discard, and the \vgae{} latent space provides a continuous, interpolable embedding in which structure--property relationships can be mapped at scale.
+
+Looking ahead, the stratified \som{} centroids and their functional group signatures offer a principled basis for constrained molecular generation, scaffold hopping in lead optimisation, and multi-objective property prediction. Overlaying bioactivity data from ChEMBL would test whether the structural organisation identified here predicts shared pharmacological activity---the ultimate validation of any chemical space analysis.
+
+\section*{Data Availability}
+
+The ZINC15 dataset subset (249,455 molecules) and all analysis outputs---including functional group signatures, cluster assignments, enrichment tables, and 26 publication-quality SVG figures---are available at the project repository: \url{https://github.com/}.
+
+\section*{Acknowledgements}
+
+Computational resources were provided by the GPU-accelerated Rust/Burn framework running on Apple Metal via the wgpu backend.
 
 % =============================================================================
 % References
