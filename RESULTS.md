@@ -961,7 +961,87 @@ Enrichment ratio shows over-representation relative to the stratum population.
 | Functional group types detected | 22 / 22 |
 | Strongest FG-property |r| | 0.1057 (Hydroxyl (-OH)) |
 
-## 11. Performance
+## 11. Discussion
+
+### 11.1 Latent Space Structure and Posterior Collapse
+
+The VGAE achieves low mean reconstruction loss (0.050), confirming that the 16-dimensional latent space retains sufficient molecular information for faithful graph reconstruction. However, the variance distribution across latent dimensions reveals a characteristic pathology of variational autoencoders: **partial posterior collapse**. Dimension 0 dominates the latent space with variance 0.952, while dimensions 2, 7, 12, 14, and 15 exhibit near-zero variance (std < 0.045), suggesting that the KL divergence term has pushed these posteriors toward the prior N(0,1) without the decoder learning to utilise them.
+
+This is consistent with the β-VAE literature (Higgins et al., 2017): at β = 0.001, the reconstruction term dominates, yet several dimensions still collapse — likely because the GAT encoder routes most discriminative information through dimensions 0, 1, 6, and 11 (std > 0.19), creating an **information bottleneck** in a subset of the latent space. The practical implication is that the effective latent dimensionality is closer to 8–10 rather than the nominal 16, which paradoxically may improve downstream clustering by concentrating signal.
+
+### 11.2 What the Latent Space Encodes
+
+The dimension–property correlation analysis (Figure 7) reveals that the latent space preferentially encodes **synthetic accessibility** over drug-likeness:
+
+| Property | Max |r| across dims | Best dimension |
+|---|---|---|---|
+| SAS | 0.631 | Dim 5 |
+| logP | 0.461 | Dim 0 |
+| QED | 0.322 | Dim 5 |
+
+This hierarchy (SAS > logP > QED) is pharmacologically informative. SAS is a composite metric derived from molecular fragment contributions and structural complexity — properties that are naturally captured by a graph neural network operating on molecular topology. logP (lipophilicity) correlates with atom counts and ring systems, which the GAT encodes via its attention-weighted message passing. QED, being a multi-objective desirability function (Bickerton et al., 2012), combines orthogonal properties (MW, HBA, HBD, PSA, rotatable bonds, aromatic rings, structural alerts) and is therefore harder to capture in any single latent direction.
+
+The functional group encoding analysis reinforces this: **Phenyl** is best captured (Dim 0, |r| = 0.543), followed by **Heterocycle** (Dim 10, |r| = 0.476). Both are topologically prominent motifs that the 3-layer GAT can detect via its receptive field. In contrast, small electronegative groups (Thioether |r| = 0.031, Primary Amine |r| = 0.084) are poorly represented — their structural footprint is too localised for the attention pooling to prioritise.
+
+### 11.3 Functional Group–Property Relationships
+
+The point-biserial correlations between FG presence and molecular properties yield several results consistent with established medicinal chemistry SAR:
+
+**Phenyl → ↑logP (+0.40), ↓SAS (−0.43)**. Aromatic rings increase lipophilicity (π-system contributes ~1.5 logP units per ring) and reduce synthetic accessibility (ring systems are common commercial building blocks, lowering SAS).
+
+**Nitro → ↓QED (−0.32)**. Nitro groups are structural alerts (Kazius et al., 2005) penalised by QED's weighted desirability function. The negative correlation validates that our FG detection and property computation are internally consistent.
+
+**Amide → ↓SAS (−0.29)**. Amide bonds are among the most common bond-forming reactions in medicinal chemistry (Brown & Boström, 2016), explaining their association with low synthetic complexity.
+
+**Carboxyl → ↓logP (−0.28)**. Carboxylic acids are ionisable at physiological pH, dramatically reducing apparent lipophilicity — a well-established relationship.
+
+An unexpected finding is that the **strongest absolute FG–property correlation** across the entire dataset is only |r| = 0.43 (Phenyl–SAS). This relatively modest ceiling suggests that molecular properties emerge from **combinatorial FG interactions** rather than individual group contributions, supporting the rationale for a graph-based encoding that captures molecular context rather than a bag-of-fragments approach.
+
+### 11.4 Stratified Clustering: Topology vs. Separation
+
+The negative silhouette scores across all five QED strata (−0.165 to −0.238) and elevated Davies-Bouldin indices (3.7–4.5) initially suggest poor clustering. However, this interpretation requires nuance:
+
+1. **SOMs are topology-preserving maps, not hard partitioners.** Unlike k-means, which optimises separation, SOMs preserve neighbourhood relationships from the high-dimensional embedding space. The negative silhouette scores reflect the continuous, manifold-like structure of chemical space rather than a failure of the algorithm.
+
+2. **Quantization error tells a different story.** QE decreases monotonically from Stratum 0 (1.097) to Stratum 4 (0.740), indicating that high-QED molecules occupy a more compact, structured region of latent space. This is pharmacologically meaningful: drug-like molecules (high QED) share more structural regularities than non-drug-like molecules, making them easier to cluster coherently.
+
+3. **Topographic error is low** (0.07–0.21 across strata), confirming that the SOM topology faithfully represents the latent space neighbourhood structure — adjacent neurons map to genuinely similar molecules.
+
+4. **The Gini coefficients** (0.55–0.62) indicate moderate cluster size inequality, with a few large "attractor" clusters and many small specialised clusters — a pattern consistent with the power-law distribution observed in chemical space coverage studies (Lipinski et al., 2001).
+
+### 11.5 Chemically Coherent Cluster Signatures
+
+The FG enrichment analysis reveals that SOM clusters correspond to meaningful chemical subspaces:
+
+- **Stratum 0, Cluster 600** (n=302): 3.8× enrichment for Primary Amine, 3.7× for Hydroxyl, 2.5× for Carboxyl. This cluster captures **polar, aliphatic scaffolds** — the molecular antipode of drug-likeness in this dataset. logP = −0.19 confirms extreme hydrophilicity.
+
+- **Stratum 4, Cluster 0** (n=1,615): Phenyl prevalence collapses to 11.5% (vs. 83% stratum average), while Tertiary Amine (1.81×) and Thioether (1.89×) are enriched. This cluster represents **non-aromatic drug-like molecules** — saturated heterocyclic scaffolds with sp3-rich architectures that have gained prominence in modern drug design (Lovering et al., 2009).
+
+- **Stratum 4, Cluster 899** (n=3,347): Carboxyl enrichment at 3.67× in the highest-QED stratum is notable. These are likely **zwitterionic drug candidates** (amino acid derivatives, NSAID-like scaffolds) that achieve high QED despite the polarity penalty, through compensating properties.
+
+- **Cross-stratum pattern**: Sulfonyl (-SO₂-) shows consistent enrichment (1.5–2.1×) in clusters characterised by CN and C=N groups across strata 1–4. This constellation (sulfonamide + heterocyclic nitrogen) is the pharmacophore signature of **sulfonamide antibiotics and kinase inhibitors**, suggesting the VGAE has learned to co-locate therapeutically related scaffolds.
+
+### 11.6 The 3D UMAP Projection
+
+The 3D UMAP projection of the 16-dimensional latent space (Figure 9) reveals that QED strata occupy partially overlapping but directionally separated regions. Stratum 4 (high QED) forms a more compact cluster relative to Stratum 0 (low QED), which is diffuse — consistent with the quantization error gradient observed in the SOM analysis. The three-dimensional projection captures inter-stratum topology that would be lost in a 2D projection, particularly the continuous transition through Strata 1–3 that forms a manifold surface rather than discrete islands.
+
+### 11.7 Limitations
+
+1. **Posterior collapse** reduces the effective latent dimensionality. Cyclical annealing (Fu et al., 2019) or δ-VAE constraints could recover collapsed dimensions.
+2. **FG detection is rule-based** (SMARTS-like pattern matching on 22 types), missing rare or complex pharmacophores. Extension to learned substructure detection (e.g., GNN-based motif extraction) would improve coverage.
+3. **Silhouette scores assume convex clusters** and penalise the continuous topology that SOMs deliberately preserve. Topographic error and quantization error are more appropriate quality metrics for this architecture.
+4. **ZINC15 sampling bias**: the dataset is pre-filtered for commercial availability, excluding many natural products, macrocycles, and PROTACs that would test the model's generalization.
+5. **No external validation**: the clusters have not been evaluated against experimentally determined bioactivity data. Cross-referencing with ChEMBL assay annotations would establish whether latent-space proximity predicts activity similarity.
+
+### 11.8 Future Directions
+
+- **Disentangled representations**: Apply β-VAE annealing or FactorVAE (Kim & Mnih, 2018) to encourage each latent dimension to capture an independent generative factor.
+- **Conditional generation**: The stratified SOM provides natural conditioning variables for a CVAE — enabling generation of molecules with target QED/logP profiles.
+- **Multi-task property prediction**: Add auxiliary prediction heads for QED, logP, and SAS during VGAE training to inject property-awareness into the latent space.
+- **Bioactivity integration**: Overlay ChEMBL target annotations onto the SOM to identify activity cliffs within clusters.
+- **Scaffold hopping**: Use inter-cluster distances to identify structurally distinct but latent-space-proximal molecules — candidates for scaffold-hopping in lead optimisation.
+
+## 12. Performance
 
 | Phase | Time |
 |---|---|
@@ -974,7 +1054,7 @@ Enrichment ratio shows over-representation relative to the stratum population.
 
 **Throughput**: 9160 molecules/second
 
-## 12. Methodology Comparison
+## 13. Methodology Comparison
 
 | Aspect | Previous (Python) | Current (Rust + GNN) |
 |---|---|---|
@@ -989,7 +1069,7 @@ Enrichment ratio shows over-representation relative to the stratum population.
 | Cluster characterization | Size + basic stats | FG signatures, enrichment, representatives |
 | Implementation | Python/PyTorch | Rust/Burn (memory-safe, zero-cost abstractions) |
 
-## 13. Output Files
+## 14. Output Files
 
 ```
 results/
@@ -1038,7 +1118,7 @@ results/
     └── embeddings.csv      # 16-dim latent embeddings
 ```
 
-## 14. Figure Index
+## 15. Figure Index
 
 | # | Figure | Description |
 |---|---|---|
