@@ -20,6 +20,15 @@ use std::env;
 
 fn main() {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
+        .format(|buf, record| {
+            use std::io::Write;
+            let ts = buf.timestamp_seconds();
+            writeln!(buf, "[{} {:5} {}] {}",
+                ts, record.level(),
+                record.module_path().unwrap_or(""),
+                record.args())
+        })
+        .target(env_logger::Target::Stderr)
         .init();
 
     let csv_path = env::args()
@@ -38,12 +47,20 @@ fn main() {
         Ok(results) => {
             let report = results.to_markdown();
 
-            // Write RESULTS.md
+            // Write RESULTS.md into output directory
             let results_path = format!("{}/RESULTS.md", output_dir);
             if let Err(e) = std::fs::write(&results_path, &report) {
                 log::error!("Failed to write results: {}", e);
             } else {
                 log::info!("Results written to {}", results_path);
+            }
+
+            // Write RESULTS.md at repo root with adjusted figure paths
+            let root_report = report.replace("](figures/", "](results/figures/");
+            if let Err(e) = std::fs::write("RESULTS.md", &root_report) {
+                log::error!("Failed to write root RESULTS.md: {}", e);
+            } else {
+                log::info!("Root RESULTS.md written");
             }
 
             println!("\n{}", report);

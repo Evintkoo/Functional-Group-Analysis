@@ -1,7 +1,12 @@
 /// Full analysis pipeline: CSV → SMILES → Graph → FG detect → GNN encode → SOM cluster → analysis → results.
+/// Supports save/load of pipeline state for resumption and autotune for optimal SOM grid sizing.
 
-use burn::backend::ndarray::NdArray;
+use burn::backend::Autodiff;
+use burn::backend::wgpu::{Wgpu, WgpuDevice};
+use burn::module::AutodiffModule;
+use burn::optim::{AdamConfig, GradientsParams, Optimizer};
 use burn::prelude::*;
+use serde::{Serialize, Deserialize};
 use std::time::Instant;
 use std::collections::HashMap;
 
@@ -10,12 +15,68 @@ use crate::features::{self, MolecularFeatures, NODE_FEATURE_DIM, EDGE_FEATURE_DI
 use crate::functional_groups::{self, FunctionalGroup, FGProfile, FGCensus, fg_enrichment};
 use crate::io::{self, MoleculeRecord};
 use crate::smiles;
-use crate::som::{Som, SomConfig};
+use crate::som::{self, Som, SomConfig, AutotuneResult};
 use crate::visualization::{self, VisualizationData};
 
-type B = NdArray<f32>;
+/// GPU-accelerated backend via Metal (macOS) / Vulkan (Linux) / DX12 (Windows).
+type B = Wgpu;
+/// Training backend with automatic differentiation on GPU.
+type TrainB = Autodiff<Wgpu>;
 
-/// Convert MolecularFeatures into Burn tensors.
+/// Flush stderr to ensure log output is visible in non-TTY modes (pipes, redirection).
+fn flush_log() {
+    use std::io::Write;
+    let _ = std::io::stderr().flush();
+}
+
+// ═══════════════════════════════════════════════════
+// Pipeline state — save/load for resumption
+// ═══════════════════════════════════════════════════
+
+/// Serializable pipeline state snapshot. Saved after encoding + clustering to allow
+/// resuming from a checkpoint without re-running the expensive VGAE encoding phase.
+#[derive(Serialize, Deserialize)]
+pub struct PipelineState {
+    pub version: String,
+    pub csv_path: String,
+    pub total_molecules: usize,
+    pub processed_molecules: usize,
+    pub embeddings: Vec<Vec<f32>>,
+    pub valid_indices: Vec<usize>,
+    pub recon_losses: Vec<f32>,
+    pub labels: Vec<usize>,
+    pub som_states: Vec<SomState>,
+    pub autotune_results: Vec<AutotuneResult>,
+    pub phase_completed: u8,
+}
+
+/// Per-stratum SOM state for serialization.
+#[derive(Serialize, Deserialize)]
+pub struct SomState {
+    pub stratum_id: usize,
+    pub som: Som,
+    pub config: SomConfig,
+    pub best_grid: (usize, usize),
+}
+
+impl PipelineState {
+    pub fn save(&self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let json = serde_json::to_string(self)?;
+        std::fs::write(path, &json)?;
+        log::info!("Pipeline state saved to {} ({:.1} MB)", path, json.len() as f64 / 1_048_576.0);
+        Ok(())
+    }
+
+    pub fn load(path: &str) -> Result<Self, Box<dyn std::error::Error>> {
+        let json = std::fs::read_to_string(path)?;
+        let state: PipelineState = serde_json::from_str(&json)?;
+        log::info!("Pipeline state loaded from {} (phase {}, {} molecules, {} embeddings)",
+            path, state.phase_completed, state.total_molecules, state.embeddings.len());
+        Ok(state)
+    }
+}
+
+/// Convert MolecularFeatures into Burn tensors for inference.
 fn features_to_tensors(
     feats: &MolecularFeatures,
     device: &<B as Backend>::Device,
@@ -31,6 +92,29 @@ fn features_to_tensors(
         Tensor::zeros([1, EDGE_FEATURE_DIM], device)
     } else {
         Tensor::<B, 1>::from_floats(
+            edge_data.as_slice(), device,
+        ).reshape([num_edge_entries, EDGE_FEATURE_DIM])
+    };
+
+    (node_tensor, edge_tensor)
+}
+
+/// Convert MolecularFeatures into Burn tensors for training (Autodiff backend).
+fn features_to_train_tensors(
+    feats: &MolecularFeatures,
+    device: &<TrainB as Backend>::Device,
+) -> (Tensor<TrainB, 2>, Tensor<TrainB, 2>) {
+    let node_data: Vec<f32> = feats.node_features.iter().flatten().copied().collect();
+    let node_tensor = Tensor::<TrainB, 1>::from_floats(
+        node_data.as_slice(), device,
+    ).reshape([feats.num_atoms, NODE_FEATURE_DIM]);
+
+    let edge_data: Vec<f32> = feats.edge_features.iter().flatten().copied().collect();
+    let num_edge_entries = feats.edge_features.len().max(1);
+    let edge_tensor = if edge_data.is_empty() {
+        Tensor::zeros([1, EDGE_FEATURE_DIM], device)
+    } else {
+        Tensor::<TrainB, 1>::from_floats(
             edge_data.as_slice(), device,
         ).reshape([num_edge_entries, EDGE_FEATURE_DIM])
     };
@@ -547,8 +631,10 @@ fn cluster_size_distribution(cluster_infos: &[ClusterInfo]) -> ClusterSizeStats 
 /// Run the complete analysis pipeline.
 pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults, Box<dyn std::error::Error>> {
     let pipeline_start = Instant::now();
-    let device = Default::default();
+    let device = WgpuDevice::BestAvailable;
     let train_config = TrainConfig::default();
+
+    log::info!("Using GPU-accelerated backend (Metal/wgpu)");
 
     // ═══════════════════════════════════════════════════
     // Phase 0: Load data
@@ -556,6 +642,7 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
     log::info!("════════════════════════════════════════════");
     log::info!("  Phase 0: Loading data");
     log::info!("════════════════════════════════════════════");
+    flush_log();
     let t0 = Instant::now();
     let all_records = io::load_zinc_csv(csv_path)?;
     let total = all_records.len();
@@ -592,6 +679,7 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
     log::info!("════════════════════════════════════════════");
     log::info!("  Phase 1: Molecular graph construction + FG detection");
     log::info!("════════════════════════════════════════════");
+    flush_log();
     let t1 = Instant::now();
     let record_refs: Vec<&MoleculeRecord> = records.iter().collect();
     let (mol_features, graph_stats) = process_molecules(&record_refs);
@@ -613,11 +701,12 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
     }
 
     // ═══════════════════════════════════════════════════
-    // Phase 2: VGAE Encoding
+    // Phase 2: VGAE Training + Encoding
     // ═══════════════════════════════════════════════════
     log::info!("════════════════════════════════════════════");
-    log::info!("  Phase 2: VGAE Encoding");
+    log::info!("  Phase 2: VGAE Training + Encoding");
     log::info!("════════════════════════════════════════════");
+    flush_log();
     let t2 = Instant::now();
 
     let vgae_config = VgaeConfig::new(NODE_FEATURE_DIM, EDGE_FEATURE_DIM)
@@ -626,39 +715,146 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
         .with_latent_dim(16)
         .with_num_gnn_layers(3);
 
-    let vgae: Vgae<B> = vgae_config.init(&device);
+    // ── 2a: Train VGAE with Adam optimizer on Autodiff<Wgpu> ──
+    // Train on a representative sample for efficiency, then encode all molecules.
+    let train_sample_size = 2000.min(mol_features.len());
+    log::info!("  Training VGAE: {} epochs, lr={}, kl_weight={}, sample={}",
+        train_config.num_epochs, train_config.learning_rate, train_config.kl_weight, train_sample_size);
+
+    let mut vgae_train: Vgae<TrainB> = vgae_config.init(&device);
+    let mut optimizer = AdamConfig::new()
+        .with_epsilon(1e-8)
+        .init::<TrainB, Vgae<TrainB>>();
+
+    // Shuffle indices and pick train/val samples
+    use rand::seq::SliceRandom;
+    let mut rng = rand::thread_rng();
+    let mut all_indices: Vec<usize> = (0..mol_features.len()).collect();
+    all_indices.shuffle(&mut rng);
+
+    let sample_indices = &all_indices[..train_sample_size];
+    let n_val = (train_sample_size as f32 * train_config.val_split) as usize;
+    let n_train = train_sample_size - n_val;
+    let train_indices = &sample_indices[..n_train];
+    let val_indices = &sample_indices[n_train..];
+
+    log::info!("  Train: {} molecules, Val: {} molecules", n_train, n_val);
+
+    let mut train_losses_per_epoch = Vec::new();
+    let mut val_losses_per_epoch = Vec::new();
+
+    for epoch in 0..train_config.num_epochs {
+        // ── Training pass ──
+        let mut epoch_train_loss = 0.0f32;
+        let mut train_count = 0usize;
+
+        for &idx in train_indices {
+            let (feats, _, _) = &mol_features[idx];
+            let (node_t, edge_t) = features_to_train_tensors(feats, &device);
+
+            let output = vgae_train.forward(node_t.clone(), &feats.edge_index, edge_t, feats.num_atoms);
+            let loss = vgae_loss(output.reconstructed, node_t, output.mu, output.log_var, train_config.kl_weight);
+
+            let loss_val: f32 = loss.clone().inner().into_scalar();
+            epoch_train_loss += loss_val;
+            train_count += 1;
+
+            // Backpropagation
+            let grads = loss.backward();
+            let grads = GradientsParams::from_grads(grads, &vgae_train);
+            vgae_train = optimizer.step(train_config.learning_rate, vgae_train, grads);
+        }
+
+        let avg_train_loss = epoch_train_loss / train_count.max(1) as f32;
+        train_losses_per_epoch.push(avg_train_loss);
+
+        // ── Validation pass (no gradients) ──
+        let mut epoch_val_loss = 0.0f32;
+        let mut val_count = 0usize;
+
+        for &idx in val_indices {
+            let (feats, _, _) = &mol_features[idx];
+            let (node_t, edge_t) = features_to_train_tensors(feats, &device);
+
+            let output = vgae_train.forward(node_t.clone(), &feats.edge_index, edge_t, feats.num_atoms);
+            let loss = vgae_loss(output.reconstructed, node_t, output.mu, output.log_var, train_config.kl_weight);
+            let loss_val: f32 = loss.inner().into_scalar();
+            epoch_val_loss += loss_val;
+            val_count += 1;
+        }
+
+        let avg_val_loss = epoch_val_loss / val_count.max(1) as f32;
+        val_losses_per_epoch.push(avg_val_loss);
+
+        if (epoch + 1) % 5 == 0 || epoch == 0 {
+            let elapsed = t2.elapsed().as_secs_f64();
+            log::info!("  Epoch {:3}/{}: train_loss={:.6}, val_loss={:.6} ({:.1}s elapsed)",
+                epoch + 1, train_config.num_epochs, avg_train_loss, avg_val_loss, elapsed);
+            flush_log();
+        }
+    }
+
+    let train_time = t2.elapsed();
+    log::info!("  VGAE training complete in {:.2}s", train_time.as_secs_f64());
+    flush_log();
+    log::info!("  Final: train_loss={:.6}, val_loss={:.6}",
+        train_losses_per_epoch.last().unwrap_or(&0.0),
+        val_losses_per_epoch.last().unwrap_or(&0.0));
+
+    // ── 2b: Encode all molecules using trained model (inference, no autodiff) ──
+    log::info!("  Encoding all {} molecules with trained VGAE...", mol_features.len());
+    let t_enc = Instant::now();
+
+    // Strip autodiff wrapper for inference
+    let vgae: Vgae<B> = vgae_train.valid();
 
     let mut embeddings: Vec<Vec<f32>> = Vec::new();
     let mut valid_indices: Vec<usize> = Vec::new();
-    let mut recon_losses: Vec<f32> = Vec::new();
 
+    // Use embed() — only runs encoder + attention pool + fc_mu (skips decoder entirely)
     for (i, (feats, orig_idx, _)) in mol_features.iter().enumerate() {
         let (node_t, edge_t) = features_to_tensors(feats, &device);
-
-        let output = vgae.forward(node_t.clone(), &feats.edge_index, edge_t.clone(), feats.num_atoms);
-        let embedding: Vec<f32> = output.mu.to_data().to_vec().unwrap();
-
-        let loss = vgae_loss(output.reconstructed, node_t, output.mu, output.log_var, train_config.kl_weight);
-        let loss_val: f32 = loss.into_scalar();
-        recon_losses.push(loss_val);
+        let mu = vgae.embed(node_t, &feats.edge_index, edge_t);
+        let embedding: Vec<f32> = mu.to_data().to_vec().unwrap();
 
         embeddings.push(embedding);
         valid_indices.push(*orig_idx);
 
-        if (i + 1) % 500 == 0 {
-            let avg_loss: f32 = recon_losses.iter().sum::<f32>() / recon_losses.len() as f32;
-            log::info!("  Encoded {}/{} | avg loss = {:.6}", i + 1, mol_features.len(), avg_loss);
+        if (i + 1) % 10000 == 0 {
+            log::info!("  Encoded {}/{}", i + 1, mol_features.len());
+            flush_log();
         }
+    }
+
+    // Sample reconstruction loss on a subset for diagnostics
+    let sample_size = 1000.min(mol_features.len());
+    let mut sample_indices: Vec<usize> = (0..mol_features.len()).collect();
+    {
+        use rand::seq::SliceRandom;
+        let mut rng = rand::thread_rng();
+        sample_indices.partial_shuffle(&mut rng, sample_size);
+    }
+    sample_indices.truncate(sample_size);
+
+    let mut recon_losses: Vec<f32> = Vec::new();
+    for &si in &sample_indices {
+        let (feats, _, _) = &mol_features[si];
+        let (node_t, edge_t) = features_to_tensors(feats, &device);
+        let output = vgae.forward(node_t.clone(), &feats.edge_index, edge_t, feats.num_atoms);
+        let loss = vgae_loss(output.reconstructed, node_t, output.mu, output.log_var, train_config.kl_weight);
+        recon_losses.push(loss.into_scalar());
     }
 
     let encode_time = t2.elapsed();
     let avg_recon_loss = recon_losses.iter().sum::<f32>() / recon_losses.len().max(1) as f32;
     let emb_stats = embedding_stats(&embeddings);
 
-    log::info!("Encoding complete in {:.2}s", encode_time.as_secs_f64());
+    log::info!("Encoding complete in {:.2}s (inference: {:.2}s)",
+        encode_time.as_secs_f64(), t_enc.elapsed().as_secs_f64());
+    flush_log();
     log::info!("  Mean reconstruction loss: {:.6}", avg_recon_loss);
 
-    io::save_training_losses(output_dir, &recon_losses, &recon_losses)?;
+    io::save_training_losses(output_dir, &train_losses_per_epoch, &val_losses_per_epoch)?;
 
     // ═══════════════════════════════════════════════════
     // Phase 3: Importance Analysis
@@ -666,11 +862,13 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
     log::info!("════════════════════════════════════════════");
     log::info!("  Phase 3: Importance Analysis");
     log::info!("════════════════════════════════════════════");
+    flush_log();
     let t_imp = Instant::now();
     let importance = importance_analysis(&embeddings, &record_refs, &all_fg_profiles, &valid_indices);
     let importance_time = t_imp.elapsed();
 
     log::info!("Importance analysis complete in {:.2}s", importance_time.as_secs_f64());
+    flush_log();
     log::info!("  Top latent dimension correlations with QED:");
     let mut sorted_dims = importance.dim_correlations.clone();
     sorted_dims.sort_by(|a, b| b.qed_corr.abs().partial_cmp(&a.qed_corr.abs()).unwrap_or(std::cmp::Ordering::Equal));
@@ -691,6 +889,7 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
     log::info!("════════════════════════════════════════════");
     log::info!("  Phase 4: Stratified SOM clustering + FG analysis");
     log::info!("════════════════════════════════════════════");
+    flush_log();
     let t3 = Instant::now();
 
     let qed_edges = vec![0.399, 0.520, 0.694, 0.814];
@@ -698,6 +897,8 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
 
     let mut all_labels = vec![0usize; embeddings.len()];
     let mut strata_results = Vec::new();
+    let mut autotune_results: Vec<AutotuneResult> = Vec::new();
+    let mut som_states: Vec<SomState> = Vec::new();
 
     for (group_id, stratum_indices) in strata.iter().enumerate() {
         let stratum_emb_indices: Vec<usize> = stratum_indices.iter()
@@ -715,8 +916,16 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
 
         log::info!("─── Stratum {} ───  {} molecules", group_id, stratum_embeddings.len());
 
-        // Train SOM
-        let som_config = SomConfig::new(16);
+        // Autotune SOM grid size for this stratum
+        log::info!("  Running SOM autotune...");
+        let at_result = som::autotune(&stratum_embeddings, 16, stratum_embeddings.len() > 20000);
+        let best_grid = at_result.best_grid;
+        log::info!("  Autotune selected {}×{} grid", best_grid.0, best_grid.1);
+
+        autotune_results.push(at_result.clone());
+
+        // Train SOM with best configuration (full epochs)
+        let som_config = at_result.best_config.clone();
         let mut som = Som::new(&som_config, &stratum_embeddings);
         som.train(&stratum_embeddings, &som_config);
 
@@ -731,6 +940,14 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
         for (k, &emb_idx) in stratum_emb_indices.iter().enumerate() {
             all_labels[emb_idx] = labels[k];
         }
+
+        // Save SOM state for serialization
+        som_states.push(SomState {
+            stratum_id: group_id,
+            som: som.clone(),
+            config: som_config.clone(),
+            best_grid,
+        });
 
         // FG profiles for this stratum
         let stratum_fg_profiles: Vec<FGProfile> = stratum_emb_indices.iter()
@@ -758,7 +975,7 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
         let cluster_quality = silhouette_score(&stratum_embeddings, &labels);
         let size_stats = cluster_size_distribution(&cluster_infos);
 
-        log::info!("  Active clusters: {}/100 | QE: {:.6}", used_clusters.len(), qe);
+        log::info!("  Active clusters: {}/{} | QE: {:.6}", used_clusters.len(), best_grid.0 * best_grid.1, qe);
         log::info!("  Silhouette: {:.4} | Davies-Bouldin: {:.4}", cluster_quality.silhouette_mean, cluster_quality.davies_bouldin);
         log::info!("  Cluster sizes: mean={:.1}, median={:.0}, gini={:.3}", size_stats.mean, size_stats.median, size_stats.gini);
 
@@ -810,12 +1027,32 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
 
     let cluster_time = t3.elapsed();
 
+    // Save pipeline state checkpoint after clustering
+    let state_path = format!("{}/pipeline_state.json", output_dir);
+    let pipeline_state = PipelineState {
+        version: "1.0".to_string(),
+        csv_path: csv_path.to_string(),
+        total_molecules: total,
+        processed_molecules: embeddings.len(),
+        embeddings: embeddings.clone(),
+        valid_indices: valid_indices.clone(),
+        recon_losses: recon_losses.clone(),
+        labels: all_labels.clone(),
+        som_states,
+        autotune_results: autotune_results.clone(),
+        phase_completed: 4,
+    };
+    if let Err(e) = pipeline_state.save(&state_path) {
+        log::warn!("Failed to save pipeline state: {}", e);
+    }
+
     // ═══════════════════════════════════════════════════
     // Phase 5: Generate visualizations
     // ═══════════════════════════════════════════════════
     log::info!("════════════════════════════════════════════");
     log::info!("  Phase 5: Generating visualizations");
     log::info!("════════════════════════════════════════════");
+    flush_log();
     let t_viz = Instant::now();
 
     // Build stratum labels for each embedding
@@ -887,13 +1124,16 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
 
     let viz_time = t_viz.elapsed();
     log::info!("Visualization complete in {:.2}s ({} figures)", viz_time.as_secs_f64(), figures.len());
+    flush_log();
 
     let total_time = pipeline_start.elapsed();
 
     log::info!("════════════════════════════════════════════");
     log::info!("  Pipeline complete");
     log::info!("════════════════════════════════════════════");
+    flush_log();
     log::info!("  Total: {:.2}s", total_time.as_secs_f64());
+    flush_log();
 
     Ok(PipelineResults {
         total_molecules: total,
@@ -902,7 +1142,8 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
         strata_results,
         latent_dim: 16,
         gnn_layers: 3,
-        som_grid: (10, 10),
+        som_grid: autotune_results.first().map(|a| a.best_grid).unwrap_or((10, 10)),
+        autotune_results,
         dataset_stats,
         graph_stats,
         emb_stats,
@@ -1090,6 +1331,7 @@ pub struct PipelineResults {
     pub latent_dim: usize,
     pub gnn_layers: usize,
     pub som_grid: (usize, usize),
+    pub autotune_results: Vec<AutotuneResult>,
     pub dataset_stats: DatasetStats,
     pub graph_stats: GraphStats,
     pub emb_stats: EmbeddingStats,
@@ -1224,13 +1466,26 @@ impl PipelineResults {
 
         md.push_str("### SOM Configuration\n\n");
         md.push_str("| Parameter | Value |\n|---|---|\n");
-        md.push_str(&format!("| Grid size | {}×{} ({} neurons) |\n",
-            self.som_grid.0, self.som_grid.1, self.som_grid.0 * self.som_grid.1));
-        md.push_str("| Training epochs | 128 |\n");
+        md.push_str("| Grid selection | **Autotune** (multi-candidate evaluation) |\n");
+        md.push_str("| Training epochs | 128 (full), 30–50 (autotune eval) |\n");
         md.push_str("| Initial learning rate | 0.5 |\n");
-        md.push_str("| Initial radius | 5.0 |\n");
         md.push_str("| Distance metric | Euclidean |\n");
-        md.push_str("| Neighborhood | Gaussian |\n\n");
+        md.push_str("| Neighborhood | Gaussian |\n");
+        md.push_str("| Scoring | 0.4×QE + 0.3×TE + 0.3×ActiveRatio |\n\n");
+
+        if !self.autotune_results.is_empty() {
+            md.push_str("### Autotune Results (per Stratum)\n\n");
+            for (i, at) in self.autotune_results.iter().enumerate() {
+                md.push_str(&format!("**Stratum {}** — Best grid: **{}×{}**\n\n", i, at.best_grid.0, at.best_grid.1));
+                md.push_str("| Grid | Neurons | Active | QE | TE | Score |\n|---|---|---|---|---|---|\n");
+                for c in &at.candidates {
+                    md.push_str(&format!("| {}×{} | {} | {} | {:.4} | {:.4} | {:.4} |\n",
+                        c.grid_width, c.grid_height, c.num_clusters, c.active_clusters,
+                        c.quantization_error, c.topographic_error, c.combined_score));
+                }
+                md.push_str("\n");
+            }
+        }
 
         // ── 5. VGAE Encoding Results ──
         md.push_str("## 5. VGAE Encoding Results\n\n");
@@ -1507,7 +1762,10 @@ impl PipelineResults {
             let max_size = all_sizes.iter().copied().max().unwrap_or(0);
             let min_size = all_sizes.iter().copied().min().unwrap_or(0);
             let active_clusters: usize = self.strata_results.iter().map(|sr| sr.num_clusters_used).sum();
-            let total_neurons: usize = self.strata_results.len() * self.som_grid.0 * self.som_grid.1;
+            let total_neurons: usize = self.autotune_results.iter()
+                .map(|at| at.best_grid.0 * at.best_grid.1)
+                .sum::<usize>()
+                .max(self.strata_results.len() * self.som_grid.0 * self.som_grid.1);
 
             // Global averages
             let avg_silhouette = self.strata_results.iter()
@@ -1617,5 +1875,265 @@ impl PipelineResults {
         md.push_str("\n");
 
         md
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── pearson_correlation ──
+
+    #[test]
+    fn test_pearson_perfect_positive() {
+        let x = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let y = vec![2.0, 4.0, 6.0, 8.0, 10.0];
+        let r = pearson_correlation(&x, &y);
+        assert!((r - 1.0).abs() < 1e-10, "Perfect positive correlation: r={}", r);
+    }
+
+    #[test]
+    fn test_pearson_perfect_negative() {
+        let x = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let y = vec![10.0, 8.0, 6.0, 4.0, 2.0];
+        let r = pearson_correlation(&x, &y);
+        assert!((r + 1.0).abs() < 1e-10, "Perfect negative correlation: r={}", r);
+    }
+
+    #[test]
+    fn test_pearson_uncorrelated() {
+        let x = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let y = vec![2.0, 4.0, 1.0, 5.0, 3.0];
+        let r = pearson_correlation(&x, &y);
+        assert!(r.abs() < 0.5, "Weakly correlated data: r={}", r);
+    }
+
+    #[test]
+    fn test_pearson_constant_returns_zero() {
+        let x = vec![1.0, 1.0, 1.0, 1.0];
+        let y = vec![1.0, 2.0, 3.0, 4.0];
+        let r = pearson_correlation(&x, &y);
+        assert_eq!(r, 0.0, "Constant input should return 0");
+    }
+
+    #[test]
+    fn test_pearson_too_short() {
+        let x = vec![1.0, 2.0];
+        let y = vec![3.0, 4.0];
+        let r = pearson_correlation(&x, &y);
+        assert_eq!(r, 0.0, "n < 3 should return 0");
+    }
+
+    // ── stat_std / stat_var ──
+
+    #[test]
+    fn test_stat_std_known() {
+        let vals = vec![2.0, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 9.0];
+        let std = stat_std(&vals);
+        // Population std=2.0, sample std≈2.138
+        assert!((std - 2.138).abs() < 0.01, "std={}", std);
+    }
+
+    #[test]
+    fn test_stat_var_known() {
+        let vals = vec![2.0, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 9.0];
+        let var = stat_var(&vals);
+        assert!((var - stat_std(&vals).powi(2)).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_stat_std_single_value() {
+        let vals = vec![42.0];
+        assert_eq!(stat_std(&vals), 0.0);
+    }
+
+    #[test]
+    fn test_stat_std_empty() {
+        let vals: Vec<f64> = vec![];
+        assert_eq!(stat_std(&vals), 0.0);
+    }
+
+    // ── euclidean_dist ──
+
+    #[test]
+    fn test_euclidean_dist_known() {
+        let a = vec![0.0f32, 0.0];
+        let b = vec![3.0f32, 4.0];
+        let d = euclidean_dist(&a, &b);
+        assert!((d - 5.0).abs() < 1e-10, "3-4-5 triangle: d={}", d);
+    }
+
+    #[test]
+    fn test_euclidean_dist_same_point() {
+        let a = vec![1.0f32, 2.0, 3.0];
+        let d = euclidean_dist(&a, &a);
+        assert!((d).abs() < 1e-10);
+    }
+
+    // ── centroid_of ──
+
+    #[test]
+    fn test_centroid_of_basic() {
+        let embeddings = vec![
+            vec![0.0f32, 0.0],
+            vec![2.0f32, 4.0],
+            vec![4.0f32, 2.0],
+        ];
+        let c = centroid_of(&[0, 1, 2], &embeddings);
+        assert!((c[0] - 2.0).abs() < 1e-5);
+        assert!((c[1] - 2.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn test_centroid_of_single() {
+        let embeddings = vec![vec![3.0f32, 7.0]];
+        let c = centroid_of(&[0], &embeddings);
+        assert_eq!(c, vec![3.0, 7.0]);
+    }
+
+    #[test]
+    fn test_centroid_of_empty() {
+        let embeddings = vec![vec![1.0f32]];
+        let c = centroid_of(&[], &embeddings);
+        assert!(c.is_empty());
+    }
+
+    // ── cluster_size_distribution ──
+
+    fn dummy_cluster(id: usize, size: usize, centroid: Vec<f32>) -> ClusterInfo {
+        ClusterInfo {
+            cluster_id: id,
+            size,
+            centroid,
+            mean_qed: 0.0, std_qed: 0.0, mean_logp: 0.0, mean_sas: 0.0,
+            compactness: 0.0,
+            cluster_census: FGCensus::from_profiles(&[]),
+            signature_fgs: vec![],
+            dominant_fg: None,
+            representative_smiles: None,
+        }
+    }
+
+    #[test]
+    fn test_cluster_size_distribution_uniform() {
+        let clusters: Vec<ClusterInfo> = (0..10).map(|i| {
+            let mut c = dummy_cluster(i, 100, vec![0.0]);
+            c.mean_qed = 0.5;
+            c
+        }).collect();
+
+        let stats = cluster_size_distribution(&clusters);
+        assert_eq!(stats.total_clusters, 10);
+        assert!((stats.mean - 100.0).abs() < 1e-5);
+        assert!((stats.median - 100.0).abs() < 1e-5);
+        assert!((stats.std).abs() < 1e-5, "Uniform sizes should have zero std");
+        assert!((stats.gini).abs() < 1e-5, "Uniform sizes should have zero Gini");
+        assert_eq!(stats.singletons, 0);
+    }
+
+    #[test]
+    fn test_cluster_size_distribution_varied() {
+        let sizes = vec![1, 1, 5, 10, 50, 100];
+        let clusters: Vec<ClusterInfo> = sizes.iter().enumerate()
+            .map(|(i, &s)| dummy_cluster(i, s, vec![]))
+            .collect();
+
+        let stats = cluster_size_distribution(&clusters);
+        assert_eq!(stats.singletons, 2);
+        assert!(stats.gini > 0.3, "Unequal sizes should have high Gini: {}", stats.gini);
+        assert_eq!(stats.min, 1);
+        assert_eq!(stats.max, 100);
+    }
+
+    // ── inter_cluster_distances ──
+
+    #[test]
+    fn test_inter_cluster_distances_basic() {
+        let clusters = vec![
+            dummy_cluster(0, 10, vec![0.0, 0.0]),
+            dummy_cluster(1, 10, vec![3.0, 4.0]),
+        ];
+
+        let pairs = inter_cluster_distances(&clusters);
+        assert_eq!(pairs.len(), 1);
+        assert!((pairs[0].distance - 5.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn test_inter_cluster_distances_sorted() {
+        let clusters = vec![
+            dummy_cluster(0, 1, vec![0.0]),
+            dummy_cluster(1, 1, vec![10.0]),
+            dummy_cluster(2, 1, vec![1.0]),
+        ];
+
+        let pairs = inter_cluster_distances(&clusters);
+        assert_eq!(pairs.len(), 3);
+        // Sorted by distance: (0,2)=1.0, (1,2)=9.0, (0,1)=10.0
+        assert!((pairs[0].distance - 1.0).abs() < 1e-5);
+        assert!((pairs[1].distance - 9.0).abs() < 1e-5);
+        assert!((pairs[2].distance - 10.0).abs() < 1e-5);
+    }
+
+    // ── silhouette_score ──
+
+    #[test]
+    fn test_silhouette_well_separated() {
+        let embeddings: Vec<Vec<f32>> = vec![
+            vec![0.0, 0.0], vec![0.1, 0.1], vec![0.0, 0.1],
+            vec![10.0, 10.0], vec![10.1, 10.1], vec![10.0, 10.1],
+        ];
+        let labels = vec![0, 0, 0, 1, 1, 1];
+        let q = silhouette_score(&embeddings, &labels);
+        assert!(q.silhouette_mean > 0.5, "Well-separated clusters should have high silhouette: {}", q.silhouette_mean);
+    }
+
+    // ── features_to_tensors (smoke test) ──
+
+    #[test]
+    fn test_features_to_tensors_basic() {
+        let feats = MolecularFeatures {
+            num_atoms: 2,
+            num_bonds: 1,
+            node_features: vec![vec![0.0; NODE_FEATURE_DIM]; 2],
+            edge_features: vec![vec![0.0; EDGE_FEATURE_DIM]; 1],
+            edge_index: vec![[0, 1]],
+        };
+        let device = WgpuDevice::BestAvailable;
+        let (nodes, edges) = features_to_tensors(&feats, &device);
+        assert_eq!(nodes.dims(), [2, NODE_FEATURE_DIM]);
+        assert_eq!(edges.dims(), [1, EDGE_FEATURE_DIM]);
+    }
+
+    // ── Pipeline state save/load ──
+
+    #[test]
+    fn test_pipeline_state_save_load() {
+        let state = PipelineState {
+            version: "1.0".to_string(),
+            csv_path: "test.csv".to_string(),
+            total_molecules: 100,
+            processed_molecules: 95,
+            embeddings: vec![vec![0.1, 0.2, 0.3]; 3],
+            valid_indices: vec![0, 1, 2],
+            recon_losses: vec![0.01, 0.02, 0.03],
+            labels: vec![0, 1, 0],
+            som_states: vec![],
+            autotune_results: vec![],
+            phase_completed: 2,
+        };
+
+        let path = "/tmp/fga_test_pipeline_state.json";
+        state.save(path).unwrap();
+        let loaded = PipelineState::load(path).unwrap();
+
+        assert_eq!(loaded.version, "1.0");
+        assert_eq!(loaded.total_molecules, 100);
+        assert_eq!(loaded.processed_molecules, 95);
+        assert_eq!(loaded.embeddings.len(), 3);
+        assert_eq!(loaded.phase_completed, 2);
+        assert_eq!(loaded.labels, vec![0, 1, 0]);
+
+        let _ = std::fs::remove_file(path);
     }
 }

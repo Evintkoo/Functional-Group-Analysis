@@ -47,16 +47,13 @@ fn heatmap_color(value: f64, min_val: f64, max_val: f64) -> RGBColor {
 }
 
 fn sequential_color(value: f64, min_val: f64, max_val: f64) -> RGBColor {
-    let t = if (max_val - min_val).abs() < 1e-12 {
-        0.5
-    } else {
-        ((value - min_val) / (max_val - min_val)).clamp(0.0, 1.0)
-    };
-    RGBColor(
-        (255.0 - t * 224.0) as u8,
-        (255.0 - t * 179.0) as u8,
-        (255.0 - t * 63.0) as u8,
-    )
+    let t = if (max_val - min_val).abs() < 1e-12 { 0.5 }
+        else { ((value - min_val) / (max_val - min_val)).clamp(0.0, 1.0) };
+    // Viridis-inspired: dark purple → teal → yellow
+    let r = (68.0 + t * 187.0) as u8;
+    let g = (1.0 + t * 214.0) as u8;
+    let b = (84.0 + (1.0 - (2.0 * t - 1.0).abs()) * 128.0) as u8;
+    RGBColor(r, g, b)
 }
 
 // ═══════════════════════════════════════════════════
@@ -159,7 +156,7 @@ fn plot_property_overlay(
     path: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     ensure_parent_dir(path);
-    let root = SVGBackend::new(path, (900, 400)).into_drawing_area();
+    let root = SVGBackend::new(path, (1200, 450)).into_drawing_area();
     root.fill(&WHITE)?;
 
     let areas = root.split_evenly((1, 3));
@@ -174,15 +171,17 @@ fn plot_property_overlay(
         let max_count = *counts.iter().max().unwrap_or(&1) as f64;
 
         let mut chart = ChartBuilder::on(area)
-            .caption(*label, ("sans-serif", 18).into_font())
-            .margin(8)
-            .x_label_area_size(35)
-            .y_label_area_size(45)
+            .caption(*label, ("sans-serif", 20).into_font())
+            .margin(15)
+            .x_label_area_size(40)
+            .y_label_area_size(55)
             .build_cartesian_2d(bins[0]..bins[bins.len() - 1], 0.0..max_count * 1.1)?;
 
         chart.configure_mesh()
-            .x_label_style(("sans-serif", 11))
-            .y_label_style(("sans-serif", 11))
+            .x_desc(*label)
+            .y_desc("Count")
+            .x_label_style(("sans-serif", 12))
+            .y_label_style(("sans-serif", 12))
             .draw()?;
 
         let bar_width = (bins[1] - bins[0]) * 0.92;
@@ -209,7 +208,7 @@ pub fn plot_fg_prevalence(
     ensure_parent_dir(&path);
 
     let n = fg_data.len();
-    let root = SVGBackend::new(&path, (900, 50 + n as u32 * 28)).into_drawing_area();
+    let root = SVGBackend::new(&path, (900, 80 + n as u32 * 32)).into_drawing_area();
     root.fill(&WHITE)?;
 
     let max_pct = fg_data.iter().map(|(_, p)| *p).fold(0.0_f64, f64::max) * 1.1;
@@ -275,7 +274,7 @@ pub fn plot_latent_space_pca(
     let x_pad = (x_max - x_min) * 0.05;
     let y_pad = (y_max - y_min) * 0.05;
 
-    let root = SVGBackend::new(&path, (900, 700)).into_drawing_area();
+    let root = SVGBackend::new(&path, (1000, 750)).into_drawing_area();
     root.fill(&WHITE)?;
 
     let mut chart = ChartBuilder::on(&root)
@@ -308,11 +307,11 @@ pub fn plot_latent_space_pca(
         let color = STRATUM_COLORS[stratum];
         chart.draw_series(
             stratum_points.iter().map(|&(x, y)| {
-                Circle::new((x, y), 2, color.mix(0.4).filled())
+                Circle::new((x, y), 4, color.mix(0.6).filled())
             })
         )?
         .label(*qed_labels.get(stratum).unwrap_or(&""))
-        .legend(move |(x, y)| Circle::new((x + 10, y), 5, color.filled()));
+        .legend(move |(x, y)| Circle::new((x + 10, y), 6, color.filled()));
     }
 
     chart.configure_series_labels()
@@ -350,8 +349,8 @@ pub fn plot_cluster_size_distributions(
         let max_count = *counts.iter().max().unwrap_or(&1) as f64;
 
         let mut chart = ChartBuilder::on(area)
-            .caption(qed_labels.get(i).unwrap_or(&""), ("sans-serif", 16).into_font())
-            .margin(8)
+            .caption(qed_labels.get(i).unwrap_or(&""), ("sans-serif", 18).into_font())
+            .margin(15)
             .x_label_area_size(35)
             .y_label_area_size(50)
             .build_cartesian_2d(bins[0]..bins[bins.len() - 1], 0.0..max_count * 1.15)?;
@@ -359,8 +358,8 @@ pub fn plot_cluster_size_distributions(
         chart.configure_mesh()
             .x_desc("Cluster Size")
             .y_desc("Count")
-            .x_label_style(("sans-serif", 11))
-            .y_label_style(("sans-serif", 11))
+            .x_label_style(("sans-serif", 12))
+            .y_label_style(("sans-serif", 12))
             .draw()?;
 
         let bar_width = (bins[1] - bins[0]) * 0.92;
@@ -391,7 +390,7 @@ pub fn plot_dim_property_heatmap(
     let properties = ["QED", "logP", "SAS"];
     let n_props = properties.len();
 
-    let root = SVGBackend::new(&path, (700, 100 + n_dims as u32 * 30)).into_drawing_area();
+    let root = SVGBackend::new(&path, (800, 100 + n_dims as u32 * 35)).into_drawing_area();
     root.fill(&WHITE)?;
 
     let mut chart = ChartBuilder::on(&root)
@@ -406,7 +405,7 @@ pub fn plot_dim_property_heatmap(
         .x_label_formatter(&|idx| properties.get(*idx).unwrap_or(&"").to_string())
         .y_label_formatter(&|idx| format!("Dim {}", dim_correlations.get(*idx).map(|d| d.0).unwrap_or(*idx)))
         .x_label_style(("sans-serif", 13))
-        .y_label_style(("sans-serif", 11))
+        .y_label_style(("sans-serif", 12))
         .draw()?;
 
     for (row, &(_, r_qed, r_logp, r_sas)) in dim_correlations.iter().enumerate() {
@@ -421,7 +420,7 @@ pub fn plot_dim_property_heatmap(
                 Text::new(
                     format!("{:+.3}", val),
                     (col, row),
-                    ("sans-serif", 10).into_font().color(text_color),
+                    ("sans-serif", 12).into_font().color(text_color),
                 )
             ))?;
         }
@@ -443,7 +442,7 @@ pub fn plot_fg_property_correlations(
     ensure_parent_dir(&path);
 
     let n_fgs = fg_correlations.len();
-    let root = SVGBackend::new(&path, (750, 100 + n_fgs as u32 * 28)).into_drawing_area();
+    let root = SVGBackend::new(&path, (750, 100 + n_fgs as u32 * 32)).into_drawing_area();
     root.fill(&WHITE)?;
 
     let properties = ["QED", "logP", "SAS"];
@@ -460,22 +459,22 @@ pub fn plot_fg_property_correlations(
         .x_label_formatter(&|idx| properties.get(*idx).unwrap_or(&"").to_string())
         .y_label_formatter(&|idx| fg_correlations.get(*idx).map(|(n, _, _, _)| n.clone()).unwrap_or_default())
         .x_label_style(("sans-serif", 13))
-        .y_label_style(("sans-serif", 10))
+        .y_label_style(("sans-serif", 11))
         .draw()?;
 
     for (row, (_, r_qed, r_logp, r_sas)) in fg_correlations.iter().enumerate() {
         let vals = [*r_qed, *r_logp, *r_sas];
         for (col, &val) in vals.iter().enumerate() {
-            let color = heatmap_color(val, -0.15, 0.15);
+            let color = heatmap_color(val, -0.3, 0.3);
             chart.draw_series(std::iter::once(
                 Rectangle::new([(col, row), (col + 1, row + 1)], color.filled())
             ))?;
-            let text_color = if val.abs() > 0.10 { &WHITE } else { &BLACK };
+            let text_color = if val.abs() > 0.20 { &WHITE } else { &BLACK };
             chart.draw_series(std::iter::once(
                 Text::new(
                     format!("{:+.3}", val),
                     (col, row),
-                    ("sans-serif", 9).into_font().color(text_color),
+                    ("sans-serif", 11).into_font().color(text_color),
                 )
             ))?;
         }
@@ -496,11 +495,12 @@ pub fn plot_cluster_quality_comparison(
     let path = format!("{}/figures/cluster_quality_comparison.svg", output_dir);
     ensure_parent_dir(&path);
 
-    let root = SVGBackend::new(&path, (1000, 700)).into_drawing_area();
+    let root = SVGBackend::new(&path, (1100, 750)).into_drawing_area();
     root.fill(&WHITE)?;
 
     let areas = root.split_evenly((2, 2));
     let titles = ["Silhouette Score", "Davies-Bouldin Index", "Quantization Error", "Gini Coefficient"];
+    let y_labels = ["Score", "Index", "Error", "Coefficient"];
     let metrics: Vec<Vec<f64>> = vec![
         strata_metrics.iter().map(|m| m.1).collect(),
         strata_metrics.iter().map(|m| m.2).collect(),
@@ -517,7 +517,7 @@ pub fn plot_cluster_quality_comparison(
         let y_hi = max_v + range * 0.15;
 
         let mut chart = ChartBuilder::on(area)
-            .caption(titles[i], ("sans-serif", 16).into_font())
+            .caption(titles[i], ("sans-serif", 18).into_font())
             .margin(10)
             .x_label_area_size(35)
             .y_label_area_size(55)
@@ -525,6 +525,7 @@ pub fn plot_cluster_quality_comparison(
 
         chart.configure_mesh()
             .x_desc("Stratum")
+            .y_desc(y_labels[i])
             .x_label_style(("sans-serif", 12))
             .y_label_style(("sans-serif", 12))
             .draw()?;
@@ -542,7 +543,7 @@ pub fn plot_cluster_quality_comparison(
                 Text::new(
                     format!("{:.4}", v),
                     (j, v),
-                    ("sans-serif", 10).into_font(),
+                    ("sans-serif", 11).into_font(),
                 )
             })
         )?;
@@ -586,7 +587,7 @@ pub fn plot_embedding_variance(
     let n = dim_variances.len();
     let max_var = dim_variances.iter().map(|d| d.1).fold(0.0_f64, f64::max) * 1.1;
 
-    let root = SVGBackend::new(&path, (800, 500)).into_drawing_area();
+    let root = SVGBackend::new(&path, (850, 500)).into_drawing_area();
     root.fill(&WHITE)?;
 
     let mut chart = ChartBuilder::on(&root)
@@ -631,7 +632,7 @@ pub fn plot_umatrix_heatmaps(
     ensure_parent_dir(&path);
 
     let n_strata = u_matrices.len();
-    let root = SVGBackend::new(&path, (250 * n_strata as u32 + 100, 350)).into_drawing_area();
+    let root = SVGBackend::new(&path, (280 * n_strata as u32 + 120, 400)).into_drawing_area();
     root.fill(&WHITE)?;
 
     let areas = root.split_evenly((1, n_strata));
@@ -647,16 +648,18 @@ pub fn plot_umatrix_heatmaps(
         let u_max = all_vals.iter().copied().fold(f64::MIN, f64::max);
 
         let mut chart = ChartBuilder::on(area)
-            .caption(qed_labels.get(i).unwrap_or(&""), ("sans-serif", 14).into_font())
-            .margin(5)
-            .x_label_area_size(25)
-            .y_label_area_size(25)
+            .caption(qed_labels.get(i).unwrap_or(&""), ("sans-serif", 16).into_font())
+            .margin(10)
+            .x_label_area_size(30)
+            .y_label_area_size(30)
             .build_cartesian_2d(0..w, 0..h)?;
 
         chart.configure_mesh()
             .disable_mesh()
-            .x_label_style(("sans-serif", 9))
-            .y_label_style(("sans-serif", 9))
+            .x_desc("Grid X")
+            .y_desc("Grid Y")
+            .x_label_style(("sans-serif", 11))
+            .y_label_style(("sans-serif", 11))
             .draw()?;
 
         for r in 0..h {
@@ -702,7 +705,7 @@ pub fn plot_fg_enrichment_heatmap(
         return Ok(format!("figures/{}", filename));
     }
 
-    let root = SVGBackend::new(&path, (200 + n_fgs as u32 * 55, 120 + n_clusters as u32 * 28)).into_drawing_area();
+    let root = SVGBackend::new(&path, (200 + n_fgs as u32 * 60, 120 + n_clusters as u32 * 32)).into_drawing_area();
     root.fill(&WHITE)?;
 
     let mut data: Vec<Vec<f64>> = Vec::new();
@@ -719,7 +722,7 @@ pub fn plot_fg_enrichment_heatmap(
     let mut chart = ChartBuilder::on(&root)
         .caption(format!("FG Enrichment — Stratum {}", stratum_id), ("sans-serif", 18).into_font())
         .margin(15)
-        .x_label_area_size(100)
+        .x_label_area_size(120)
         .y_label_area_size(80)
         .build_cartesian_2d(0..n_fgs, 0..n_clusters)?;
 
@@ -727,8 +730,8 @@ pub fn plot_fg_enrichment_heatmap(
         .disable_mesh()
         .x_label_formatter(&|idx| fg_names.get(*idx).cloned().unwrap_or_default())
         .y_label_formatter(&|idx| cluster_fg_enrichments.get(*idx).map(|(id, _)| format!("C{}", id)).unwrap_or_default())
-        .x_label_style(("sans-serif", 9).into_font().transform(FontTransform::Rotate270))
-        .y_label_style(("sans-serif", 10))
+        .x_label_style(("sans-serif", 11).into_font().transform(FontTransform::Rotate270))
+        .y_label_style(("sans-serif", 11))
         .draw()?;
 
     for (row, row_data) in data.iter().enumerate() {
@@ -762,7 +765,7 @@ pub fn plot_distance_matrix(
     let n = n_clusters.min(20);
     if n < 2 { return Ok(format!("figures/{}", filename)); }
 
-    let root = SVGBackend::new(&path, (100 + n as u32 * 30, 100 + n as u32 * 30)).into_drawing_area();
+    let root = SVGBackend::new(&path, (120 + n as u32 * 35, 120 + n as u32 * 35)).into_drawing_area();
     root.fill(&WHITE)?;
 
     let mut matrix = vec![vec![0.0_f64; n]; n];
@@ -778,14 +781,16 @@ pub fn plot_distance_matrix(
     let mut chart = ChartBuilder::on(&root)
         .caption(format!("Inter-Cluster Distances — Stratum {}", stratum_id), ("sans-serif", 16).into_font())
         .margin(10)
-        .x_label_area_size(30)
-        .y_label_area_size(30)
+        .x_label_area_size(35)
+        .y_label_area_size(35)
         .build_cartesian_2d(0..n, 0..n)?;
 
     chart.configure_mesh()
         .disable_mesh()
-        .x_label_style(("sans-serif", 9))
-        .y_label_style(("sans-serif", 9))
+        .x_desc("Cluster ID")
+        .y_desc("Cluster ID")
+        .x_label_style(("sans-serif", 11))
+        .y_label_style(("sans-serif", 11))
         .draw()?;
 
     for r in 0..n {
@@ -812,11 +817,12 @@ pub fn plot_stratum_property_comparison(
     let path = format!("{}/figures/stratum_property_comparison.svg", output_dir);
     ensure_parent_dir(&path);
 
-    let root = SVGBackend::new(&path, (900, 400)).into_drawing_area();
+    let root = SVGBackend::new(&path, (1200, 450)).into_drawing_area();
     root.fill(&WHITE)?;
 
     let areas = root.split_evenly((1, 3));
     let property_names = ["QED (mean ± std)", "logP (mean ± std)", "SAS (mean ± std)"];
+    let y_descs = ["QED", "logP", "SAS"];
 
     for (p_idx, area) in areas.iter().enumerate() {
         let (means, stds): (Vec<f64>, Vec<f64>) = strata_stats.iter().map(|s| {
@@ -832,16 +838,17 @@ pub fn plot_stratum_property_comparison(
         let y_max = all_vals.iter().copied().fold(f64::MIN, f64::max) + 0.1;
 
         let mut chart = ChartBuilder::on(area)
-            .caption(property_names[p_idx], ("sans-serif", 14).into_font())
-            .margin(8)
-            .x_label_area_size(30)
-            .y_label_area_size(50)
+            .caption(property_names[p_idx], ("sans-serif", 18).into_font())
+            .margin(15)
+            .x_label_area_size(40)
+            .y_label_area_size(55)
             .build_cartesian_2d(0..means.len(), y_min..y_max)?;
 
         chart.configure_mesh()
             .x_desc("Stratum")
-            .x_label_style(("sans-serif", 11))
-            .y_label_style(("sans-serif", 11))
+            .y_desc(y_descs[p_idx])
+            .x_label_style(("sans-serif", 12))
+            .y_label_style(("sans-serif", 12))
             .draw()?;
 
         chart.draw_series(
@@ -887,7 +894,7 @@ pub fn plot_molecule_complexity(
     let x_max = points.iter().map(|p| p.0).fold(0.0_f64, f64::max) + 2.0;
     let y_max = points.iter().map(|p| p.1).fold(0.0_f64, f64::max) + 2.0;
 
-    let root = SVGBackend::new(&path, (800, 600)).into_drawing_area();
+    let root = SVGBackend::new(&path, (900, 650)).into_drawing_area();
     root.fill(&WHITE)?;
 
     let mut chart = ChartBuilder::on(&root)
@@ -912,7 +919,7 @@ pub fn plot_molecule_complexity(
                 (100.0 + 155.0 * t) as u8,
                 (50.0 + 130.0 * t) as u8,
             );
-            Circle::new((a, b), 2, color.mix(0.5).filled())
+            Circle::new((a, b), 4, color.mix(0.6).filled())
         })
     )?
     .label("Color: QED (red=low, green=high)")
@@ -1131,4 +1138,184 @@ pub fn generate_all_figures(data: &VisualizationData, output_dir: &str) -> Vec<(
 
     log::info!("Generated {} figures total", figures.len());
     figures
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_compute_histogram_basic() {
+        let data = vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0];
+        let (bins, counts) = compute_histogram(&data, 5);
+        assert_eq!(bins.len(), 6); // num_bins + 1 edges
+        assert_eq!(counts.len(), 5);
+        let total: usize = counts.iter().sum();
+        assert_eq!(total, 10);
+    }
+
+    #[test]
+    fn test_compute_histogram_single_value() {
+        let data = vec![5.0; 100];
+        let (bins, counts) = compute_histogram(&data, 10);
+        assert_eq!(counts.len(), 10);
+        let total: usize = counts.iter().sum();
+        assert_eq!(total, 100);
+    }
+
+    #[test]
+    fn test_compute_histogram_empty() {
+        let data: Vec<f64> = vec![];
+        let (bins, counts) = compute_histogram(&data, 10);
+        assert_eq!(bins.len(), 2);
+        assert_eq!(counts, vec![0]);
+    }
+
+    #[test]
+    fn test_simple_pca_2d_dimensions() {
+        let embeddings: Vec<Vec<f32>> = (0..100)
+            .map(|i| vec![i as f32 * 0.1, (i as f32).sin(), (i as f32).cos(), i as f32 * 0.05])
+            .collect();
+        let (pc1, pc2) = simple_pca_2d(&embeddings);
+        assert_eq!(pc1.len(), 100);
+        assert_eq!(pc2.len(), 100);
+    }
+
+    #[test]
+    fn test_simple_pca_2d_empty() {
+        let embeddings: Vec<Vec<f32>> = vec![];
+        let (pc1, pc2) = simple_pca_2d(&embeddings);
+        assert!(pc1.is_empty());
+        assert!(pc2.is_empty());
+    }
+
+    #[test]
+    fn test_power_iteration_unit_vector() {
+        let data = vec![
+            vec![1.0, 0.0],
+            vec![1.0, 0.0],
+            vec![1.0, 0.0],
+        ];
+        let v = power_iteration(&data, 2, None, 30);
+        assert_eq!(v.len(), 2);
+        let norm: f64 = v.iter().map(|x| x * x).sum::<f64>().sqrt();
+        assert!((norm - 1.0).abs() < 1e-10, "Eigenvector should be unit length");
+    }
+
+    #[test]
+    fn test_heatmap_color_extremes() {
+        let low = heatmap_color(0.0, 0.0, 1.0);
+        let high = heatmap_color(1.0, 0.0, 1.0);
+        let mid = heatmap_color(0.5, 0.0, 1.0);
+        // Low should be blueish
+        assert!(low.2 > low.0, "Low value should be more blue than red");
+        // High should be reddish
+        assert!(high.0 > high.2, "High value should be more red than blue");
+        // Mid should be near white
+        assert!(mid.0 > 200 && mid.1 > 200 && mid.2 > 200, "Mid value should be near white");
+    }
+
+    #[test]
+    fn test_sequential_color_range() {
+        let low = sequential_color(0.0, 0.0, 1.0);
+        let high = sequential_color(1.0, 0.0, 1.0);
+        // Low should be near white
+        assert!(low.0 > 240 && low.1 > 240 && low.2 > 240);
+        // High should be dark
+        assert!(high.0 < 50 && high.1 < 100);
+    }
+
+    #[test]
+    fn test_heatmap_color_equal_range() {
+        let c = heatmap_color(5.0, 5.0, 5.0);
+        // With equal min/max, should return mid-range color
+        assert!(c.0 > 100);
+    }
+
+    #[test]
+    fn test_ensure_parent_dir() {
+        let test_path = "/tmp/fga_test_viz_dir/sub/file.svg";
+        ensure_parent_dir(test_path);
+        assert!(std::path::Path::new("/tmp/fga_test_viz_dir/sub").exists());
+        let _ = std::fs::remove_dir_all("/tmp/fga_test_viz_dir");
+    }
+
+    #[test]
+    fn test_plot_histogram_creates_file() {
+        let data = vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0];
+        let path = "/tmp/fga_test_histogram.svg";
+        let result = plot_histogram(&data, path, "Test", "X", 5, RGBColor(31, 119, 180));
+        assert!(result.is_ok());
+        assert!(std::path::Path::new(path).exists());
+        let content = std::fs::read_to_string(path).unwrap();
+        assert!(content.contains("<svg"));
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
+    fn test_plot_fg_prevalence_creates_file() {
+        let fg_data = vec![
+            ("Phenyl".to_string(), 83.0),
+            ("Amide".to_string(), 68.0),
+            ("Ether".to_string(), 37.0),
+        ];
+        let dir = "/tmp/fga_test_fg_prev";
+        let _ = std::fs::create_dir_all(format!("{}/figures", dir));
+        let result = plot_fg_prevalence(&fg_data, dir);
+        assert!(result.is_ok());
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn test_plot_embedding_variance_creates_file() {
+        let variances: Vec<(usize, f64)> = (0..16).map(|i| (i, 0.01 * (i + 1) as f64)).collect();
+        let dir = "/tmp/fga_test_emb_var";
+        let _ = std::fs::create_dir_all(format!("{}/figures", dir));
+        let result = plot_embedding_variance(&variances, dir);
+        assert!(result.is_ok());
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn test_plot_cluster_quality_creates_file() {
+        let metrics = vec![
+            (0, -0.02, 3.35, 0.028, 0.38),
+            (1, -0.01, 3.35, 0.029, 0.38),
+            (2, 0.00, 3.32, 0.031, 0.40),
+        ];
+        let dir = "/tmp/fga_test_cq";
+        let _ = std::fs::create_dir_all(format!("{}/figures", dir));
+        let result = plot_cluster_quality_comparison(&metrics, dir);
+        assert!(result.is_ok());
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn test_plot_latent_space_pca_creates_file() {
+        let embeddings: Vec<Vec<f32>> = (0..50)
+            .map(|i| vec![i as f32 * 0.1; 4])
+            .collect();
+        let labels = vec![0, 0, 1, 1, 2, 2, 3, 3, 4, 4,
+                          0, 0, 1, 1, 2, 2, 3, 3, 4, 4,
+                          0, 0, 1, 1, 2, 2, 3, 3, 4, 4,
+                          0, 0, 1, 1, 2, 2, 3, 3, 4, 4,
+                          0, 0, 1, 1, 2, 2, 3, 3, 4, 4];
+        let dir = "/tmp/fga_test_pca";
+        let _ = std::fs::create_dir_all(format!("{}/figures", dir));
+        let result = plot_latent_space_pca(&embeddings, &labels, dir);
+        assert!(result.is_ok());
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn test_plot_distance_matrix_creates_file() {
+        let distances = vec![
+            (0, 1, 0.5), (0, 2, 0.8), (1, 2, 0.3),
+        ];
+        let dir = "/tmp/fga_test_dist";
+        let _ = std::fs::create_dir_all(format!("{}/figures", dir));
+        let result = plot_distance_matrix(&distances, 3, dir, 0);
+        assert!(result.is_ok());
+        let _ = std::fs::remove_dir_all(dir);
+    }
 }

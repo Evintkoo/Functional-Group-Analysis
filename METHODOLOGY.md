@@ -298,7 +298,7 @@ For each cluster in each QED stratum:
 | Component | Technology |
 |-----------|-----------|
 | Language | **Rust** (2021 edition) |
-| ML framework | **Burn** 0.16 (ndarray backend) |
+| ML framework | **Burn** 0.16 (wgpu/Metal GPU backend + autodiff) |
 | Graph library | **petgraph** 0.7 |
 | CSV I/O | **csv** + **serde** |
 | Parallelism | **rayon** |

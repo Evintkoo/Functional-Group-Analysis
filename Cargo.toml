@@ -5,8 +5,9 @@ edition = "2021"
 description = "Graph-based functional group analysis of drug-like molecules using GNN and VGAE"
 
 [dependencies]
-burn = { version = "0.16", features = ["ndarray", "autodiff", "train"] }
+burn = { version = "0.16", features = ["ndarray", "wgpu", "autodiff", "train"] }
 burn-ndarray = "0.16"
+burn-wgpu = "0.16"
 petgraph = "0.7"
 csv = "1.3"
 serde = { version = "1", features = ["derive"] }

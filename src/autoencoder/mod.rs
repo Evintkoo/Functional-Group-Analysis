@@ -178,11 +178,134 @@ pub struct TrainConfig {
 impl Default for TrainConfig {
     fn default() -> Self {
         Self {
-            num_epochs: 128,
+            num_epochs: 20,
             learning_rate: 1e-3,
             kl_weight: 0.001,
             val_split: 0.2,
             output_dir: "results".into(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use burn::backend::ndarray::NdArray;
+
+    type B = NdArray<f32>;
+
+    fn make_vgae() -> Vgae<B> {
+        let device = Default::default();
+        VgaeConfig::new(8, 3)
+            .with_hidden_dim(16)
+            .with_gnn_output_dim(8)
+            .with_latent_dim(4)
+            .with_num_gnn_layers(1)
+            .init(&device)
+    }
+
+    fn dummy_inputs() -> (Tensor<B, 2>, Vec<[usize; 2]>, Tensor<B, 2>) {
+        let device = Default::default();
+        let nodes = Tensor::<B, 2>::ones([5, 8], &device);
+        let edge_index = vec![[0, 1], [1, 0], [1, 2], [2, 1], [2, 3], [3, 4]];
+        let edges = Tensor::<B, 2>::ones([6, 3], &device);
+        (nodes, edge_index, edges)
+    }
+
+    #[test]
+    fn test_vgae_encode_shape() {
+        let vgae = make_vgae();
+        let (nodes, edge_index, edges) = dummy_inputs();
+        let (mu, log_var) = vgae.encode(nodes, &edge_index, edges);
+        assert_eq!(mu.dims(), [1, 4]);
+        assert_eq!(log_var.dims(), [1, 4]);
+    }
+
+    #[test]
+    fn test_vgae_reparameterize_shape() {
+        let vgae = make_vgae();
+        let device = Default::default();
+        let mu = Tensor::<B, 2>::zeros([1, 4], &device);
+        let log_var = Tensor::<B, 2>::zeros([1, 4], &device);
+        let z = vgae.reparameterize(mu, log_var);
+        assert_eq!(z.dims(), [1, 4]);
+    }
+
+    #[test]
+    fn test_vgae_decode_shape() {
+        let vgae = make_vgae();
+        let device = Default::default();
+        let z = Tensor::<B, 2>::zeros([1, 4], &device);
+        let out = vgae.decode(z);
+        // Decoder outputs [1, node_feature_dim=8]
+        assert_eq!(out.dims(), [1, 8]);
+    }
+
+    #[test]
+    fn test_vgae_decode_to_nodes_shape() {
+        let vgae = make_vgae();
+        let device = Default::default();
+        let z = Tensor::<B, 2>::zeros([1, 4], &device);
+        let out = vgae.decode_to_nodes(z, 5);
+        assert_eq!(out.dims(), [5, 8]);
+    }
+
+    #[test]
+    fn test_vgae_forward_shapes() {
+        let vgae = make_vgae();
+        let (nodes, edge_index, edges) = dummy_inputs();
+        let output = vgae.forward(nodes, &edge_index, edges, 5);
+        assert_eq!(output.mu.dims(), [1, 4]);
+        assert_eq!(output.log_var.dims(), [1, 4]);
+        assert_eq!(output.z.dims(), [1, 4]);
+        assert_eq!(output.reconstructed.dims(), [5, 8]);
+    }
+
+    #[test]
+    fn test_vgae_embed_shape() {
+        let vgae = make_vgae();
+        let (nodes, edge_index, edges) = dummy_inputs();
+        let mu = vgae.embed(nodes, &edge_index, edges);
+        assert_eq!(mu.dims(), [1, 4]);
+    }
+
+    #[test]
+    fn test_vgae_latent_dim() {
+        let vgae = make_vgae();
+        assert_eq!(vgae.latent_dim(), 4);
+    }
+
+    #[test]
+    fn test_vgae_loss_positive() {
+        let device = Default::default();
+        let recon = Tensor::<B, 2>::ones([5, 8], &device);
+        let target = Tensor::<B, 2>::zeros([5, 8], &device);
+        let mu = Tensor::<B, 2>::ones([1, 4], &device);
+        let log_var = Tensor::<B, 2>::zeros([1, 4], &device);
+
+        let loss = vgae_loss(recon, target, mu, log_var, 0.001);
+        let loss_val: f32 = loss.into_scalar();
+        assert!(loss_val > 0.0, "Loss should be positive");
+    }
+
+    #[test]
+    fn test_vgae_loss_zero_reconstruction() {
+        let device = Default::default();
+        let tensor = Tensor::<B, 2>::ones([3, 4], &device);
+        let mu = Tensor::<B, 2>::zeros([1, 2], &device);
+        let log_var = Tensor::<B, 2>::zeros([1, 2], &device);
+
+        let loss = vgae_loss(tensor.clone(), tensor, mu, log_var, 0.001);
+        let loss_val: f32 = loss.into_scalar();
+        // Reconstruction loss should be ~0, only KL term remains
+        assert!(loss_val.abs() < 0.1, "Loss should be near zero for perfect reconstruction: {}", loss_val);
+    }
+
+    #[test]
+    fn test_train_config_defaults() {
+        let config = TrainConfig::default();
+        assert_eq!(config.num_epochs, 20);
+        assert!((config.kl_weight - 0.001).abs() < 1e-6);
+        assert!((config.learning_rate - 1e-3).abs() < 1e-10);
     }
 }
