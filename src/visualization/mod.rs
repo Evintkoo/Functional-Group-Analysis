@@ -35,23 +35,24 @@ const FIG_WIDE: (u32, u32) = (1200, 500);
 const FIG_PANEL_2X2: (u32, u32) = (1200, 900);
 
 // ═══════════════════════════════════════════════════
-// Color palettes (colorblind-safe, tab10-derived)
+// Color palettes — Wong (2011, Nature Methods) colorblind-safe
 // ═══════════════════════════════════════════════════
 
 const STRATUM_COLORS: [RGBColor; 5] = [
-    RGBColor(31, 119, 180),   // blue
-    RGBColor(255, 127, 14),   // orange
-    RGBColor(44, 160, 44),    // green
-    RGBColor(214, 39, 40),    // red
-    RGBColor(148, 103, 189),  // purple
+    RGBColor(0, 114, 178),    // blue
+    RGBColor(230, 159, 0),    // orange
+    RGBColor(0, 158, 115),    // bluish green
+    RGBColor(204, 121, 167),  // reddish purple
+    RGBColor(86, 180, 233),   // sky blue
 ];
 
 const PROPERTY_COLORS: [RGBColor; 3] = [
-    RGBColor(31, 119, 180),   // QED - blue
-    RGBColor(255, 127, 14),   // logP - orange
-    RGBColor(44, 160, 44),    // SAS - green
+    RGBColor(0, 114, 178),    // QED - blue
+    RGBColor(230, 159, 0),    // logP - orange
+    RGBColor(0, 158, 115),    // SAS - bluish green
 ];
 
+/// CVD-safe diverging colormap: blue → white → red (Crameri-style).
 fn heatmap_color(value: f64, min_val: f64, max_val: f64) -> RGBColor {
     let t = if (max_val - min_val).abs() < 1e-12 {
         0.5
@@ -60,29 +61,45 @@ fn heatmap_color(value: f64, min_val: f64, max_val: f64) -> RGBColor {
     };
     if t < 0.5 {
         let s = t * 2.0;
+        // Dark blue (33, 102, 172) → white (247, 247, 247)
         RGBColor(
-            (59.0 + s * 196.0) as u8,
-            (76.0 + s * 179.0) as u8,
-            (192.0 + s * 63.0) as u8,
+            (33.0 + s * 214.0) as u8,
+            (102.0 + s * 145.0) as u8,
+            (172.0 + s * 75.0) as u8,
         )
     } else {
         let s = (t - 0.5) * 2.0;
+        // White (247, 247, 247) → dark red (178, 24, 43)
         RGBColor(
-            (255.0 - s * 42.0) as u8,
-            (255.0 - s * 216.0) as u8,
-            (255.0 - s * 217.0) as u8,
+            (247.0 - s * 69.0) as u8,
+            (247.0 - s * 223.0) as u8,
+            (247.0 - s * 204.0) as u8,
         )
     }
 }
 
+/// CVD-safe sequential colormap: Viridis (5-stop piecewise linear).
 fn sequential_color(value: f64, min_val: f64, max_val: f64) -> RGBColor {
     let t = if (max_val - min_val).abs() < 1e-12 { 0.5 }
         else { ((value - min_val) / (max_val - min_val)).clamp(0.0, 1.0) };
-    // Viridis-inspired: dark purple → teal → yellow
-    let r = (68.0 + t * 187.0) as u8;
-    let g = (1.0 + t * 214.0) as u8;
-    let b = (84.0 + (1.0 - (2.0 * t - 1.0).abs()) * 128.0) as u8;
-    RGBColor(r, g, b)
+    // Viridis stops: (0.0) #440154 → (0.25) #31688e → (0.5) #21918c → (0.75) #5ec962 → (1.0) #fde725
+    let stops: [(f64, u8, u8, u8); 5] = [
+        (0.00,  68,   1,  84),
+        (0.25,  49, 104, 142),
+        (0.50,  33, 145, 140),
+        (0.75,  94, 201,  98),
+        (1.00, 253, 231,  37),
+    ];
+    let mut i = 0;
+    while i < 3 && t > stops[i + 1].0 { i += 1; }
+    let (t0, r0, g0, b0) = stops[i];
+    let (t1, r1, g1, b1) = stops[i + 1];
+    let s = ((t - t0) / (t1 - t0)).clamp(0.0, 1.0);
+    RGBColor(
+        (r0 as f64 + s * (r1 as f64 - r0 as f64)) as u8,
+        (g0 as f64 + s * (g1 as f64 - g0 as f64)) as u8,
+        (b0 as f64 + s * (b1 as f64 - b0 as f64)) as u8,
+    )
 }
 
 /// Draw a vertical colorbar on the right side of a drawing area.
@@ -401,19 +418,19 @@ pub fn plot_latent_space_umap(
     let knn_dists = ndarray_017::Array2::from_shape_vec((n_samples, k), knn_dist_flat)
         .map_err(|e| format!("KNN dist array error: {}", e))?;
 
-    // Random 2D initialization
+    // Random 3D initialization
     use rand::Rng;
     let mut rng = rand::thread_rng();
-    let mut init_flat: Vec<f32> = Vec::with_capacity(n_samples * 2);
-    for _ in 0..n_samples {
-        init_flat.push(rng.gen::<f32>() * 20.0 - 10.0);
+    let n_dims = 3usize;
+    let mut init_flat: Vec<f32> = Vec::with_capacity(n_samples * n_dims);
+    for _ in 0..(n_samples * n_dims) {
         init_flat.push(rng.gen::<f32>() * 20.0 - 10.0);
     }
-    let init = ndarray_017::Array2::from_shape_vec((n_samples, 2), init_flat)
+    let init = ndarray_017::Array2::from_shape_vec((n_samples, n_dims), init_flat)
         .map_err(|e| format!("UMAP init array error: {}", e))?;
 
     let config = UmapCfg {
-        n_components: 2,
+        n_components: n_dims,
         graph: UmapGraphParams {
             n_neighbors: k,
             ..Default::default()
@@ -427,59 +444,67 @@ pub fn plot_latent_space_umap(
     let umap = UmapAlgo::new(config);
     let fitted = umap.fit(data_arr.view(), knn_indices.view(), knn_dists.view(), init.view());
     let embedding = fitted.embedding();
-    let umap_result: Vec<Vec<f64>> = (0..n_samples)
-        .map(|i| vec![embedding[[i, 0]] as f64, embedding[[i, 1]] as f64])
-        .collect();
-
-    let points: Vec<(f64, f64, usize)> = umap_result.iter()
+    let umap_result: Vec<(f64, f64, f64, usize)> = (0..n_samples)
         .zip(sampled_strata.iter())
-        .map(|(coords, &s)| (coords[0], coords[1], s))
+        .map(|(i, &s)| (
+            embedding[[i, 0]] as f64,
+            embedding[[i, 1]] as f64,
+            embedding[[i, 2]] as f64,
+            s,
+        ))
         .collect();
 
-    let x_min = points.iter().map(|p| p.0).fold(f64::MAX, f64::min);
-    let x_max = points.iter().map(|p| p.0).fold(f64::MIN, f64::max);
-    let y_min = points.iter().map(|p| p.1).fold(f64::MAX, f64::min);
-    let y_max = points.iter().map(|p| p.1).fold(f64::MIN, f64::max);
-    let x_pad = (x_max - x_min) * 0.05;
-    let y_pad = (y_max - y_min) * 0.05;
+    let x_min = umap_result.iter().map(|p| p.0).fold(f64::MAX, f64::min);
+    let x_max = umap_result.iter().map(|p| p.0).fold(f64::MIN, f64::max);
+    let y_min = umap_result.iter().map(|p| p.1).fold(f64::MAX, f64::min);
+    let y_max = umap_result.iter().map(|p| p.1).fold(f64::MIN, f64::max);
+    let z_min = umap_result.iter().map(|p| p.2).fold(f64::MAX, f64::min);
+    let z_max = umap_result.iter().map(|p| p.2).fold(f64::MIN, f64::max);
+    let x_pad = (x_max - x_min) * 0.08;
+    let y_pad = (y_max - y_min) * 0.08;
+    let z_pad = (z_max - z_min) * 0.08;
 
-    let root = SVGBackend::new(&path, (1000, 800)).into_drawing_area();
+    let root = SVGBackend::new(&path, (1100, 900)).into_drawing_area();
     root.fill(&WHITE)?;
 
     let mut chart = ChartBuilder::on(&root)
-        .caption("Latent Space (UMAP Projection)", (FONT, TITLE_SIZE).into_font())
-        .margin(20)
-        .x_label_area_size(50)
-        .y_label_area_size(60)
-        .right_y_label_area_size(65)
-        .build_cartesian_2d(
+        .caption("Latent Space (3D UMAP Projection)", (FONT, TITLE_SIZE).into_font())
+        .margin(25)
+        .build_cartesian_3d(
             (x_min - x_pad)..(x_max + x_pad),
             (y_min - y_pad)..(y_max + y_pad),
+            (z_min - z_pad)..(z_max + z_pad),
         )?;
 
-    chart.configure_mesh()
-        .x_desc("UMAP 1")
-        .y_desc("UMAP 2")
-        .x_label_style((FONT, TICK_SIZE))
-        .y_label_style((FONT, TICK_SIZE))
-        .axis_desc_style((FONT, AXIS_LABEL_SIZE))
-        .light_line_style(GRID_STYLE)
+    chart.with_projection(|mut pb| {
+        pb.pitch = 0.35;
+        pb.yaw = 0.65;
+        pb.scale = 0.85;
+        pb.into_matrix()
+    });
+
+    chart.configure_axes()
+        .light_grid_style(GRID_STYLE)
+        .label_style((FONT, TICK_SIZE))
+        .x_formatter(&|v| format!("{:.1}", v))
+        .y_formatter(&|v| format!("{:.1}", v))
+        .z_formatter(&|v| format!("{:.1}", v))
         .draw()?;
 
     let qed_labels = ["QED [0, 0.4)", "QED [0.4, 0.52)", "QED [0.52, 0.69)", "QED [0.69, 0.81)", "QED [0.81, 1.0]"];
 
     for stratum in 0..5 {
-        let stratum_points: Vec<(f64, f64)> = points.iter()
-            .filter(|p| p.2 == stratum)
-            .map(|p| (p.0, p.1))
+        let stratum_points: Vec<(f64, f64, f64)> = umap_result.iter()
+            .filter(|p| p.3 == stratum)
+            .map(|p| (p.0, p.1, p.2))
             .collect();
 
         if stratum_points.is_empty() { continue; }
 
         let color = STRATUM_COLORS[stratum];
         chart.draw_series(
-            stratum_points.iter().map(|&(x, y)| {
-                Circle::new((x, y), SCATTER_R, color.mix(SCATTER_ALPHA).filled())
+            stratum_points.iter().map(|&(x, y, z)| {
+                Circle::new((x, y, z), SCATTER_R, color.mix(SCATTER_ALPHA).filled())
             })
         )?
         .label(*qed_labels.get(stratum).unwrap_or(&""))
@@ -1111,23 +1136,10 @@ pub fn plot_molecule_complexity(
     let x_max = points.iter().map(|p| p.0).fold(0.0_f64, f64::max) + 2.0;
     let y_max = points.iter().map(|p| p.1).fold(0.0_f64, f64::max) + 2.0;
 
-    let qed_color = |q: f64| -> RGBColor {
-        let t = q.clamp(0.0, 1.0);
-        RGBColor(
-            (255.0 * (1.0 - t)) as u8,
-            (100.0 + 155.0 * t) as u8,
-            (50.0 + 130.0 * t) as u8,
-        )
-    };
-
     let root = SVGBackend::new(&path, (950, 700)).into_drawing_area();
     root.fill(&WHITE)?;
 
-    let qed_hm = |val: f64, lo: f64, hi: f64| -> RGBColor {
-        let t = ((val - lo) / (hi - lo)).clamp(0.0, 1.0);
-        qed_color(t)
-    };
-    let _ = draw_colorbar(&root, 0.0, 1.0, "QED", qed_hm);
+    let _ = draw_colorbar(&root, 0.0, 1.0, "QED", sequential_color);
 
     let mut chart = ChartBuilder::on(&root)
         .caption("Molecular Graph Complexity", (FONT, TITLE_SIZE).into_font())
@@ -1148,12 +1160,12 @@ pub fn plot_molecule_complexity(
 
     chart.draw_series(
         points.iter().map(|&(a, b, q)| {
-            let color = qed_color(q);
+            let color = sequential_color(q, 0.0, 1.0);
             Circle::new((a, b), SCATTER_R, color.mix(SCATTER_ALPHA).filled())
         })
     )?
-    .label("Color: QED (red=low, green=high)")
-    .legend(|(x, y)| Circle::new((x + 10, y), 5, RGBColor(44, 160, 44).filled()));
+    .label("Color: QED (Viridis scale)")
+    .legend(|(x, y)| Circle::new((x + 10, y), 5, RGBColor(33, 145, 140).filled()));
 
     chart.configure_series_labels()
         .position(SeriesLabelPosition::UpperLeft)
@@ -1451,17 +1463,17 @@ mod tests {
     fn test_sequential_color_range() {
         let low = sequential_color(0.0, 0.0, 1.0);
         let high = sequential_color(1.0, 0.0, 1.0);
-        // Low should be near white
-        assert!(low.0 > 240 && low.1 > 240 && low.2 > 240);
-        // High should be dark
-        assert!(high.0 < 50 && high.1 < 100);
+        // Viridis: low should be dark purple (68, 1, 84)
+        assert!(low.0 < 80 && low.1 < 10 && low.2 > 70, "Low should be dark purple");
+        // High should be bright yellow (253, 231, 37)
+        assert!(high.0 > 240 && high.1 > 220 && high.2 < 50, "High should be yellow");
     }
 
     #[test]
     fn test_heatmap_color_equal_range() {
         let c = heatmap_color(5.0, 5.0, 5.0);
-        // With equal min/max, should return mid-range color
-        assert!(c.0 > 100);
+        // With equal min/max, t=0.5 → near white (247, 247, 247)
+        assert!(c.0 > 200 && c.1 > 200 && c.2 > 200);
     }
 
     #[test]
