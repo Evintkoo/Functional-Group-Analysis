@@ -963,83 +963,84 @@ Enrichment ratio shows over-representation relative to the stratum population.
 
 ## 11. Discussion
 
-### 11.1 Latent Space Structure and Posterior Collapse
+### 11.1 The Aromatic Dominance of Drug-Like Chemical Space
 
-The VGAE achieves low mean reconstruction loss (0.050), confirming that the 16-dimensional latent space retains sufficient molecular information for faithful graph reconstruction. However, the variance distribution across latent dimensions reveals a characteristic pathology of variational autoencoders: **partial posterior collapse**. Dimension 0 dominates the latent space with variance 0.952, while dimensions 2, 7, 12, 14, and 15 exhibit near-zero variance (std < 0.045), suggesting that the KL divergence term has pushed these posteriors toward the prior N(0,1) without the decoder learning to utilise them.
+The functional group census reveals that 83% of the 249,455 ZINC15 molecules contain at least one phenyl ring, with a mean of 2.42 aromatic rings per molecule. This aromatic dominance — together with the 68% prevalence of amide bonds and 58% heterocycle occurrence — reflects the well-documented bias in medicinal chemistry toward flat, sp2-rich scaffolds (Ritchie & Macdonald, 2009). Phenyl rings serve as rigid hydrophobic anchors in protein binding pockets, and their synthetic accessibility (Suzuki coupling, Buchwald–Hartwig amination) makes them the default building block in combinatorial library design.
 
-This is consistent with the β-VAE literature (Higgins et al., 2017): at β = 0.001, the reconstruction term dominates, yet several dimensions still collapse — likely because the GAT encoder routes most discriminative information through dimensions 0, 1, 6, and 11 (std > 0.19), creating an **information bottleneck** in a subset of the latent space. The practical implication is that the effective latent dimensionality is closer to 8–10 rather than the nominal 16, which paradoxically may improve downstream clustering by concentrating signal.
+However, this structural homogeneity has been linked to high clinical attrition rates. The "escape from flatland" hypothesis (Lovering et al., 2009) argues that increasing sp3 carbon fraction (Fsp3) improves clinical success by enhancing aqueous solubility and reducing off-target promiscuity. Our Stratum 4 analysis provides direct evidence for this: **Cluster 0** (n=1,615, QED 0.86) contains only 11.5% phenyl-bearing molecules versus the 83% dataset average, and is instead enriched for tertiary amines (1.81×), thioethers (1.89×), and ethers (1.41×). These are saturated, three-dimensional scaffolds — the very molecular architectures that Lovering et al. identified as correlated with improved developability. Their co-location in the highest-QED stratum is not coincidental; it reflects the QED metric's penalisation of excessive aromaticity via the aromatic ring count descriptor.
 
-### 11.2 What the Latent Space Encodes
+### 11.2 Lipophilicity, Synthetic Accessibility, and the Drug-Likeness Triad
 
-The dimension–property correlation analysis (Figure 7) reveals that the latent space preferentially encodes **synthetic accessibility** over drug-likeness:
+The three molecular properties tracked across strata — QED, logP, and SAS — are not independent. Their inter-relationships across the five QED strata illuminate fundamental tensions in drug design:
 
-| Property | Max |r| across dims | Best dimension |
-|---|---|---|---|
-| SAS | 0.631 | Dim 5 |
-| logP | 0.461 | Dim 0 |
-| QED | 0.322 | Dim 5 |
+**logP decreases with increasing QED** (Stratum 0 mean logP ≈ 3.2 → Stratum 4 ≈ 2.0). This reflects the Lipinski Rule of Five (Lipinski et al., 1997): molecules exceeding logP ≈ 5 are penalised by QED, driving the high-QED population toward moderate lipophilicity. The ZINC15 dataset, being pre-filtered for drug-likeness, already excludes extreme outliers, yet the gradient across strata confirms that even within Lipinski-compliant space, lower lipophilicity tracks with higher drug-likeness scores.
 
-This hierarchy (SAS > logP > QED) is pharmacologically informative. SAS is a composite metric derived from molecular fragment contributions and structural complexity — properties that are naturally captured by a graph neural network operating on molecular topology. logP (lipophilicity) correlates with atom counts and ring systems, which the GAT encodes via its attention-weighted message passing. QED, being a multi-objective desirability function (Bickerton et al., 2012), combines orthogonal properties (MW, HBA, HBD, PSA, rotatable bonds, aromatic rings, structural alerts) and is therefore harder to capture in any single latent direction.
+**SAS increases with increasing QED** (Stratum 0 SAS ≈ 2.5 → Stratum 4 SAS ≈ 3.5). This is counterintuitive at first glance — why would more drug-like molecules be harder to synthesise? The explanation lies in structural complexity: high-QED molecules tend to have more stereocentres, more saturated heterocycles, and more diverse functional group decoration. They are "better designed" pharmaceutically but more demanding synthetically. This SAS–QED tension is a well-known bottleneck in lead optimisation, where improving ADMET properties often requires introducing structural motifs (e.g., chiral amines, spiro junctions) that complicate synthesis (Roughley & Jordan, 2011).
 
-The functional group encoding analysis reinforces this: **Phenyl** is best captured (Dim 0, |r| = 0.543), followed by **Heterocycle** (Dim 10, |r| = 0.476). Both are topologically prominent motifs that the 3-layer GAT can detect via its receptive field. In contrast, small electronegative groups (Thioether |r| = 0.031, Primary Amine |r| = 0.084) are poorly represented — their structural footprint is too localised for the attention pooling to prioritise.
+The point-biserial correlations quantify how individual functional groups contribute to this triad:
 
-### 11.3 Functional Group–Property Relationships
+| Functional Group | QED Effect | logP Effect | SAS Effect | Interpretation |
+|---|---|---|---|---|
+| Phenyl | −0.07 | +0.40 | −0.43 | Lipophilic, easy to synthesise, mild QED penalty |
+| Nitro (−NO₂) | −0.32 | +0.04 | −0.07 | Strong QED penalty (structural alert), neutral elsewhere |
+| Amide (−CONH−) | +0.02 | +0.09 | −0.29 | Synthetically accessible (amide coupling), QED-neutral |
+| Carboxyl (−COOH) | 0.00 | −0.28 | +0.13 | Reduces logP (ionisation at pH 7.4), slightly increases SAS |
+| Hydroxyl (−OH) | +0.02 | −0.10 | +0.11 | Mild polarity increase, marginal QED and SAS effects |
+| Halide (C−X) | +0.01 | +0.26 | −0.16 | Increases lipophilicity, facile synthesis (halogenation) |
 
-The point-biserial correlations between FG presence and molecular properties yield several results consistent with established medicinal chemistry SAR:
+The nitro group's strong negative QED correlation (r = −0.32) deserves particular attention. Nitroaromatics are flagged as structural alerts in multiple toxicity prediction models (Kazius et al., 2005; Benigni & Bossa, 2011) due to their propensity for metabolic reduction to reactive nitroso and hydroxylamine intermediates. QED explicitly penalises structural alerts, and our data show that 29.6% of Stratum 0 (low QED) molecules carry nitro groups compared to only 1.3% in Stratum 4 — a >20-fold depletion that empirically validates the alert classification.
 
-**Phenyl → ↑logP (+0.40), ↓SAS (−0.43)**. Aromatic rings increase lipophilicity (π-system contributes ~1.5 logP units per ring) and reduce synthetic accessibility (ring systems are common commercial building blocks, lowering SAS).
+### 11.3 Functional Group Co-occurrence and Molecular Polypharmacology
 
-**Nitro → ↓QED (−0.32)**. Nitro groups are structural alerts (Kazius et al., 2005) penalised by QED's weighted desirability function. The negative correlation validates that our FG detection and property computation are internally consistent.
+That the strongest individual FG–property correlation is only |r| = 0.43 (Phenyl → SAS) has important implications. Molecular properties are not determined by any single functional group but emerge from the **combinatorial interplay** of multiple substituents, ring systems, and stereochemistry. This is why fragment-based QSAR models plateau in predictive accuracy (Tropsha, 2010) and why whole-molecule graph representations, as used here, can capture property-determining features that additive fragment schemes miss.
 
-**Amide → ↓SAS (−0.29)**. Amide bonds are among the most common bond-forming reactions in medicinal chemistry (Brown & Boström, 2016), explaining their association with low synthetic complexity.
+The cluster-level FG enrichment analysis illustrates this combinatorial logic:
 
-**Carboxyl → ↓logP (−0.28)**. Carboxylic acids are ionisable at physiological pH, dramatically reducing apparent lipophilicity — a well-established relationship.
+- **Sulfonamide pharmacophore pattern**: Across strata 1–4, clusters enriched for sulfonyl (−SO₂−, 1.5–2.1×) consistently co-enrich for nitrile (−C≡N), imine (C=N), and heterocyclic nitrogen. This is the pharmacophore signature of kinase inhibitors (e.g., vemurafenib-class RAF inhibitors) and sulfonamide antibacterials. The co-occurrence is not random; it reflects the medicinal chemistry design principle of combining a sulfonamide hydrogen-bond donor/acceptor with a heterocyclic hinge-binding motif.
 
-An unexpected finding is that the **strongest absolute FG–property correlation** across the entire dataset is only |r| = 0.43 (Phenyl–SAS). This relatively modest ceiling suggests that molecular properties emerge from **combinatorial FG interactions** rather than individual group contributions, supporting the rationale for a graph-based encoding that captures molecular context rather than a bag-of-fragments approach.
+- **Polar aliphatic cluster** (Stratum 0, Cluster 600): The simultaneous enrichment of primary amine (3.8×), hydroxyl (3.7×), and carboxyl (2.5×) with logP = −0.19 identifies a population of amino acid derivatives, sugar-like scaffolds, and peptidomimetics. These molecules fail drug-likeness metrics not because they are inherently poor pharmacological agents, but because QED is calibrated on orally bioavailable small molecules — a design philosophy that systematically undervalues injectable biologics, prodrugs, and CNS-penetrant polar molecules that exploit transporter-mediated uptake (Pardridge, 2012).
 
-### 11.4 Stratified Clustering: Topology vs. Separation
+- **Halide–heterocycle synergy** (Stratum 4, Cluster 899): Halide enrichment at 1.51× combined with heterocycle enrichment at 1.23× in the highest-QED cluster reflects the dominance of halogenated heteroaromatic scaffolds in marketed drugs. Chlorine and fluorine substituents are the most common halogens in approved drugs (Gillis et al., 2015), serving dual roles: fluorine as a metabolic blocker (blocking cytochrome P450 oxidation) and chlorine as a lipophilicity modulator occupying hydrophobic binding pockets.
 
-The negative silhouette scores across all five QED strata (−0.165 to −0.238) and elevated Davies-Bouldin indices (3.7–4.5) initially suggest poor clustering. However, this interpretation requires nuance:
+### 11.4 The Structure of Drug-Like Chemical Space
 
-1. **SOMs are topology-preserving maps, not hard partitioners.** Unlike k-means, which optimises separation, SOMs preserve neighbourhood relationships from the high-dimensional embedding space. The negative silhouette scores reflect the continuous, manifold-like structure of chemical space rather than a failure of the algorithm.
+The monotonic decrease in quantization error from Stratum 0 (QE = 1.10) to Stratum 4 (QE = 0.74) reveals that drug-like molecules occupy a **more compact and structured** region of chemical space compared to non-drug-like molecules. This asymmetry has a chemical explanation: drug-likeness constraints (MW < 500, logP < 5, HBD ≤ 5, HBA ≤ 10) define a bounded hyper-rectangle in property space, and molecules optimised for oral bioavailability converge toward similar structural solutions — moderate size, balanced polarity, limited hydrogen-bonding capacity. Non-drug-like molecules, unconstrained by these boundaries, explore a far wider structural manifold.
 
-2. **Quantization error tells a different story.** QE decreases monotonically from Stratum 0 (1.097) to Stratum 4 (0.740), indicating that high-QED molecules occupy a more compact, structured region of latent space. This is pharmacologically meaningful: drug-like molecules (high QED) share more structural regularities than non-drug-like molecules, making them easier to cluster coherently.
+The 3D UMAP projection (Figure 9) visualises this directly: Stratum 4 (high QED) forms a dense, coherent cloud, while Stratum 0 (low QED) is diffuse and peripherally distributed. The intermediate strata (1–3) form a continuous surface connecting these extremes, consistent with the view that chemical space is a continuum rather than a collection of discrete islands (Dobson, 2004).
 
-3. **Topographic error is low** (0.07–0.21 across strata), confirming that the SOM topology faithfully represents the latent space neighbourhood structure — adjacent neurons map to genuinely similar molecules.
+Within each stratum, the SOM U-matrix heatmaps (Figure 11) reveal internal topological structure. Stratum 4 has the lowest U-matrix maximum (0.074 vs. 0.141 for Stratum 2), indicating smoother transitions between neighbouring clusters — molecules at the drug-likeness optimum are more structurally similar to their nearest neighbours than are molecules at intermediate QED values. This smoothness has practical implications for virtual screening: interpolating between high-QED cluster centroids is more likely to yield viable drug candidates than interpolating in lower strata, where the rugged U-matrix landscape signals abrupt structural transitions.
 
-4. **The Gini coefficients** (0.55–0.62) indicate moderate cluster size inequality, with a few large "attractor" clusters and many small specialised clusters — a pattern consistent with the power-law distribution observed in chemical space coverage studies (Lipinski et al., 2001).
+### 11.5 Implications for Molecular Design
 
-### 11.5 Chemically Coherent Cluster Signatures
+Several findings from this analysis have direct relevance to medicinal chemistry practice:
 
-The FG enrichment analysis reveals that SOM clusters correspond to meaningful chemical subspaces:
+1. **Aromatic ring reduction is viable.** The existence of 1,615 high-QED molecules with <12% phenyl prevalence (Cluster 0, Stratum 4) demonstrates that drug-likeness does not require aromatic scaffolds. These sp3-rich molecules — enriched for saturated nitrogen heterocycles and thioethers — represent an under-explored design space that recent clinical data suggest has superior developability properties (Clemons et al., 2010).
 
-- **Stratum 0, Cluster 600** (n=302): 3.8× enrichment for Primary Amine, 3.7× for Hydroxyl, 2.5× for Carboxyl. This cluster captures **polar, aliphatic scaffolds** — the molecular antipode of drug-likeness in this dataset. logP = −0.19 confirms extreme hydrophilicity.
+2. **Sulfonamide clusters span the QED spectrum.** The recurring sulfonyl + heterocyclic nitrogen motif across all five strata suggests this pharmacophore is compatible with a wide range of drug-likeness profiles. For lead optimisation, this means sulfonamide-based scaffolds offer considerable room for property modulation without abandoning the core pharmacophore.
 
-- **Stratum 4, Cluster 0** (n=1,615): Phenyl prevalence collapses to 11.5% (vs. 83% stratum average), while Tertiary Amine (1.81×) and Thioether (1.89×) are enriched. This cluster represents **non-aromatic drug-like molecules** — saturated heterocyclic scaffolds with sp3-rich architectures that have gained prominence in modern drug design (Lovering et al., 2009).
+3. **Carboxylate-bearing drug-like molecules exist.** The 3.67× carboxyl enrichment in Stratum 4, Cluster 899 challenges the common assumption that carboxylic acids are undesirable in drug design (due to low membrane permeability). These high-QED carboxylates likely achieve oral bioavailability through compensating properties — low MW, moderate logP, or prodrug ester strategies — and represent underutilised design space for targets requiring an anionic pharmacophore (e.g., integrin antagonists, PPAR agonists).
 
-- **Stratum 4, Cluster 899** (n=3,347): Carboxyl enrichment at 3.67× in the highest-QED stratum is notable. These are likely **zwitterionic drug candidates** (amino acid derivatives, NSAID-like scaffolds) that achieve high QED despite the polarity penalty, through compensating properties.
+4. **The QED–SAS trade-off is quantifiable.** The positive SAS gradient across strata provides empirical support for prioritising synthetic accessibility early in the drug design cycle. Molecules that score well on QED but require complex, multi-step synthesis (SAS > 4) may not be practical leads. The cluster-level data can identify structural motifs that simultaneously optimise both metrics.
 
-- **Cross-stratum pattern**: Sulfonyl (-SO₂-) shows consistent enrichment (1.5–2.1×) in clusters characterised by CN and C=N groups across strata 1–4. This constellation (sulfonamide + heterocyclic nitrogen) is the pharmacophore signature of **sulfonamide antibiotics and kinase inhibitors**, suggesting the VGAE has learned to co-locate therapeutically related scaffolds.
+### 11.6 Limitations and Caveats
 
-### 11.6 The 3D UMAP Projection
+1. **ZINC15 commercial availability filter** biases the dataset toward synthetically tractable scaffolds, excluding natural products, macrocycles, and covalent warheads that represent growing areas of drug discovery. Repeating this analysis on ChEMBL or DrugBank would test whether the observed FG–property relationships generalise beyond commercial chemical space.
 
-The 3D UMAP projection of the 16-dimensional latent space (Figure 9) reveals that QED strata occupy partially overlapping but directionally separated regions. Stratum 4 (high QED) forms a more compact cluster relative to Stratum 0 (low QED), which is diffuse — consistent with the quantization error gradient observed in the SOM analysis. The three-dimensional projection captures inter-stratum topology that would be lost in a 2D projection, particularly the continuous transition through Strata 1–3 that forms a manifold surface rather than discrete islands.
+2. **QED as a drug-likeness proxy** has known limitations (Bickerton et al., 2012). It is calibrated on a historical set of oral drugs and does not account for newer modalities (PROTACs, molecular glues, RNA-targeting molecules). The stratum boundaries used here are QED-quintiles, and alternative stratification by target class or therapeutic area might reveal different structural patterns.
 
-### 11.7 Limitations
+3. **The 22-type functional group vocabulary** covers canonical medicinal chemistry motifs but misses pharmacologically important substructures such as boronic acids, azetidines, deuterated methyl groups, and warheads for covalent inhibitors. Extending coverage to ~50–100 substructure types would provide a more complete picture.
 
-1. **Posterior collapse** reduces the effective latent dimensionality. Cyclical annealing (Fu et al., 2019) or δ-VAE constraints could recover collapsed dimensions.
-2. **FG detection is rule-based** (SMARTS-like pattern matching on 22 types), missing rare or complex pharmacophores. Extension to learned substructure detection (e.g., GNN-based motif extraction) would improve coverage.
-3. **Silhouette scores assume convex clusters** and penalise the continuous topology that SOMs deliberately preserve. Topographic error and quantization error are more appropriate quality metrics for this architecture.
-4. **ZINC15 sampling bias**: the dataset is pre-filtered for commercial availability, excluding many natural products, macrocycles, and PROTACs that would test the model's generalization.
-5. **No external validation**: the clusters have not been evaluated against experimentally determined bioactivity data. Cross-referencing with ChEMBL assay annotations would establish whether latent-space proximity predicts activity similarity.
+4. **No bioactivity data are integrated.** The current analysis establishes structural relationships but cannot determine whether clustered molecules share pharmacological activity. Cross-referencing with ChEMBL target annotations, screening data, or patent assignees would connect structural clusters to therapeutic hypotheses.
 
-### 11.8 Future Directions
+5. **Stereochemical information is partially captured.** While the graph representation encodes E/Z and R/S stereocentres as node features, the functional group detection is stereo-agnostic. For chiral drug molecules, enantiomer-specific analysis could reveal stereo-dependent clustering patterns.
 
-- **Disentangled representations**: Apply β-VAE annealing or FactorVAE (Kim & Mnih, 2018) to encourage each latent dimension to capture an independent generative factor.
-- **Conditional generation**: The stratified SOM provides natural conditioning variables for a CVAE — enabling generation of molecules with target QED/logP profiles.
-- **Multi-task property prediction**: Add auxiliary prediction heads for QED, logP, and SAS during VGAE training to inject property-awareness into the latent space.
-- **Bioactivity integration**: Overlay ChEMBL target annotations onto the SOM to identify activity cliffs within clusters.
-- **Scaffold hopping**: Use inter-cluster distances to identify structurally distinct but latent-space-proximal molecules — candidates for scaffold-hopping in lead optimisation.
+### 11.7 Future Directions
+
+- **Target deconvolution**: Overlaying ChEMBL bioactivity annotations onto the SOM would reveal whether latent-space proximity predicts target similarity — enabling identification of activity cliffs (structurally similar molecules with dramatically different potency) and polypharmacology signatures.
+- **Scaffold hopping**: Inter-cluster distances identify structurally dissimilar molecules that occupy adjacent latent-space positions. These pairs are candidates for scaffold hopping in lead optimisation — replacing a core scaffold while preserving binding affinity.
+- **Generative design**: The stratified SOM provides natural conditioning variables for constrained molecular generation. Sampling from high-QED, low-SAS cluster centroids would bias generative models toward synthetically accessible drug-like candidates.
+- **ADMET property integration**: Extending the property set to include Caco-2 permeability predictions, hERG liability scores, and metabolic stability estimates would enable multi-objective stratification beyond the QED/logP/SAS triad.
+- **Natural product comparison**: Repeating the analysis on the COCONUT (Sorokina et al., 2021) or LOTUS databases would quantify how natural product chemical space differs from synthetic drug space in terms of FG distribution, ring saturation, and stereochemical complexity.
 
 ## 12. Performance
 
