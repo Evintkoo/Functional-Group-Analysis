@@ -4,7 +4,9 @@
 use plotters::prelude::*;
 use std::path::Path;
 use std::collections::HashMap;
-use rag_umap::convert_to_2d;
+use umap_rs::{Umap as UmapAlgo, UmapConfig as UmapCfg, GraphParams as UmapGraphParams,
+               OptimizationParams as UmapOptParams};
+use rayon::prelude::*;
 
 // ═══════════════════════════════════════════════════
 // Color palettes
@@ -264,12 +266,76 @@ pub fn plot_latent_space_umap(
     let sampled: Vec<Vec<f32>> = embeddings.iter().step_by(step).cloned().collect();
     let sampled_strata: Vec<usize> = stratum_labels.iter().step_by(step).copied().collect();
 
-    // Run UMAP 2D projection
-    let umap_input: Vec<Vec<f64>> = sampled.iter()
-        .map(|e| e.iter().map(|&v| v as f64).collect())
+    // Run optimized parallel UMAP via umap-rs (Rayon Hogwild! SGD)
+    let n_samples = sampled.len();
+    let n_features = sampled[0].len();
+    let k = 15usize.min(n_samples - 1);
+
+    // Build data matrix using ndarray 0.17 (required by umap-rs)
+    let mut data_flat: Vec<f32> = Vec::with_capacity(n_samples * n_features);
+    for e in &sampled {
+        for &v in e { data_flat.push(v); }
+    }
+    let data_arr = ndarray_017::Array2::from_shape_vec((n_samples, n_features), data_flat)
+        .map_err(|e| format!("UMAP data array error: {}", e))?;
+
+    // Parallel brute-force KNN (15k × 16-dim is trivially fast with rayon)
+    let knn_results: Vec<Vec<(usize, f32)>> = (0..n_samples).into_par_iter().map(|i| {
+        let mut dists: Vec<(usize, f32)> = (0..n_samples)
+            .filter(|&j| j != i)
+            .map(|j| {
+                let d: f32 = sampled[i].iter().zip(sampled[j].iter())
+                    .map(|(a, b)| (a - b).powi(2)).sum::<f32>().sqrt();
+                (j, d)
+            })
+            .collect();
+        dists.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+        dists.truncate(k);
+        dists
+    }).collect();
+
+    let mut knn_idx_flat: Vec<u32> = vec![0; n_samples * k];
+    let mut knn_dist_flat: Vec<f32> = vec![0.0; n_samples * k];
+    for (i, neighbors) in knn_results.iter().enumerate() {
+        for (j, &(idx, dist)) in neighbors.iter().enumerate() {
+            knn_idx_flat[i * k + j] = idx as u32;
+            knn_dist_flat[i * k + j] = dist;
+        }
+    }
+    let knn_indices = ndarray_017::Array2::from_shape_vec((n_samples, k), knn_idx_flat)
+        .map_err(|e| format!("KNN index array error: {}", e))?;
+    let knn_dists = ndarray_017::Array2::from_shape_vec((n_samples, k), knn_dist_flat)
+        .map_err(|e| format!("KNN dist array error: {}", e))?;
+
+    // Random 2D initialization
+    use rand::Rng;
+    let mut rng = rand::thread_rng();
+    let mut init_flat: Vec<f32> = Vec::with_capacity(n_samples * 2);
+    for _ in 0..n_samples {
+        init_flat.push(rng.gen::<f32>() * 20.0 - 10.0);
+        init_flat.push(rng.gen::<f32>() * 20.0 - 10.0);
+    }
+    let init = ndarray_017::Array2::from_shape_vec((n_samples, 2), init_flat)
+        .map_err(|e| format!("UMAP init array error: {}", e))?;
+
+    let config = UmapCfg {
+        n_components: 2,
+        graph: UmapGraphParams {
+            n_neighbors: k,
+            ..Default::default()
+        },
+        optimization: UmapOptParams {
+            n_epochs: Some(500),
+            ..Default::default()
+        },
+        ..Default::default()
+    };
+    let umap = UmapAlgo::new(config);
+    let fitted = umap.fit(data_arr.view(), knn_indices.view(), knn_dists.view(), init.view());
+    let embedding = fitted.embedding();
+    let umap_result: Vec<Vec<f64>> = (0..n_samples)
+        .map(|i| vec![embedding[[i, 0]] as f64, embedding[[i, 1]] as f64])
         .collect();
-    let umap_result = convert_to_2d(umap_input)
-        .map_err(|e| format!("UMAP failed: {:?}", e))?;
 
     let points: Vec<(f64, f64, usize)> = umap_result.iter()
         .zip(sampled_strata.iter())
