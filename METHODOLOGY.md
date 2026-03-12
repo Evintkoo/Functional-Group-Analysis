@@ -300,8 +300,10 @@ For each cluster in each QED stratum:
 | Language | **Rust** (2021 edition) |
 | ML framework | **Burn** 0.16 (wgpu/Metal GPU backend + autodiff) |
 | Graph library | **petgraph** 0.7 |
+| Dimensionality reduction | **umap-rs** 0.4 (parallel Hogwild! SGD UMAP) |
 | CSV I/O | **csv** + **serde** |
 | Parallelism | **rayon** |
+| Visualization | **plotters** (SVG backend) |
 | Logging | **env_logger** |
 
 ### Module Structure
@@ -316,6 +318,7 @@ src/
 ├── som/mod.rs                 # Self-Organizing Map
 ├── functional_groups/mod.rs   # 22-type FG detection + enrichment analysis
 ├── pipeline/mod.rs            # End-to-end pipeline orchestration
+├── visualization/mod.rs       # SVG plot generation (distributions, heatmaps, UMAP)
 └── io/mod.rs                  # CSV loading and result output
 ```
 
@@ -336,10 +339,51 @@ cargo build --release
 results/
 ├── RESULTS.md              # Generated analysis report
 ├── training_losses.csv     # Epoch-wise train/val losses
+├── pipeline_state.json     # Phase 4 checkpoint (SOM state + labels)
+├── checkpoints/
+│   └── phase_2.json        # Phase 2 checkpoint (VGAE embeddings)
+├── figures/                # 23 SVG visualizations
+│   ├── property_distributions_combined.svg
+│   ├── qed_distribution.svg
+│   ├── logp_distribution.svg
+│   ├── sas_distribution.svg
+│   ├── molecule_complexity.svg
+│   ├── fg_prevalence.svg
+│   ├── latent_space_umap.svg
+│   ├── reconstruction_loss_dist.svg
+│   ├── embedding_dim_variance.svg
+│   ├── dim_property_heatmap.svg
+│   ├── fg_property_correlations.svg
+│   ├── stratum_property_comparison.svg
+│   ├── umatrix_heatmaps.svg
+│   ├── cluster_quality_comparison.svg
+│   ├── cluster_size_distribution.svg
+│   ├── fg_enrichment_stratum_{0..4}.svg
+│   └── cluster_distance_matrix_stratum_{0..4}.svg
 └── group_{0..4}/
     ├── labeled_data.csv    # SMILES + properties + cluster label
     └── embeddings.csv      # 16-dim latent embeddings
 ```
+
+### Checkpointing & Resumption
+
+The pipeline saves checkpoints after the two most expensive phases, enabling resumption without re-running costly computations:
+
+| Checkpoint | Phase | File | Contents | Skip time |
+|------------|-------|------|----------|-----------|
+| Phase 2 | VGAE training + encoding | `checkpoints/phase_2.json` | Embeddings, valid indices, losses | ~2–3 hours |
+| Phase 4 | SOM clustering | `pipeline_state.json` | Labels, SOM weights, autotune results | ~30–60 min |
+
+Checkpoints are automatically detected on restart — if a valid checkpoint exists, the pipeline skips that phase and loads cached results.
+
+### Visualization — UMAP Projection
+
+Latent space visualization uses **umap-rs** (v0.4), a fast parallel Rust implementation of UMAP with Rayon-based Hogwild! SGD optimization:
+
+1. **Subsampling**: Max 15,000 points from 249k embeddings for tractability
+2. **KNN computation**: Parallel brute-force Euclidean KNN (k=15) over 16-dim embeddings
+3. **UMAP optimization**: 500 epochs of parallel SGD with negative sampling
+4. **Output**: 2D scatter plot colored by QED stratum (Figure 9)
 
 ---
 
@@ -350,3 +394,4 @@ results/
 3. Kohonen, T. (1990). The Self-Organizing Map. *Proceedings of the IEEE*
 4. Sterling, T. & Irwin, J.J. (2015). ZINC 15 – Ligand Discovery for Everyone. *J. Chem. Inf. Model.*
 5. Bickerton, G.R. et al. (2012). Quantifying the chemical beauty of drugs. *Nature Chemistry*
+6. McInnes, L. et al. (2018). UMAP: Uniform Manifold Approximation and Projection for Dimension Reduction. *arXiv:1802.03426*
