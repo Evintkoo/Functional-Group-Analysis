@@ -1,5 +1,6 @@
-/// Visualization module: generates SVG plots for dissertation-grade reporting.
+/// Visualization module: generates publication-quality SVG figures for Q1 journal submission.
 /// Uses the `plotters` crate with SVG backend for high-quality vector graphics.
+/// Typography, sizing, and styling follow Nature/Science/PNAS figure guidelines.
 
 use plotters::prelude::*;
 use std::path::Path;
@@ -9,7 +10,32 @@ use umap_rs::{Umap as UmapAlgo, UmapConfig as UmapCfg, GraphParams as UmapGraphP
 use rayon::prelude::*;
 
 // ═══════════════════════════════════════════════════
-// Color palettes
+// Q1 journal figure standards
+// ═══════════════════════════════════════════════════
+
+const FONT: &str = "Helvetica";
+const TITLE_SIZE: u32 = 16;
+const AXIS_LABEL_SIZE: u32 = 13;
+const TICK_SIZE: u32 = 11;
+const LEGEND_SIZE: u32 = 11;
+const ANNOT_SIZE: u32 = 10;
+const PANEL_LABEL_SIZE: u32 = 18;
+const HEATMAP_ANNOT_SIZE: u32 = 10;
+
+const BAR_ALPHA: f64 = 0.85;
+const SCATTER_ALPHA: f64 = 0.70;
+const SCATTER_R: u32 = 3;
+const BAR_STROKE: u32 = 1;
+const GRID_STYLE: RGBColor = RGBColor(225, 225, 225);
+const MEAN_LINE: RGBColor = RGBColor(180, 0, 0);
+
+// Standard figure dimensions (single-column ~89mm, double-column ~178mm at 96 DPI)
+const FIG_SINGLE: (u32, u32) = (800, 600);
+const FIG_WIDE: (u32, u32) = (1200, 500);
+const FIG_PANEL_2X2: (u32, u32) = (1200, 900);
+
+// ═══════════════════════════════════════════════════
+// Color palettes (colorblind-safe, tab10-derived)
 // ═══════════════════════════════════════════════════
 
 const STRATUM_COLORS: [RGBColor; 5] = [
@@ -59,6 +85,64 @@ fn sequential_color(value: f64, min_val: f64, max_val: f64) -> RGBColor {
     RGBColor(r, g, b)
 }
 
+/// Draw a vertical colorbar on the right side of a drawing area.
+fn draw_colorbar(
+    area: &DrawingArea<SVGBackend, plotters::coord::Shift>,
+    min_val: f64,
+    max_val: f64,
+    label: &str,
+    color_fn: impl Fn(f64, f64, f64) -> RGBColor,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let (w, h) = area.dim_in_pixel();
+    let bar_w = 18u32;
+    let bar_h = (h as f64 * 0.6) as u32;
+    let x0 = w as i32 - 55;
+    let y0 = ((h - bar_h) / 2) as i32;
+    let n_steps = 64u32;
+    let step_h = bar_h / n_steps;
+
+    for i in 0..n_steps {
+        let t = 1.0 - i as f64 / n_steps as f64;
+        let val = min_val + t * (max_val - min_val);
+        let color = color_fn(val, min_val, max_val);
+        let yi = y0 + i as i32 * step_h as i32;
+        area.draw(&Rectangle::new(
+            [(x0, yi), (x0 + bar_w as i32, yi + step_h as i32)],
+            color.filled(),
+        ))?;
+    }
+    // Border
+    area.draw(&Rectangle::new(
+        [(x0, y0), (x0 + bar_w as i32, y0 + bar_h as i32)],
+        BLACK.stroke_width(1),
+    ))?;
+    // Labels
+    let fmt = |v: f64| -> String {
+        if v.abs() >= 100.0 { format!("{:.0}", v) }
+        else if v.abs() >= 1.0 { format!("{:.2}", v) }
+        else { format!("{:.3}", v) }
+    };
+    area.draw(&Text::new(fmt(max_val), (x0 + bar_w as i32 + 3, y0 + 2),
+        (FONT, ANNOT_SIZE - 1).into_font()))?;
+    area.draw(&Text::new(fmt(min_val), (x0 + bar_w as i32 + 3, y0 + bar_h as i32 - 4),
+        (FONT, ANNOT_SIZE - 1).into_font()))?;
+    area.draw(&Text::new(label, (x0 - 2, y0 - 14),
+        (FONT, ANNOT_SIZE).into_font()))?;
+    Ok(())
+}
+
+/// Draw a panel label like "(a)" in the top-left corner.
+fn draw_panel_label(
+    area: &DrawingArea<SVGBackend, plotters::coord::Shift>,
+    label: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    area.draw(&Text::new(
+        label.to_string(), (8, 6),
+        (FONT, PANEL_LABEL_SIZE).into_font().style(FontStyle::Bold),
+    ))?;
+    Ok(())
+}
+
 // ═══════════════════════════════════════════════════
 // 1. Property distribution histograms
 // ═══════════════════════════════════════════════════
@@ -106,21 +190,23 @@ fn plot_histogram(
     let (bins, counts) = compute_histogram(data, num_bins);
     let max_count = *counts.iter().max().unwrap_or(&1) as f64;
 
-    let root = SVGBackend::new(path, (800, 500)).into_drawing_area();
+    let root = SVGBackend::new(path, FIG_SINGLE).into_drawing_area();
     root.fill(&WHITE)?;
 
     let mut chart = ChartBuilder::on(&root)
-        .caption(title, ("sans-serif", 22).into_font())
-        .margin(15)
-        .x_label_area_size(45)
-        .y_label_area_size(55)
+        .caption(title, (FONT, TITLE_SIZE).into_font())
+        .margin(20)
+        .x_label_area_size(50)
+        .y_label_area_size(65)
         .build_cartesian_2d(bins[0]..bins[bins.len() - 1], 0.0..max_count * 1.05)?;
 
     chart.configure_mesh()
         .x_desc(x_label)
         .y_desc("Count")
-        .x_label_style(("sans-serif", 14))
-        .y_label_style(("sans-serif", 14))
+        .x_label_style((FONT, TICK_SIZE))
+        .y_label_style((FONT, TICK_SIZE))
+        .axis_desc_style((FONT, AXIS_LABEL_SIZE))
+        .light_line_style(GRID_STYLE)
         .draw()?;
 
     let bar_width = (bins[1] - bins[0]) * 0.95;
@@ -128,24 +214,26 @@ fn plot_histogram(
         bins.windows(2).zip(counts.iter()).map(|(bin_pair, &count)| {
             let x0 = bin_pair[0];
             let x1 = x0 + bar_width;
-            Rectangle::new([(x0, 0.0), (x1, count as f64)], color.mix(0.8).filled())
+            let mut bar = Rectangle::new([(x0, 0.0), (x1, count as f64)], color.mix(BAR_ALPHA).filled());
+            bar.set_margin(0, 0, 0, 0);
+            bar
         })
     )?;
 
-    // Add mean line
+    // Dashed mean indicator
     let mean = data.iter().sum::<f64>() / data.len().max(1) as f64;
     chart.draw_series(LineSeries::new(
         vec![(mean, 0.0), (mean, max_count * 1.0)],
-        RED.stroke_width(2),
+        MEAN_LINE.stroke_width(2),
     ))?
-    .label(format!("Mean = {:.3}", mean))
-    .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], RED.stroke_width(2)));
+    .label(format!("μ = {:.3}", mean))
+    .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], MEAN_LINE.stroke_width(2)));
 
     chart.configure_series_labels()
         .position(SeriesLabelPosition::UpperRight)
-        .background_style(WHITE.mix(0.8))
-        .border_style(BLACK)
-        .label_font(("sans-serif", 13))
+        .background_style(WHITE.mix(0.9))
+        .border_style(BLACK.stroke_width(1))
+        .label_font((FONT, LEGEND_SIZE))
         .draw()?;
 
     root.present()?;
@@ -159,7 +247,7 @@ fn plot_property_overlay(
     path: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     ensure_parent_dir(path);
-    let root = SVGBackend::new(path, (1200, 450)).into_drawing_area();
+    let root = SVGBackend::new(path, (1500, 500)).into_drawing_area();
     root.fill(&WHITE)?;
 
     let areas = root.split_evenly((1, 3));
@@ -168,29 +256,33 @@ fn plot_property_overlay(
         ("logP", logp_vals, PROPERTY_COLORS[1]),
         ("SAS", sas_vals, PROPERTY_COLORS[2]),
     ];
+    let panel_labels = ["(a)", "(b)", "(c)"];
 
-    for (area, (label, data, color)) in areas.iter().zip(datasets.iter()) {
+    for (i, (area, (label, data, color))) in areas.iter().zip(datasets.iter()).enumerate() {
+        let _ = draw_panel_label(area, panel_labels[i]);
         let (bins, counts) = compute_histogram(data, 40);
         let max_count = *counts.iter().max().unwrap_or(&1) as f64;
 
         let mut chart = ChartBuilder::on(area)
-            .caption(*label, ("sans-serif", 20).into_font())
-            .margin(15)
-            .x_label_area_size(40)
-            .y_label_area_size(55)
+            .caption(*label, (FONT, TITLE_SIZE).into_font())
+            .margin(18)
+            .x_label_area_size(45)
+            .y_label_area_size(60)
             .build_cartesian_2d(bins[0]..bins[bins.len() - 1], 0.0..max_count * 1.1)?;
 
         chart.configure_mesh()
             .x_desc(*label)
             .y_desc("Count")
-            .x_label_style(("sans-serif", 12))
-            .y_label_style(("sans-serif", 12))
+            .x_label_style((FONT, TICK_SIZE))
+            .y_label_style((FONT, TICK_SIZE))
+            .axis_desc_style((FONT, AXIS_LABEL_SIZE))
+            .light_line_style(GRID_STYLE)
             .draw()?;
 
         let bar_width = (bins[1] - bins[0]) * 0.92;
         chart.draw_series(
             bins.windows(2).zip(counts.iter()).map(|(bp, &c)| {
-                Rectangle::new([(bp[0], 0.0), (bp[0] + bar_width, c as f64)], color.mix(0.75).filled())
+                Rectangle::new([(bp[0], 0.0), (bp[0] + bar_width, c as f64)], color.mix(BAR_ALPHA).filled())
             })
         )?;
     }
@@ -211,16 +303,16 @@ pub fn plot_fg_prevalence(
     ensure_parent_dir(&path);
 
     let n = fg_data.len();
-    let root = SVGBackend::new(&path, (900, 80 + n as u32 * 32)).into_drawing_area();
+    let root = SVGBackend::new(&path, (900, 100 + n as u32 * 34)).into_drawing_area();
     root.fill(&WHITE)?;
 
     let max_pct = fg_data.iter().map(|(_, p)| *p).fold(0.0_f64, f64::max) * 1.1;
 
     let mut chart = ChartBuilder::on(&root)
-        .caption("Functional Group Prevalence (%)", ("sans-serif", 20).into_font())
-        .margin(15)
-        .x_label_area_size(40)
-        .y_label_area_size(200)
+        .caption("Functional Group Prevalence (%)", (FONT, TITLE_SIZE).into_font())
+        .margin(20)
+        .x_label_area_size(45)
+        .y_label_area_size(210)
         .build_cartesian_2d(0.0..max_pct, 0..n)?;
 
     chart.configure_mesh()
@@ -228,8 +320,10 @@ pub fn plot_fg_prevalence(
         .y_label_formatter(&|idx| {
             fg_data.get(*idx).map(|(name, _)| name.clone()).unwrap_or_default()
         })
-        .x_label_style(("sans-serif", 12))
-        .y_label_style(("sans-serif", 11))
+        .x_label_style((FONT, TICK_SIZE))
+        .y_label_style((FONT, TICK_SIZE))
+        .axis_desc_style((FONT, AXIS_LABEL_SIZE))
+        .light_line_style(GRID_STYLE)
         .draw()?;
 
     chart.draw_series(
@@ -241,7 +335,7 @@ pub fn plot_fg_prevalence(
             } else {
                 RGBColor(148, 103, 189)
             };
-            Rectangle::new([(0.0, i), (*pct, i + 1)], color.mix(0.8).filled())
+            Rectangle::new([(0.0, i), (*pct, i + 1)], color.mix(BAR_ALPHA).filled())
         })
     )?;
 
@@ -349,14 +443,15 @@ pub fn plot_latent_space_umap(
     let x_pad = (x_max - x_min) * 0.05;
     let y_pad = (y_max - y_min) * 0.05;
 
-    let root = SVGBackend::new(&path, (1000, 750)).into_drawing_area();
+    let root = SVGBackend::new(&path, (1000, 800)).into_drawing_area();
     root.fill(&WHITE)?;
 
     let mut chart = ChartBuilder::on(&root)
-        .caption("Latent Space (UMAP Projection)", ("sans-serif", 22).into_font())
-        .margin(15)
-        .x_label_area_size(45)
-        .y_label_area_size(55)
+        .caption("Latent Space (UMAP Projection)", (FONT, TITLE_SIZE).into_font())
+        .margin(20)
+        .x_label_area_size(50)
+        .y_label_area_size(60)
+        .right_y_label_area_size(65)
         .build_cartesian_2d(
             (x_min - x_pad)..(x_max + x_pad),
             (y_min - y_pad)..(y_max + y_pad),
@@ -365,8 +460,10 @@ pub fn plot_latent_space_umap(
     chart.configure_mesh()
         .x_desc("UMAP 1")
         .y_desc("UMAP 2")
-        .x_label_style(("sans-serif", 14))
-        .y_label_style(("sans-serif", 14))
+        .x_label_style((FONT, TICK_SIZE))
+        .y_label_style((FONT, TICK_SIZE))
+        .axis_desc_style((FONT, AXIS_LABEL_SIZE))
+        .light_line_style(GRID_STYLE)
         .draw()?;
 
     let qed_labels = ["QED [0, 0.4)", "QED [0.4, 0.52)", "QED [0.52, 0.69)", "QED [0.69, 0.81)", "QED [0.81, 1.0]"];
@@ -382,18 +479,18 @@ pub fn plot_latent_space_umap(
         let color = STRATUM_COLORS[stratum];
         chart.draw_series(
             stratum_points.iter().map(|&(x, y)| {
-                Circle::new((x, y), 4, color.mix(0.6).filled())
+                Circle::new((x, y), SCATTER_R, color.mix(SCATTER_ALPHA).filled())
             })
         )?
         .label(*qed_labels.get(stratum).unwrap_or(&""))
-        .legend(move |(x, y)| Circle::new((x + 10, y), 6, color.filled()));
+        .legend(move |(x, y)| Circle::new((x + 10, y), 5, color.filled()));
     }
 
     chart.configure_series_labels()
         .position(SeriesLabelPosition::UpperRight)
-        .background_style(WHITE.mix(0.9))
-        .border_style(BLACK)
-        .label_font(("sans-serif", 12))
+        .background_style(WHITE.mix(0.95))
+        .border_style(BLACK.stroke_width(1))
+        .label_font((FONT, LEGEND_SIZE))
         .draw()?;
 
     root.present()?;
@@ -412,36 +509,40 @@ pub fn plot_cluster_size_distributions(
     ensure_parent_dir(&path);
 
     let n_strata = strata_cluster_sizes.len();
-    let root = SVGBackend::new(&path, (900, 250 * n_strata as u32 + 80)).into_drawing_area();
+    let root = SVGBackend::new(&path, (900, 260 * n_strata as u32 + 80)).into_drawing_area();
     root.fill(&WHITE)?;
 
     let areas = root.split_evenly((n_strata, 1));
     let qed_labels = ["Stratum 0: QED [0, 0.4)", "Stratum 1: QED [0.4, 0.52)", "Stratum 2: QED [0.52, 0.69)", "Stratum 3: QED [0.69, 0.81)", "Stratum 4: QED [0.81, 1.0]"];
+    let panel_labels = ["(a)", "(b)", "(c)", "(d)", "(e)"];
 
     for (i, (area, sizes)) in areas.iter().zip(strata_cluster_sizes.iter()).enumerate() {
+        let _ = draw_panel_label(area, panel_labels.get(i).unwrap_or(&""));
         let float_sizes: Vec<f64> = sizes.iter().map(|&s| s as f64).collect();
         let (bins, counts) = compute_histogram(&float_sizes, 30);
         let max_count = *counts.iter().max().unwrap_or(&1) as f64;
 
         let mut chart = ChartBuilder::on(area)
-            .caption(qed_labels.get(i).unwrap_or(&""), ("sans-serif", 18).into_font())
-            .margin(15)
-            .x_label_area_size(35)
-            .y_label_area_size(50)
+            .caption(qed_labels.get(i).unwrap_or(&""), (FONT, TITLE_SIZE - 2).into_font())
+            .margin(18)
+            .x_label_area_size(40)
+            .y_label_area_size(55)
             .build_cartesian_2d(bins[0]..bins[bins.len() - 1], 0.0..max_count * 1.15)?;
 
         chart.configure_mesh()
             .x_desc("Cluster Size")
             .y_desc("Count")
-            .x_label_style(("sans-serif", 12))
-            .y_label_style(("sans-serif", 12))
+            .x_label_style((FONT, TICK_SIZE))
+            .y_label_style((FONT, TICK_SIZE))
+            .axis_desc_style((FONT, AXIS_LABEL_SIZE))
+            .light_line_style(GRID_STYLE)
             .draw()?;
 
         let bar_width = (bins[1] - bins[0]) * 0.92;
         let color = STRATUM_COLORS[i % 5];
         chart.draw_series(
             bins.windows(2).zip(counts.iter()).map(|(bp, &c)| {
-                Rectangle::new([(bp[0], 0.0), (bp[0] + bar_width, c as f64)], color.mix(0.75).filled())
+                Rectangle::new([(bp[0], 0.0), (bp[0] + bar_width, c as f64)], color.mix(BAR_ALPHA).filled())
             })
         )?;
     }
@@ -465,22 +566,25 @@ pub fn plot_dim_property_heatmap(
     let properties = ["QED", "logP", "SAS"];
     let n_props = properties.len();
 
-    let root = SVGBackend::new(&path, (800, 100 + n_dims as u32 * 35)).into_drawing_area();
+    let root = SVGBackend::new(&path, (850, 120 + n_dims as u32 * 36)).into_drawing_area();
     root.fill(&WHITE)?;
 
+    let _ = draw_colorbar(&root, -1.0, 1.0, "r", heatmap_color);
+
     let mut chart = ChartBuilder::on(&root)
-        .caption("Latent Dimension ↔ Property Correlations", ("sans-serif", 20).into_font())
-        .margin(15)
-        .x_label_area_size(60)
-        .y_label_area_size(55)
+        .caption("Latent Dimension ↔ Property Correlations", (FONT, TITLE_SIZE).into_font())
+        .margin(20)
+        .x_label_area_size(65)
+        .y_label_area_size(60)
+        .right_y_label_area_size(70)
         .build_cartesian_2d(0..n_props, 0..n_dims)?;
 
     chart.configure_mesh()
         .disable_mesh()
         .x_label_formatter(&|idx| properties.get(*idx).unwrap_or(&"").to_string())
         .y_label_formatter(&|idx| format!("Dim {}", dim_correlations.get(*idx).map(|d| d.0).unwrap_or(*idx)))
-        .x_label_style(("sans-serif", 13))
-        .y_label_style(("sans-serif", 12))
+        .x_label_style((FONT, TICK_SIZE))
+        .y_label_style((FONT, TICK_SIZE))
         .draw()?;
 
     for (row, &(_, r_qed, r_logp, r_sas)) in dim_correlations.iter().enumerate() {
@@ -495,7 +599,7 @@ pub fn plot_dim_property_heatmap(
                 Text::new(
                     format!("{:+.3}", val),
                     (col, row),
-                    ("sans-serif", 12).into_font().color(text_color),
+                    (FONT, HEATMAP_ANNOT_SIZE).into_font().color(text_color),
                 )
             ))?;
         }
@@ -517,24 +621,27 @@ pub fn plot_fg_property_correlations(
     ensure_parent_dir(&path);
 
     let n_fgs = fg_correlations.len();
-    let root = SVGBackend::new(&path, (750, 100 + n_fgs as u32 * 32)).into_drawing_area();
+    let root = SVGBackend::new(&path, (800, 120 + n_fgs as u32 * 34)).into_drawing_area();
     root.fill(&WHITE)?;
+
+    let _ = draw_colorbar(&root, -0.3, 0.3, "r", heatmap_color);
 
     let properties = ["QED", "logP", "SAS"];
 
     let mut chart = ChartBuilder::on(&root)
-        .caption("Functional Group ↔ Property Correlations", ("sans-serif", 20).into_font())
-        .margin(15)
-        .x_label_area_size(60)
-        .y_label_area_size(200)
+        .caption("Functional Group ↔ Property Correlations", (FONT, TITLE_SIZE).into_font())
+        .margin(20)
+        .x_label_area_size(65)
+        .y_label_area_size(210)
+        .right_y_label_area_size(70)
         .build_cartesian_2d(0..3usize, 0..n_fgs)?;
 
     chart.configure_mesh()
         .disable_mesh()
         .x_label_formatter(&|idx| properties.get(*idx).unwrap_or(&"").to_string())
         .y_label_formatter(&|idx| fg_correlations.get(*idx).map(|(n, _, _, _)| n.clone()).unwrap_or_default())
-        .x_label_style(("sans-serif", 13))
-        .y_label_style(("sans-serif", 11))
+        .x_label_style((FONT, TICK_SIZE))
+        .y_label_style((FONT, TICK_SIZE))
         .draw()?;
 
     for (row, (_, r_qed, r_logp, r_sas)) in fg_correlations.iter().enumerate() {
@@ -549,7 +656,7 @@ pub fn plot_fg_property_correlations(
                 Text::new(
                     format!("{:+.3}", val),
                     (col, row),
-                    ("sans-serif", 11).into_font().color(text_color),
+                    (FONT, HEATMAP_ANNOT_SIZE).into_font().color(text_color),
                 )
             ))?;
         }
@@ -570,12 +677,13 @@ pub fn plot_cluster_quality_comparison(
     let path = format!("{}/figures/cluster_quality_comparison.svg", output_dir);
     ensure_parent_dir(&path);
 
-    let root = SVGBackend::new(&path, (1100, 750)).into_drawing_area();
+    let root = SVGBackend::new(&path, FIG_PANEL_2X2).into_drawing_area();
     root.fill(&WHITE)?;
 
     let areas = root.split_evenly((2, 2));
     let titles = ["Silhouette Score", "Davies-Bouldin Index", "Quantization Error", "Gini Coefficient"];
     let y_labels = ["Score", "Index", "Error", "Coefficient"];
+    let panel_labels = ["(a)", "(b)", "(c)", "(d)"];
     let metrics: Vec<Vec<f64>> = vec![
         strata_metrics.iter().map(|m| m.1).collect(),
         strata_metrics.iter().map(|m| m.2).collect(),
@@ -584,6 +692,7 @@ pub fn plot_cluster_quality_comparison(
     ];
 
     for (i, area) in areas.iter().enumerate() {
+        let _ = draw_panel_label(area, panel_labels[i]);
         let vals = &metrics[i];
         let min_v = vals.iter().copied().fold(f64::MAX, f64::min);
         let max_v = vals.iter().copied().fold(f64::MIN, f64::max);
@@ -592,24 +701,26 @@ pub fn plot_cluster_quality_comparison(
         let y_hi = max_v + range * 0.15;
 
         let mut chart = ChartBuilder::on(area)
-            .caption(titles[i], ("sans-serif", 18).into_font())
-            .margin(10)
-            .x_label_area_size(35)
-            .y_label_area_size(55)
+            .caption(titles[i], (FONT, TITLE_SIZE - 2).into_font())
+            .margin(14)
+            .x_label_area_size(40)
+            .y_label_area_size(60)
             .build_cartesian_2d(0..vals.len(), y_lo..y_hi)?;
 
         chart.configure_mesh()
             .x_desc("Stratum")
             .y_desc(y_labels[i])
-            .x_label_style(("sans-serif", 12))
-            .y_label_style(("sans-serif", 12))
+            .x_label_style((FONT, TICK_SIZE))
+            .y_label_style((FONT, TICK_SIZE))
+            .axis_desc_style((FONT, AXIS_LABEL_SIZE))
+            .light_line_style(GRID_STYLE)
             .draw()?;
 
         chart.draw_series(
             vals.iter().enumerate().map(|(j, &v)| {
                 let color = STRATUM_COLORS[j % 5];
                 let bar_bottom = if y_lo > 0.0 { y_lo } else { 0.0_f64.min(v) };
-                Rectangle::new([(j, bar_bottom), (j + 1, v)], color.mix(0.8).filled())
+                Rectangle::new([(j, bar_bottom), (j + 1, v)], color.mix(BAR_ALPHA).filled())
             })
         )?;
 
@@ -618,7 +729,7 @@ pub fn plot_cluster_quality_comparison(
                 Text::new(
                     format!("{:.4}", v),
                     (j, v),
-                    ("sans-serif", 11).into_font(),
+                    (FONT, ANNOT_SIZE).into_font(),
                 )
             })
         )?;
@@ -662,21 +773,23 @@ pub fn plot_embedding_variance(
     let n = dim_variances.len();
     let max_var = dim_variances.iter().map(|d| d.1).fold(0.0_f64, f64::max) * 1.1;
 
-    let root = SVGBackend::new(&path, (850, 500)).into_drawing_area();
+    let root = SVGBackend::new(&path, FIG_SINGLE).into_drawing_area();
     root.fill(&WHITE)?;
 
     let mut chart = ChartBuilder::on(&root)
-        .caption("Latent Dimension Variance", ("sans-serif", 22).into_font())
-        .margin(15)
-        .x_label_area_size(45)
-        .y_label_area_size(65)
+        .caption("Latent Dimension Variance", (FONT, TITLE_SIZE).into_font())
+        .margin(20)
+        .x_label_area_size(50)
+        .y_label_area_size(70)
         .build_cartesian_2d(0..n, 0.0..max_var)?;
 
     chart.configure_mesh()
         .x_desc("Dimension")
         .y_desc("Variance")
-        .x_label_style(("sans-serif", 14))
-        .y_label_style(("sans-serif", 14))
+        .x_label_style((FONT, TICK_SIZE))
+        .y_label_style((FONT, TICK_SIZE))
+        .axis_desc_style((FONT, AXIS_LABEL_SIZE))
+        .light_line_style(GRID_STYLE)
         .draw()?;
 
     chart.draw_series(
@@ -687,7 +800,14 @@ pub fn plot_embedding_variance(
                 (119.0 - intensity * 80.0) as u8,
                 (180.0 - intensity * 140.0) as u8,
             );
-            Rectangle::new([(i, 0.0), (i + 1, var)], color.filled())
+            Rectangle::new([(i, 0.0), (i + 1, var)], color.mix(BAR_ALPHA).filled())
+        })
+    )?;
+
+    // Bar outlines for print clarity
+    chart.draw_series(
+        dim_variances.iter().enumerate().map(|(i, &(_, var))| {
+            Rectangle::new([(i, 0.0), (i + 1, var)], BLACK.stroke_width(BAR_STROKE))
         })
     )?;
 
@@ -707,14 +827,16 @@ pub fn plot_umatrix_heatmaps(
     ensure_parent_dir(&path);
 
     let n_strata = u_matrices.len();
-    let root = SVGBackend::new(&path, (280 * n_strata as u32 + 120, 400)).into_drawing_area();
+    let root = SVGBackend::new(&path, (300 * n_strata as u32 + 140, 440)).into_drawing_area();
     root.fill(&WHITE)?;
 
     let areas = root.split_evenly((1, n_strata));
     let qed_labels = ["S0: Low QED", "S1: Med-Low", "S2: Medium", "S3: Med-High", "S4: High QED"];
+    let panel_labels = ["(a)", "(b)", "(c)", "(d)", "(e)"];
 
     for (i, (area, u_matrix)) in areas.iter().zip(u_matrices.iter()).enumerate() {
         if u_matrix.is_empty() { continue; }
+        let _ = draw_panel_label(area, panel_labels.get(i).unwrap_or(&""));
         let h = u_matrix.len();
         let w = u_matrix[0].len();
 
@@ -723,18 +845,19 @@ pub fn plot_umatrix_heatmaps(
         let u_max = all_vals.iter().copied().fold(f64::MIN, f64::max);
 
         let mut chart = ChartBuilder::on(area)
-            .caption(qed_labels.get(i).unwrap_or(&""), ("sans-serif", 16).into_font())
-            .margin(10)
-            .x_label_area_size(30)
-            .y_label_area_size(30)
+            .caption(qed_labels.get(i).unwrap_or(&""), (FONT, TITLE_SIZE - 2).into_font())
+            .margin(12)
+            .x_label_area_size(35)
+            .y_label_area_size(35)
             .build_cartesian_2d(0..w, 0..h)?;
 
         chart.configure_mesh()
             .disable_mesh()
             .x_desc("Grid X")
             .y_desc("Grid Y")
-            .x_label_style(("sans-serif", 11))
-            .y_label_style(("sans-serif", 11))
+            .x_label_style((FONT, TICK_SIZE - 1))
+            .y_label_style((FONT, TICK_SIZE - 1))
+            .axis_desc_style((FONT, AXIS_LABEL_SIZE - 1))
             .draw()?;
 
         for r in 0..h {
@@ -780,7 +903,7 @@ pub fn plot_fg_enrichment_heatmap(
         return Ok(format!("figures/{}", filename));
     }
 
-    let root = SVGBackend::new(&path, (200 + n_fgs as u32 * 60, 120 + n_clusters as u32 * 32)).into_drawing_area();
+    let root = SVGBackend::new(&path, (220 + n_fgs as u32 * 60, 140 + n_clusters as u32 * 34)).into_drawing_area();
     root.fill(&WHITE)?;
 
     let mut data: Vec<Vec<f64>> = Vec::new();
@@ -794,19 +917,22 @@ pub fn plot_fg_enrichment_heatmap(
     let e_min = all_vals.iter().copied().fold(f64::MAX, f64::min).min(0.5);
     let e_max = all_vals.iter().copied().fold(f64::MIN, f64::max).max(2.0);
 
+    let _ = draw_colorbar(&root, e_min, e_max, "Enrichment", heatmap_color);
+
     let mut chart = ChartBuilder::on(&root)
-        .caption(format!("FG Enrichment — Stratum {}", stratum_id), ("sans-serif", 18).into_font())
-        .margin(15)
-        .x_label_area_size(120)
-        .y_label_area_size(80)
+        .caption(format!("FG Enrichment — Stratum {}", stratum_id), (FONT, TITLE_SIZE).into_font())
+        .margin(20)
+        .x_label_area_size(130)
+        .y_label_area_size(85)
+        .right_y_label_area_size(70)
         .build_cartesian_2d(0..n_fgs, 0..n_clusters)?;
 
     chart.configure_mesh()
         .disable_mesh()
         .x_label_formatter(&|idx| fg_names.get(*idx).cloned().unwrap_or_default())
         .y_label_formatter(&|idx| cluster_fg_enrichments.get(*idx).map(|(id, _)| format!("C{}", id)).unwrap_or_default())
-        .x_label_style(("sans-serif", 11).into_font().transform(FontTransform::Rotate270))
-        .y_label_style(("sans-serif", 11))
+        .x_label_style((FONT, TICK_SIZE).into_font().transform(FontTransform::Rotate270))
+        .y_label_style((FONT, TICK_SIZE))
         .draw()?;
 
     for (row, row_data) in data.iter().enumerate() {
@@ -840,7 +966,7 @@ pub fn plot_distance_matrix(
     let n = n_clusters.min(20);
     if n < 2 { return Ok(format!("figures/{}", filename)); }
 
-    let root = SVGBackend::new(&path, (120 + n as u32 * 35, 120 + n as u32 * 35)).into_drawing_area();
+    let root = SVGBackend::new(&path, (140 + n as u32 * 36, 140 + n as u32 * 36)).into_drawing_area();
     root.fill(&WHITE)?;
 
     let mut matrix = vec![vec![0.0_f64; n]; n];
@@ -853,19 +979,23 @@ pub fn plot_distance_matrix(
         }
     }
 
+    let _ = draw_colorbar(&root, 0.0, max_dist, "Distance", sequential_color);
+
     let mut chart = ChartBuilder::on(&root)
-        .caption(format!("Inter-Cluster Distances — Stratum {}", stratum_id), ("sans-serif", 16).into_font())
-        .margin(10)
-        .x_label_area_size(35)
-        .y_label_area_size(35)
+        .caption(format!("Inter-Cluster Distances — Stratum {}", stratum_id), (FONT, TITLE_SIZE).into_font())
+        .margin(14)
+        .x_label_area_size(40)
+        .y_label_area_size(40)
+        .right_y_label_area_size(70)
         .build_cartesian_2d(0..n, 0..n)?;
 
     chart.configure_mesh()
         .disable_mesh()
         .x_desc("Cluster ID")
         .y_desc("Cluster ID")
-        .x_label_style(("sans-serif", 11))
-        .y_label_style(("sans-serif", 11))
+        .x_label_style((FONT, TICK_SIZE))
+        .y_label_style((FONT, TICK_SIZE))
+        .axis_desc_style((FONT, AXIS_LABEL_SIZE))
         .draw()?;
 
     for r in 0..n {
@@ -892,14 +1022,17 @@ pub fn plot_stratum_property_comparison(
     let path = format!("{}/figures/stratum_property_comparison.svg", output_dir);
     ensure_parent_dir(&path);
 
-    let root = SVGBackend::new(&path, (1200, 450)).into_drawing_area();
+    let root = SVGBackend::new(&path, (1300, 500)).into_drawing_area();
     root.fill(&WHITE)?;
 
     let areas = root.split_evenly((1, 3));
     let property_names = ["QED (mean ± std)", "logP (mean ± std)", "SAS (mean ± std)"];
     let y_descs = ["QED", "logP", "SAS"];
+    let panel_labels = ["(a)", "(b)", "(c)"];
 
     for (p_idx, area) in areas.iter().enumerate() {
+        let _ = draw_panel_label(area, panel_labels[p_idx]);
+
         let (means, stds): (Vec<f64>, Vec<f64>) = strata_stats.iter().map(|s| {
             match p_idx {
                 0 => (s.1, s.2),
@@ -913,30 +1046,39 @@ pub fn plot_stratum_property_comparison(
         let y_max = all_vals.iter().copied().fold(f64::MIN, f64::max) + 0.1;
 
         let mut chart = ChartBuilder::on(area)
-            .caption(property_names[p_idx], ("sans-serif", 18).into_font())
-            .margin(15)
-            .x_label_area_size(40)
-            .y_label_area_size(55)
+            .caption(property_names[p_idx], (FONT, TITLE_SIZE - 2).into_font())
+            .margin(16)
+            .x_label_area_size(45)
+            .y_label_area_size(60)
             .build_cartesian_2d(0..means.len(), y_min..y_max)?;
 
         chart.configure_mesh()
             .x_desc("Stratum")
             .y_desc(y_descs[p_idx])
-            .x_label_style(("sans-serif", 12))
-            .y_label_style(("sans-serif", 12))
+            .x_label_style((FONT, TICK_SIZE))
+            .y_label_style((FONT, TICK_SIZE))
+            .axis_desc_style((FONT, AXIS_LABEL_SIZE))
+            .light_line_style(GRID_STYLE)
             .draw()?;
 
         chart.draw_series(
             means.iter().enumerate().map(|(i, &m)| {
                 let color = STRATUM_COLORS[i % 5];
                 let bar_bottom = if y_min > 0.0 { y_min } else { 0.0_f64.min(m) };
-                Rectangle::new([(i, bar_bottom), (i + 1, m)], color.mix(0.7).filled())
+                Rectangle::new([(i, bar_bottom), (i + 1, m)], color.mix(BAR_ALPHA).filled())
             })
         )?;
 
+        // Error bars with caps
         chart.draw_series(
-            means.iter().zip(stds.iter()).enumerate().map(|(i, (&m, &s))| {
-                PathElement::new(vec![(i, m - s), (i, m + s)], BLACK.stroke_width(2))
+            means.iter().zip(stds.iter()).enumerate().flat_map(|(i, (&m, &s))| {
+                let lo = m - s;
+                let hi = m + s;
+                vec![
+                    PathElement::new(vec![(i, lo), (i, hi)], BLACK.stroke_width(2)),
+                    PathElement::new(vec![(i, lo), (i, lo)], BLACK.stroke_width(2)),
+                    PathElement::new(vec![(i, hi), (i, hi)], BLACK.stroke_width(2)),
+                ]
             })
         )?;
     }
@@ -969,32 +1111,45 @@ pub fn plot_molecule_complexity(
     let x_max = points.iter().map(|p| p.0).fold(0.0_f64, f64::max) + 2.0;
     let y_max = points.iter().map(|p| p.1).fold(0.0_f64, f64::max) + 2.0;
 
-    let root = SVGBackend::new(&path, (900, 650)).into_drawing_area();
+    let qed_color = |q: f64| -> RGBColor {
+        let t = q.clamp(0.0, 1.0);
+        RGBColor(
+            (255.0 * (1.0 - t)) as u8,
+            (100.0 + 155.0 * t) as u8,
+            (50.0 + 130.0 * t) as u8,
+        )
+    };
+
+    let root = SVGBackend::new(&path, (950, 700)).into_drawing_area();
     root.fill(&WHITE)?;
 
+    let qed_hm = |val: f64, lo: f64, hi: f64| -> RGBColor {
+        let t = ((val - lo) / (hi - lo)).clamp(0.0, 1.0);
+        qed_color(t)
+    };
+    let _ = draw_colorbar(&root, 0.0, 1.0, "QED", qed_hm);
+
     let mut chart = ChartBuilder::on(&root)
-        .caption("Molecular Graph Complexity", ("sans-serif", 22).into_font())
-        .margin(15)
-        .x_label_area_size(45)
-        .y_label_area_size(55)
+        .caption("Molecular Graph Complexity", (FONT, TITLE_SIZE).into_font())
+        .margin(20)
+        .x_label_area_size(50)
+        .y_label_area_size(60)
+        .right_y_label_area_size(70)
         .build_cartesian_2d(0.0..x_max, 0.0..y_max)?;
 
     chart.configure_mesh()
         .x_desc("Number of Atoms")
         .y_desc("Number of Bonds")
-        .x_label_style(("sans-serif", 14))
-        .y_label_style(("sans-serif", 14))
+        .x_label_style((FONT, TICK_SIZE))
+        .y_label_style((FONT, TICK_SIZE))
+        .axis_desc_style((FONT, AXIS_LABEL_SIZE))
+        .light_line_style(GRID_STYLE)
         .draw()?;
 
     chart.draw_series(
         points.iter().map(|&(a, b, q)| {
-            let t = q.clamp(0.0, 1.0);
-            let color = RGBColor(
-                (255.0 * (1.0 - t)) as u8,
-                (100.0 + 155.0 * t) as u8,
-                (50.0 + 130.0 * t) as u8,
-            );
-            Circle::new((a, b), 4, color.mix(0.6).filled())
+            let color = qed_color(q);
+            Circle::new((a, b), SCATTER_R, color.mix(SCATTER_ALPHA).filled())
         })
     )?
     .label("Color: QED (red=low, green=high)")
@@ -1004,7 +1159,7 @@ pub fn plot_molecule_complexity(
         .position(SeriesLabelPosition::UpperLeft)
         .background_style(WHITE.mix(0.9))
         .border_style(BLACK)
-        .label_font(("sans-serif", 12))
+        .label_font((FONT, LEGEND_SIZE))
         .draw()?;
 
     root.present()?;

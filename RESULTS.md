@@ -966,13 +966,13 @@ Enrichment ratio shows over-representation relative to the stratum population.
 | Phase | Time |
 |---|---|
 | Data loading | 0.12s |
-| Graph parsing + FG detection | 1.85s |
+| Graph parsing + FG detection | 1.86s |
 | VGAE encoding | 0.10s |
-| Importance analysis | 0.34s |
+| Importance analysis | 0.33s |
 | SOM clustering + FG analysis | 14.01s |
-| **Total** | **27.11s** |
+| **Total** | **26.97s** |
 
-**Throughput**: 9202 molecules/second
+**Throughput**: 9249 molecules/second
 
 ## 12. Methodology Comparison
 
