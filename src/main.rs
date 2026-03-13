@@ -10,6 +10,8 @@ mod autoencoder;
 mod som;
 #[allow(dead_code)]
 mod functional_groups;
+#[allow(dead_code)]
+mod stats;
 mod pipeline;
 #[allow(dead_code)]
 mod io;

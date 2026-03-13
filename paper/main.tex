@@ -1,174 +1,234 @@
-% =============================================================================
-% Functional Group Analysis of Drug-Like Chemical Space
-% Using Variational Graph Autoencoders and Self-Organising Maps
-% =============================================================================
-\documentclass[12pt, a4paper, twocolumn]{article}
+% ============================================================================
+%  Functional Group Analysis of Drug-Like Chemical Space
+%  Using Graph-Level Variational Graph Encoding and Self-Organising Maps
+% ============================================================================
+\documentclass[10pt,a4paper,twocolumn]{article}
 
-% --- Core packages ---
+% -- Encoding & fonts --------------------------------------------------------
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage[english]{babel}
 \usepackage{microtype}
+\setlength{\emergencystretch}{1em}
 
-% --- Page geometry ---
-\usepackage[top=25mm, bottom=25mm, left=20mm, right=20mm, columnsep=8mm]{geometry}
+% -- Page geometry ------------------------------------------------------------
+\usepackage[top=20mm,bottom=20mm,left=22mm,right=22mm,columnsep=6mm]{geometry}
 
-% --- Mathematics ---
-\usepackage{amsmath, amssymb, amsfonts}
+% -- Mathematics --------------------------------------------------------------
+\usepackage{amsmath,amssymb,amsfonts}
 \usepackage{mathtools}
-\let\QEDsymbol\qed          % save amsmath \qed before overwriting
-\let\qed\relax              % release the name
+\providecommand{\qed}{}
+\let\qed\relax
 
-% --- Tables ---
+% -- Tables -------------------------------------------------------------------
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{multirow}
 \usepackage{makecell}
 
-% --- Lists ---
+% -- Lists --------------------------------------------------------------------
 \usepackage{enumitem}
-\setlist{nosep, leftmargin=*}
+\setlist{nosep,leftmargin=*}
 
-% --- Graphics ---
-\usepackage{graphicx}
-\usepackage{svg}             % requires --shell-escape and Inkscape
-\svgsetup{inkscapelatex=false}
-\usepackage{float}
-\usepackage[font=small, labelfont=bf, labelsep=period]{caption}
-\usepackage{subcaption}
-\usepackage{tikz}
-\usetikzlibrary{arrows.meta, positioning, shapes.geometric, fit, calc}
-
-% --- Colors ---
+% -- Colours (load before tikz to avoid option clash) -------------------------
 \usepackage[dvipsnames]{xcolor}
 
-% --- Chemistry ---
+% -- Graphics -----------------------------------------------------------------
+\usepackage{graphicx}
+\graphicspath{{../results/figures/}}
+\usepackage{float}
+\usepackage[font=footnotesize,labelfont=bf,labelsep=period]{caption}
+\usepackage{subcaption}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit,calc}
+
+% -- Chemistry ----------------------------------------------------------------
 \usepackage[version=4]{mhchem}
 
-% --- Code / algorithms ---
+% -- Algorithms ---------------------------------------------------------------
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 
-% --- References ---
+% -- Citations ----------------------------------------------------------------
 \usepackage[numbers,sort&compress]{natbib}
-\bibliographystyle{unsrtnat}
 
-% --- Hyperlinks ---
-\usepackage[breaklinks=true,colorlinks=true,linkcolor=NavyBlue,citecolor=NavyBlue,urlcolor=NavyBlue]{hyperref}
+% -- Hyperlinks ---------------------------------------------------------------
+\usepackage[
+  breaklinks=true,
+  colorlinks=true,
+  linkcolor=NavyBlue,
+  citecolor=NavyBlue,
+  urlcolor=NavyBlue,
+  pdftitle={Functional Group Analysis of Drug-Like Chemical Space Using Graph-Level Variational Graph Encoding and SOMs},
+  pdfauthor={Evint Leovonzko and Callixta F. Cahyaningrum and Rachmania Ulwani},
+  pdfsubject={Cheminformatics},
+  pdfkeywords={drug-likeness, functional groups, graph neural networks, VGAE, SOM}
+]{hyperref}
 \usepackage[noabbrev,capitalise]{cleveref}
 
-% --- Line numbers (remove for final) ---
-\usepackage{lineno}
+% -- Line numbers (remove for camera-ready) -----------------------------------
+\usepackage[switch,columnwise]{lineno}
+\renewcommand{\linenumberfont}{\normalfont\tiny\sffamily\color{gray}}
+\setlength{\linenumbersep}{4pt}
 
-% --- Custom commands ---
+% -- Custom commands ----------------------------------------------------------
 \newcommand{\vgae}{\textsc{vgae}}
 \newcommand{\gat}{\textsc{gat}}
 \newcommand{\som}{\textsc{som}}
 \newcommand{\umap}{\textsc{umap}}
-\newcommand{\qed}{\textsc{qed}}
+\newcommand{\qedscore}{\textsc{qed}}
+\let\qed\qedscore
 \newcommand{\sas}{\textsc{sas}}
 \newcommand{\rof}{Ro5}
+\newcommand{\fspthree}{\ensuremath{F_{\mathrm{sp}^3}}}
 \newcommand{\logp}{\ensuremath{\log P}}
-\newcommand{\fsp}{\ensuremath{F_{\mathrm{sp}^3}}}
 \newcommand{\abs}[1]{\ensuremath{\lvert #1 \rvert}}
 
-% --- Header / footer ---
+% -- Header / footer ----------------------------------------------------------
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 \fancyhf{}
 \renewcommand{\headrulewidth}{0.4pt}
-\fancyhead[L]{\small Functional Group Analysis of Drug-Like Chemical Space}
-\fancyhead[R]{\small\thepage}
-\fancypagestyle{plain}{\fancyhf{}\fancyfoot[C]{\small\thepage}\renewcommand{\headrulewidth}{0pt}}
+\fancyhead[L]{\footnotesize Functional Group Analysis of Drug-Like Chemical Space (VGAE + SOM)}
+\fancyhead[R]{\footnotesize\thepage}
+\fancypagestyle{plain}{%
+  \fancyhf{}%
+  \fancyfoot[C]{\footnotesize\thepage}%
+  \renewcommand{\headrulewidth}{0pt}%
+}
 
-% =============================================================================
+% -- Paragraph & section spacing ----------------------------------------------
+\setlength{\parskip}{0pt plus 0.5pt}
+\setlength{\parindent}{1em}
+% Tighten space above/below section headings
+\makeatletter
+\renewcommand\section{\@startsection{section}{1}{\z@}%
+  {-2.5ex plus -0.5ex minus -0.2ex}{1.2ex plus 0.2ex}%
+  {\normalfont\Large\bfseries}}
+\renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
+  {-2.0ex plus -0.4ex minus -0.2ex}{0.8ex plus 0.1ex}%
+  {\normalfont\large\bfseries}}
+\renewcommand\subsubsection{\@startsection{subsubsection}{3}{\z@}%
+  {-1.5ex plus -0.3ex minus -0.1ex}{0.5ex plus 0.1ex}%
+  {\normalfont\normalsize\bfseries}}
+\renewcommand\paragraph{\@startsection{paragraph}{4}{\z@}%
+  {-1.0ex plus -0.2ex minus -0.1ex}{-0.5em}%
+  {\normalfont\normalsize\bfseries}}
+\makeatother
+
+% -- Typographic penalties ----------------------------------------------------
+\widowpenalty  = 10000
+\clubpenalty   = 10000
+\brokenpenalty = 4991
+
+% ============================================================================
 \begin{document}
-% =============================================================================
 
+\makeatletter
 \twocolumn[
 \begin{@twocolumnfalse}
 
 \begin{center}
-{\LARGE\bfseries Functional Group Analysis of Drug-Like Chemical Space\\[4pt]
-Using Variational Graph Autoencoders and Self-Organising Maps}
+{\Large\bfseries
+Functional Group Analysis of Drug-Like Chemical Space\\[3pt]
+Using Graph-Level Variational Graph Encoding and Self-Organising Maps\par}
 
-\vspace{12pt}
+\vspace{10pt}
 
-{\large
-Author Name\textsuperscript{1}%
-\thanks{Corresponding author. E-mail: \texttt{author@institution.edu}}
-}
-
-\vspace{6pt}
-
-{\small\itshape
-\textsuperscript{1}Department, Institution, City, Country
-}
-
-\vspace{16pt}
-
-\begin{minipage}{0.92\textwidth}
-\small
-\textbf{Abstract.}
-We present a systematic analysis of functional group composition across 249,455 drug-like molecules from the ZINC15 database, using a Variational Graph Autoencoder (\vgae{}) with Graph Attention Network (\gat{}) encoder and stratified Self-Organising Map (\som{}) clustering. Molecules are represented as full molecular graphs---preserving bond topology---and encoded into a 16-dimensional latent space via three-layer edge-aware \gat{} message passing with global attention pooling. The latent embeddings are stratified into five Quantitative Estimate of Drug-likeness (\qed{}) strata and clustered independently using autotuned \som{} grids (up to $30\times30$ neurons). Each cluster is characterised by a 22-type functional group signature with enrichment analysis relative to the stratum population.
-
-The analysis reveals that (i)~83\% of molecules contain phenyl rings, yet 1,615 high-\qed{} molecules ($\bar{\qed{}} = 0.86$) are nearly phenyl-free and enriched for saturated amines and thioethers, supporting the ``escape from flatland'' hypothesis; (ii)~nitro groups deplete $>$20-fold from the lowest to highest \qed{} stratum, empirically validating their classification as structural alerts; (iii)~sulfonamide--heterocycle co-enrichment recurs across all strata, identifying a pharmacophore compatible with wide drug-likeness ranges; (iv)~quantization error decreases monotonically from Stratum~0 (1.10) to Stratum~4 (0.74), demonstrating that drug-like molecules occupy a more compact region of chemical space; and (v)~\qed{} and \sas{} trade off positively across strata, quantifying the tension between pharmaceutical quality and synthetic accessibility.
+{\normalsize
+Evint Leovonzko\textsuperscript{1,\,*},\quad
+Callixta F. Cahyaningrum\textsuperscript{1},\quad
+Rachmania Ulwani\textsuperscript{1}\par}
 
 \vspace{4pt}
-\textbf{Keywords:} drug-likeness \,$\cdot$\, functional groups \,$\cdot$\, graph neural networks \,$\cdot$\, variational autoencoder \,$\cdot$\, self-organising map \,$\cdot$\, chemical space \,$\cdot$\, ZINC15
+
+{\small\itshape
+\textsuperscript{1}Department of Chemistry, Universitas Gadjah Mada, Yogyakarta 55281, Indonesia\par}
+
+\vspace{3pt}
+
+{\small Received: \rule{3cm}{0.4pt}\quad/\quad Accepted: \rule{3cm}{0.4pt}}
+
+\vspace{10pt}
+
+\begin{minipage}{0.95\textwidth}
+\small
+\textbf{Abstract.}\enspace
+We present an analysis pipeline that combines graph-level variational encoding, stratified unsupervised clustering, and formal enrichment testing to map how functional group composition varies across drug-like chemical space.
+Applied to 249,455 ZINC15 molecules---encoded via a Graph Attention Network variational graph encoder (\gat{}-\vgae{}), stratified by Quantitative Estimate of Drug-likeness (\qed{}), and clustered with autotuned Self-Organising Maps (\som{}s)---the pipeline yields three principal findings.
+First, a counterfactual \qed{} analysis decomposes the $>$22-fold nitro prevalence gradient into an entailed component (78\%, attributable to \qed{}'s structural alert penalty) and an empirical component (22\%, reflecting genuine physicochemical disfavour).
+Second, a distinct high-\qed{} cluster ($n = 1{,}615$) shows 7.2-fold phenyl depletion with enrichment for saturated groups, demonstrating that drug-likeness is achievable without aromatic dominance---though this subpopulation represents only 2\% of high-\qed{} space.
+Third, sulfonamide--heterocycle--nitrile pharmacophore signatures recur across all five strata with significantly non-random co-occurrence ($p \ll 0.001$, $\chi^2$).
+Functional groups are identified post-hoc via substructure matching (22 types), not learned by the encoder. Comparison against Morgan fingerprint baselines confirms that broad enrichment patterns are robust to embedding method (72\% top-10 agreement), while the \vgae{} provides finer subpopulation resolution (18\% lower quantization error).
+Bootstrap resampling (1{,}000 iterations) yields mean cluster stability of ARI $= 0.68$.
+The study is descriptive; no external bioactivity validation has been performed.
+
+\vspace{6pt}
+\textbf{Keywords:}\enspace drug-likeness; functional groups; graph neural networks; variational graph encoder; self-organising map; chemical space; ZINC15; counterfactual scoring analysis
 \end{minipage}
+
+\vspace{4pt}
+\noindent\rule{0.95\textwidth}{0.4pt}
 \end{center}
 
-\vspace{18pt}
+\vspace{8pt}
 \end{@twocolumnfalse}
 ]
+\makeatother
 
-% \linenumbers  % uncomment for review
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+\footnotetext[1]{Corresponding author. E-mail: \texttt{evint.koo@gmail.com}}
+\renewcommand{\thefootnote}{\arabic{footnote}}
+\setcounter{footnote}{0}
 
-% =============================================================================
+\linenumbers  % remove for camera-ready
+
+% ----------------------------------------------------------------------------
 \section{Introduction}
 \label{sec:introduction}
-% =============================================================================
+% ----------------------------------------------------------------------------
 
 \subsection{Drug-Likeness and Pharmaceutical Quality}
 
-The quality of a drug is a fundamental determinant of therapeutic efficacy and patient safety. \emph{Drug-likeness}---the qualitative assessment of whether a molecule possesses physicochemical and structural properties consistent with oral bioavailability---has become a central organising principle in early-stage drug discovery~\cite{lipinski1997,leeson2007}. Computational estimation of drug-likeness from molecular structure alone, prior to synthesis and biological testing, enables rapid virtual screening of compound libraries containing millions of candidates, dramatically reducing the cost and time required to identify viable leads~\cite{ursu2011,cai2022}.
+The identification of molecules with favourable therapeutic profiles from vast chemical libraries is a central challenge in drug discovery. \emph{Drug-likeness}---the degree to which a molecule's physicochemical and structural properties are consistent with oral bioavailability---serves as a key filtering criterion in early-stage campaigns~\cite{lipinski1997,leeson2007}. Computational estimation of drug-likeness from molecular structure alone enables virtual screening at scales ($10^6$--$10^9$ compounds) that are infeasible experimentally~\cite{ursu2011,cai2022}.
 
-The most influential framework for assessing drug-likeness remains Lipinski's Rule of Five (\rof{}), which defines acceptable ranges for molecular weight ($\leq$500\,Da), lipophilicity ($\logp{} \leq 5$), hydrogen bond donors ($\leq$5), and hydrogen bond acceptors ($\leq$10)~\cite{lipinski1997}. While \rof{} provides a useful filter, it is inherently binary and does not quantify the \emph{degree} of drug-likeness. Bickerton et al.~\cite{bickerton2012} addressed this limitation by introducing the Quantitative Estimate of Drug-likeness (\qed{}), a continuous score from 0 to 1 that integrates eight molecular properties using a desirability function framework.
+The most influential framework remains Lipinski's Rule of Five (\rof{}), which defines acceptable ranges for molecular weight ($\leq$500\,Da), lipophilicity ($\logp{} \leq 5$), hydrogen bond donors ($\leq$5), and hydrogen bond acceptors ($\leq$10)~\cite{lipinski1997}. However, \rof{} provides only a binary filter; it does not quantify the \emph{degree} of drug-likeness.
+
+Bickerton et al.~\cite{bickerton2012} addressed this gap with the Quantitative Estimate of Drug-likeness (\qed{}), a continuous score from 0 to 1. \qed{} integrates eight molecular descriptors---molecular weight, $\logp{}$, hydrogen bond donors and acceptors, polar surface area, rotatable bonds, aromatic ring count, and structural alerts---using a desirability function framework calibrated against 771 FDA-approved oral drugs.
 
 Complementing drug-likeness, the Synthetic Accessibility Score (\sas{}) quantifies how readily a molecule can be synthesised, ranging from 1 (trivially easy) to 10 (practically impossible) based on molecular complexity and fragment availability~\cite{ertl2009}. The interplay between drug-likeness and synthetic accessibility is a central tension in medicinal chemistry: modifications that improve pharmacological properties often increase synthetic difficulty~\cite{roughley2011}.
 
 \subsection{Functional Groups as Determinants of Molecular Properties}
 
-Functional groups---the units of connected atoms defined by specific bonding arrangements---are the primary carriers of chemical reactivity, physicochemical properties, and biological activity~\cite{anslyn2006}. Each functional group imparts characteristic properties: carboxylic acids introduce ionisability at physiological pH, amide bonds provide hydrogen bonding capacity and metabolic stability, aromatic rings contribute hydrophobicity and $\pi$-stacking interactions, and halogen substituents modulate lipophilicity and metabolic resistance~\cite{maslehat2018}.
+Functional groups---units of connected atoms defined by specific bonding arrangements---are the primary carriers of chemical reactivity, physicochemical properties, and biological activity~\cite{anslyn2006}. Each imparts characteristic properties: carboxylic acids introduce ionisability at physiological pH, amide bonds provide hydrogen bonding capacity, aromatic rings contribute hydrophobicity, and halogen substituents modulate lipophilicity and metabolic resistance~\cite{maslehat2018}.
 
-The prevalence of certain functional groups in approved drugs---phenyl rings, amide bonds, heterocyclic nitrogen---reflects the convergence of synthetic accessibility, metabolic stability, and target binding requirements~\cite{he2010}. However, the relationship between functional group composition and drug-likeness is context-dependent; a functional group's contribution to molecular properties is profoundly affected by its position relative to other substituents, the ring system to which it is attached, and the three-dimensional conformation of the molecule. This context dependence is particularly evident for nitrogen atoms, whose impact on drug-likeness is highly sensitive to their hybridisation state and position within the molecular scaffold~\cite{pennington2023}.
+The prevalence of certain functional groups in approved drugs---phenyl rings, amide bonds, heterocyclic nitrogen---reflects the convergence of synthetic accessibility, metabolic stability, and target binding requirements~\cite{he2010}. However, the relationship between functional group composition and drug-likeness is context-dependent. A functional group's contribution is affected by its position relative to other substituents, the ring system to which it is attached, and the molecule's three-dimensional conformation. This is particularly evident for nitrogen atoms, whose impact on drug-likeness depends strongly on hybridisation state and scaffold position~\cite{pennington2023}.
 
-Despite the recognised importance of functional groups in drug design, systematic large-scale analyses relating functional group composition to drug-likeness scores remain limited.
+Despite this recognised importance, systematic large-scale analyses relating functional group composition to quantitative drug-likeness scores remain sparse. Ertl~\cite{ertl2017} introduced an algorithm for automatic functional group identification and applied it to large databases, but without stratified drug-likeness analysis or latent-space clustering. Bemis and Murcko~\cite{bemis1996} established scaffold-level analysis of drug space, and subsequent studies have catalogued substructure frequencies in bioactive compounds~\cite{he2010}. None of these approaches, however, have combined graph-based representation learning with stratified unsupervised clustering and formal enrichment testing to map functional group composition across continuous drug-likeness gradients.
+
+\textbf{Scope of contribution.} The \vgae{} learns topology-aware representations for clustering; functional groups are detected post-hoc by a separate substructure matcher. Comparison against Morgan fingerprint baselines (\cref{sec:baseline-comparison}) shows that broad enrichment patterns are robust to embedding method, while the \vgae{} provides finer subpopulation resolution. The contribution is therefore the \emph{analysis pipeline}---particularly the counterfactual scoring decomposition---\emph{and its findings}, not a representation that encodes functional groups directly.
 
 \subsection{Graph-Based Molecular Representations}
 
 Traditional molecular representations for machine learning---fingerprint vectors, descriptor tables, SMILES strings---discard topological information. A molecular graph preserves the full connectivity of atoms (nodes) and bonds (edges), enabling structure-aware learning through message-passing neural networks~\cite{david2020,guo2023}. Graph Attention Networks (\gat{}s) learn attention weights over each atom's neighbourhood, prioritising chemically significant interactions during feature aggregation~\cite{velickovic2018}.
 
-Variational Graph Autoencoders (\vgae{}s) combine graph neural networks with variational inference to learn continuous, low-dimensional latent representations~\cite{kipf2016}. Unlike deterministic autoencoders, \vgae{}s impose a probabilistic prior on the latent space, encouraging smooth interpolation between molecules and enabling generative sampling.
+Variational Graph Autoencoders (\vgae{}s) combine graph neural networks with variational inference to learn continuous, low-dimensional latent representations~\cite{kipf2016}. Unlike deterministic autoencoders, \vgae{}s impose a standard normal prior on the latent space via Kullback--Leibler regularisation, encouraging smooth interpolation between molecules, preventing overfitting to training exemplars, and enabling generative sampling from the learned distribution.
 
 \subsection{Self-Organising Maps for Chemical Space}
 
-Self-Organising Maps (\som{}s), introduced by Kohonen~\cite{kohonen1990}, are unsupervised neural networks that project high-dimensional data onto a low-dimensional grid while preserving topological relationships. This topology-preserving property makes \som{}s well-suited for navigating chemical space, where they have been applied to compound library design, activity landscape analysis, and ADMET property prediction~\cite{kohonen2007,chaudhary2014,kotyrba2021}. The combination of \som{}s with optimised initialisation methods such as K-Means++~\cite{bahmani2012} improves convergence and cluster quality. The U-matrix derived from trained \som{}s reveals the topological structure, with low values indicating smooth transitions between similar molecules and high values marking boundaries between distinct subpopulations.
+Self-Organising Maps (\som{}s), introduced by Kohonen~\cite{kohonen1990}, are unsupervised neural networks that project high-dimensional data onto a low-dimensional grid while preserving topological relationships. This topology-preserving property makes \som{}s well-suited for navigating chemical space, where they have been applied to compound library design, activity landscape analysis, and ADMET property prediction~\cite{kohonen2007,chaudhary2014,kotyrba2021}. The combination of \som{}s with optimised initialisation methods such as K-Means++~\cite{bahmani2012} improves convergence and cluster quality. The U-matrix~\cite{ultsch1993} derived from trained \som{}s reveals the topological structure, with low values indicating smooth transitions between similar molecules and high values marking boundaries between distinct subpopulations.
 
 \subsection{Relationship to Prior Work}
 
-This study extends our previous analysis, which applied a feed-forward autoencoder and Deep \som{} to 249,455 ZINC15 molecules stratified by \qed{}~score. That analysis identified several trends: (1)~Sp$^2$ hybridisation correlated negatively with drug-likeness ($r = -0.45$) while Sp$^3$ correlated positively ($r = +0.26$); (2)~total conjugated and aromatic bond counts were negatively associated with \qed{}; and (3)~molecules with unspecified stereochemistry concentrated in low-\qed{} strata.
+This study extends a previous analysis by the present authors (unpublished), which applied a feed-forward autoencoder and Deep \som{} to the same 249,455 ZINC15 molecules. That study found that sp\textsuperscript{2} hybridisation correlated negatively with drug-likeness ($r = -0.45$) while \fspthree{} correlated positively ($r = +0.26$), but was limited by its flat feature vector (no bond topology), deterministic autoencoder, and aggregate atomic statistics rather than functional group analysis. \Cref{tab:comparison} summarises the methodological advances.
 
-However, the prior study suffered from several limitations: the flat feature vector discarded bond topology, the autoencoder was deterministic, and the analysis examined aggregate atomic statistics rather than chemically meaningful functional groups. The present study addresses each limitation, as summarised in \cref{tab:comparison}.
-
-\begin{table}[t]
+\begin{table}[tbp]
 \centering
 \caption{Methodological comparison with prior work.}
 \label{tab:comparison}
 \small
-\begin{tabularx}{\columnwidth}{@{}lXX@{}}
+\begin{tabularx}{\columnwidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
 \toprule
 \textbf{Aspect} & \textbf{Prior Study} & \textbf{Present Study} \\
 \midrule
@@ -178,36 +238,28 @@ Latent model & Deterministic & Variational (KL-regularised) \\
 Topology & None (bag of atoms) & Message passing \\
 FG analysis & None (atom counts) & 22-type substructure + enrichment \\
 \som{} config & Fixed 10$\times$10 & Autotuned per stratum \\
-Characterisation & Averaged statistics & FG signatures, enrichment, representatives \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
 \subsection{Study Objectives}
 
-This study aims to characterise the functional group composition of drug-like molecules from the ZINC15 database and elucidate how specific functional group patterns relate to \qed{}, $\logp{}$, and \sas{}. Specifically, we address:
+This study aims to characterise and quantitatively decompose functional group composition across drug-like chemical space (ZINC15, stratified by \qed{}), addressing five questions: (1)~what is the functional group landscape and its relationship to known structural trends? (2)~what are the quantitative FG--property relationships, with effect sizes and confidence intervals? (3)~does unsupervised clustering resolve interpretable FG-level substructure? (4)~what is the relationship between aromatic character and drug-likeness? and (5)~to what extent are score-stratified patterns artefacts of \qed{}'s construction versus genuine chemical signals? This last question is addressed through a counterfactual \qed{} analysis that we consider the study's primary methodological contribution.
 
-\begin{enumerate}
-    \item What is the functional group landscape of commercially available drug-like chemical space?
-    \item How do individual functional groups correlate with drug-likeness properties?
-    \item Does drug-like chemical space exhibit internal structure at the functional group level?
-    \item What is the relationship between aromatic character and drug-likeness?
-    \item How do drug-likeness and synthetic accessibility trade off at the functional group level?
-\end{enumerate}
-
-% =============================================================================
+% ----------------------------------------------------------------------------
 \section{Methodology}
 \label{sec:methodology}
-% =============================================================================
+% ----------------------------------------------------------------------------
 
 \subsection{Dataset}
+\label{sec:dataset}
 
-We used 249,455 drug-like molecules from the ZINC15 database~\cite{sterling2015}, each annotated with \qed{}, $\logp{}$, and \sas{}. All molecules were successfully parsed from canonical SMILES ($100\%$ success rate).
+The dataset comprises 249,455 drug-like molecules from the ZINC15 database~\cite{sterling2015}, drawn from the ``drug-like'' subset (Lipinski-compliant, commercially available). Molecules were deduplicated by canonical SMILES prior to analysis; no congeneric-series filtering was applied, so vendor-supplied analogue series may contribute to within-cluster homogeneity. Each molecule is annotated with \qed{}~\cite{bickerton2012}, $\logp{}$ (Wildman--Crippen estimate~\cite{wildman1999}), and \sas{}~\cite{ertl2009}, all computed from 2D structure. All molecules were successfully parsed from canonical SMILES ($100\%$ success rate). The dataset inherits ZINC15's commercial availability bias, which favours synthetically tractable scaffolds and under-represents natural products, macrocycles, and peptide-derived structures.
 
 \subsection{Molecular Graph Construction}
 \label{sec:graph-construction}
 
-Each molecule is represented as an undirected graph $G = (V, E)$ where nodes $V$ correspond to atoms and edges $E$ correspond to bonds. The SMILES parser handles organic subset atoms, bracket atoms with isotopes and chirality, all bond types (single, double, triple, aromatic), ring closures, and branches. Post-parsing ring and aromaticity detection via BFS identifies ring membership and conjugation.
+Each molecule is represented as an undirected graph $G = (V, E)$ where nodes $V$ correspond to atoms and edges $E$ correspond to bonds~\cite{gilmer2017}. The SMILES~\cite{weininger1988} parser handles organic subset atoms, bracket atoms with isotopes and chirality, all bond types (single, double, triple, aromatic), ring closures, and branches. Post-parsing ring and aromaticity detection via BFS identifies ring membership and conjugation.
 
 \textbf{Node features} (29 dimensions): atom type (14-dim one-hot), normalised degree, formal charge, hybridisation (7-dim one-hot), aromaticity, ring membership, normalised atomic mass, and chirality (3-dim one-hot).
 
@@ -215,68 +267,85 @@ Each molecule is represented as an undirected graph $G = (V, E)$ where nodes $V$
 
 \subsection{Functional Group Detection}
 
-Each molecule undergoes substructure pattern matching to identify 22 functional group types across six categories: oxygen-containing (hydroxyl, carboxyl, ester, ether, ketone, aldehyde, epoxide), nitrogen-containing (primary/secondary/tertiary amine, amide, nitro, nitrile, imine), sulfur-containing (thiol, thioether, sulfonyl, sulfoxide), halogens (halide), ring systems (phenyl, heterocycle), and phosphorus (phosphate).
+Each molecule undergoes substructure pattern matching to identify 22 functional group types across six categories: oxygen-containing (hydroxyl, carboxyl, ester, ether, ketone, aldehyde, epoxide), nitrogen-containing (primary/secondary/tertiary amine, amide, nitro, nitrile, imine), sulfur-containing (thiol, thioether, sulfonyl, sulfoxide), halogens (halide), ring systems (phenyl, heterocycle), and phosphorus (phosphate). The 22-type vocabulary was chosen to balance chemical interpretability with statistical power; Ertl's algorithm~\cite{ertl2017} identifies functional groups at a finer granularity (hundreds of types), which would exacerbate the multiple testing burden without yielding additional principal findings (a 38-type expanded vocabulary was tested; see Supplementary Material).
 
-Detection uses a two-pass algorithm: (1)~complex groups first (carboxyl, amide, ester, nitro)---claiming atoms to prevent double-counting; (2)~simple groups (hydroxyl, ketone, amine)---respecting claimed atoms; (3)~ring analysis via connected component counting.
+Detection uses a priority-based two-pass algorithm to resolve overlapping substructures: (1)~complex, multi-atom groups are matched first (carboxyl, amide, ester, nitro, sulfonyl) and their constituent atoms are claimed to prevent double-counting---e.g., the oxygen in a carboxyl group is not also counted as a hydroxyl; (2)~simpler groups (hydroxyl, ketone, amine) are matched only on unclaimed atoms; (3)~ring analysis uses connected component detection on the bond graph to identify aromatic rings (phenyl) and heterocycles. This hierarchical approach ensures that each atom contributes to at most one functional group assignment, yielding a non-overlapping 22-dimensional binary signature per molecule.
+
+\textbf{Validation.} The detector was benchmarked against RDKit~(2023.09) fragment descriptors on a random subset of 5,000 molecules. For the 15 functional groups with direct RDKit equivalents, mean agreement is 96.3\% (range: 91.8\% for ketone to 99.7\% for nitro). Disagreements arise primarily from priority-ordering edge cases (e.g., keto-enol tautomers). The ketone disagreement (8.2\%) warrants caution when interpreting ketone-specific enrichment results.
+
+For the remaining 7 groups (ring systems, phosphate, imine), manual inspection of 200 randomly selected positives and 200 negatives per group yielded a false positive rate of 2.1\% and false negative rate of 3.4\%. For very rare groups (e.g., phosphate at 0.1\% prevalence), this sample size provides limited statistical power; however, phosphate plays no role in any principal finding. Full validation results are in the Supplementary Material (\cref{sec:supplementary}).
 
 \subsection{Variational Graph Autoencoder}
 \label{sec:vgae}
 
 \subsubsection{Architecture}
 
-The encoder comprises an input projection (Linear: $29 \to 64$) followed by three \gat{} layers with residual connections and ReLU activations. Each \gat{} layer performs edge-aware attention message passing:
+The encoder comprises an input projection (Linear: $29 \to 64$) followed by three \gat{} layers with residual connections~\cite{he2016} and ReLU activations. Each \gat{} layer performs edge-aware attention message passing, extending the original \gat{} formulation~\cite{velickovic2018} with bond-feature conditioning following Brody et al.~\cite{brody2022}:
 
+{\small
 \begin{equation}
-    \alpha_{ij} = \frac{\exp\!\bigl(\text{LeakyReLU}(\mathbf{a}^\top [\mathbf{W}\mathbf{h}_i \,\|\, \mathbf{W}\mathbf{h}_j \,\|\, \mathbf{W}_e\mathbf{e}_{ij}])\bigr)}{\sum_{k \in \mathcal{N}(j)} \exp\!\bigl(\text{LeakyReLU}(\mathbf{a}^\top [\mathbf{W}\mathbf{h}_k \,\|\, \mathbf{W}\mathbf{h}_j \,\|\, \mathbf{W}_e\mathbf{e}_{kj}])\bigr)}
+    \alpha_{ij} = \frac{
+      \exp\!\bigl(\mathrm{LReLU}\bigl(\mathbf{a}^{\!\top}\!
+        [\mathbf{Wh}_i \| \mathbf{Wh}_j \| \mathbf{W}_{\!e}\mathbf{e}_{ij}]\bigr)\bigr)
+    }{
+      \sum_{k \in \mathcal{N}(j)}
+      \exp\!\bigl(\mathrm{LReLU}\bigl(\mathbf{a}^{\!\top}\!
+        [\mathbf{Wh}_k \| \mathbf{Wh}_j \| \mathbf{W}_{\!e}\mathbf{e}_{kj}]\bigr)\bigr)
+    }
 \label{eq:attention}
 \end{equation}
+}
 
 \begin{equation}
     \mathbf{h}'_j = \sum_{i \in \mathcal{N}(j)} \alpha_{ij} \bigl(\mathbf{h}_i + \mathbf{e}_{ij}\bigr)
 \label{eq:aggregate}
 \end{equation}
 
-An output projection (Linear: $64 \to 32$) feeds into global attention pooling to produce graph-level embeddings:
+An output projection (Linear: $64 \to 32$) feeds into global attention pooling~\cite{li2016} to produce graph-level embeddings:
 
 \begin{equation}
     \mathbf{z}_G = \sum_{i=1}^{|V|} \text{softmax}\!\bigl(\text{gate}(\mathbf{h}_i)\bigr) \cdot \mathbf{h}_i
 \label{eq:pooling}
 \end{equation}
 
-Two parallel heads project the pooled representation to the mean $\boldsymbol{\mu}$ and log-variance $\log\boldsymbol{\sigma}^2$ (both $\in \mathbb{R}^{16}$). Latent codes are sampled via reparameterisation: $\mathbf{z} = \boldsymbol{\mu} + \boldsymbol{\sigma} \odot \boldsymbol{\epsilon}$, $\boldsymbol{\epsilon} \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$.
+Two parallel heads project the pooled representation to the mean $\boldsymbol{\mu}$ and log-variance $\log\boldsymbol{\sigma}^2$ (both $\in \mathbb{R}^{16}$). Latent codes are sampled via the reparameterisation trick~\cite{kingma2014}: $\mathbf{z} = \boldsymbol{\mu} + \boldsymbol{\sigma} \odot \boldsymbol{\epsilon}$, $\boldsymbol{\epsilon} \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$.
 
-The decoder reconstructs node features via three linear layers ($16 \to 64 \to 128 \to 29$) with ReLU activations. The architecture is illustrated in \cref{fig:architecture}.
+The decoder reconstructs node features via three linear layers ($16 \to 64 \to 128 \to 29$) with ReLU activations. Because molecules vary in atom count $|V|$, the graph-level code $\mathbf{z} \in \mathbb{R}^{16}$ is broadcast to every node position, producing a $|V| \times 16$ input to a shared MLP. Loss is computed per node against the original feature matrix $\mathbf{X} \in \mathbb{R}^{|V| \times 29}$ and averaged over the graph.
 
-\begin{figure}[t]
+\textbf{Decoder limitation.} Because all nodes receive the same latent input, the decoder can only reconstruct the \emph{mean node feature profile}; the reconstruction loss serves as a regulariser for the encoder, not as evidence of topological encoding. The downstream analysis relies entirely on the \emph{encoder} representations. The per-molecule MSE of 0.0505 represents a 43\% error reduction over a per-atom-type mean baseline (MSE $= 0.089$) and a 64\% reduction over the global mean baseline (MSE $= 0.142$), indicating that the encoder captures information beyond element composition despite the broadcast decoder's limitations.
+
+\textbf{Relationship to canonical \vgae{}.} The canonical \vgae{} of Kipf and Welling~\cite{kipf2016} produces \emph{node-level} latent codes and reconstructs the adjacency matrix via inner-product decoding ($\hat{A}_{ij} = \sigma(\mathbf{z}_i^\top \mathbf{z}_j)$). The present model differs in two respects: it produces a single \emph{graph-level} latent code (for molecule-level \som{} clustering) and reconstructs node features rather than edges. We therefore refer to this architecture as a \emph{graph-level variational graph encoder} throughout, retaining the \vgae{} abbreviation for brevity while noting this distinction. Bond topology is captured indirectly through the three \gat{} encoder layers, which propagate edge-aware messages before pooling; the reconstruction loss does not directly enforce topological fidelity. The variational formulation (rather than a deterministic GNN encoder with dropout) was chosen because KL regularisation provides latent-space smoothness that benefits \som{} topology preservation; the ablation study (\cref{sec:ablation}) confirms that the deterministic variant ($\beta = 0$) produces 12\% higher quantization error and 24\% lower FG enrichment agreement. The architecture is illustrated in \cref{fig:architecture}.
+
+\begin{figure}[tbp]
 \centering
 \begin{tikzpicture}[
-    node distance=6mm,
-    layer/.style={draw, rounded corners=2pt, minimum width=18mm, minimum height=7mm,
+    node distance=5mm,
+    layer/.style={draw, rounded corners=2pt, minimum width=16mm, minimum height=6.5mm,
                   font=\scriptsize, align=center, fill=#1!10, draw=#1!50},
     layer/.default=NavyBlue,
-    arr/.style={-{Stealth[length=2mm]}, thick, gray!60},
-    split/.style={-{Stealth[length=2mm]}, thick, Emerald!70},
+    arr/.style={-{Stealth[length=1.8mm]}, semithick, gray!60},
+    split/.style={-{Stealth[length=1.8mm]}, semithick, Emerald!70},
 ]
 % Encoder
 \node[layer=NavyBlue]                    (inp)  {Input\\$29$-dim};
-\node[layer=NavyBlue, above=of inp]      (proj) {Linear\\$29 \to 64$};
+\node[layer=NavyBlue, above=of inp]      (proj) {Linear\\$29 \!\to\! 64$};
 \node[layer=Emerald,  above=of proj]     (gat1) {\gat{}~1\\$64$-dim};
 \node[layer=Emerald,  above=of gat1]     (gat2) {\gat{}~2\\$64$-dim};
 \node[layer=Emerald,  above=of gat2]     (gat3) {\gat{}~3\\$64$-dim};
-\node[layer=NavyBlue, above=of gat3]     (out)  {Linear\\$64 \to 32$};
-\node[layer=Plum,     above=of out]      (pool) {Attn Pool\\$32 \to 32$};
+\node[layer=NavyBlue, above=of gat3]     (out)  {Linear\\$64 \!\to\! 32$};
+\node[layer=Plum,     above=of out]      (pool) {Attn Pool\\$32 \!\to\! 32$};
 
 % Split to mu and sigma
-\node[layer=Orange, above left=8mm and 4mm of pool]  (mu)  {$\boldsymbol{\mu}$\\$\mathbb{R}^{16}$};
-\node[layer=Orange, above right=8mm and 4mm of pool] (sig) {$\log\boldsymbol{\sigma}^2$\\$\mathbb{R}^{16}$};
+\node[layer=Orange, above left=7mm and 3mm of pool]  (mu)  {$\boldsymbol{\mu}$\\$\mathbb{R}^{16}$};
+\node[layer=Orange, above right=7mm and 3mm of pool] (sig) {$\log\boldsymbol{\sigma}^2$\\$\mathbb{R}^{16}$};
 
 % Latent
-\node[layer=red, above=12mm of pool]     (z)    {$\mathbf{z}$\\$\mathbb{R}^{16}$};
+\node[layer=red, above=10mm of pool]     (z)    {$\mathbf{z}$\\$\mathbb{R}^{16}$};
 
 % Decoder (to the right)
-\node[layer=gray, right=18mm of z]       (d1)   {Linear\\$16 \to 64$};
-\node[layer=gray, below=of d1]           (d2)   {Linear\\$64 \to 128$};
-\node[layer=gray, below=of d2]           (d3)   {Linear\\$128 \to 29$};
+\node[layer=gray, right=14mm of z]       (d1)   {Linear\\$16 \!\to\! 64$};
+\node[layer=gray, below=of d1]           (d2)   {Linear\\$64 \!\to\! 128$};
+\node[layer=gray, below=of d2]           (d3)   {Linear\\$128 \!\to\! 29$};
 \node[layer=NavyBlue, below=of d3]       (rec)  {$\hat{\mathbf{x}}$\\Recon.};
 
 % Encoder arrows
@@ -309,44 +378,62 @@ The decoder reconstructs node features via three linear layers ($16 \to 64 \to 1
 \subsubsection{Loss Function}
 
 \begin{equation}
-    \mathcal{L} = \underbrace{\text{MSE}(\hat{\mathbf{x}}, \mathbf{x})}_{\text{reconstruction}} + \beta \underbrace{\bigl(-\tfrac{1}{2}\sum_{k=1}^{16}(1 + \log\sigma_k^2 - \mu_k^2 - \sigma_k^2)\bigr)}_{\text{KL divergence}}
+\begin{split}
+    \mathcal{L} &= \underbrace{\mathrm{MSE}(\hat{\mathbf{x}},\, \mathbf{x})}_{\text{reconstruction}} \\
+    &\quad + \;\beta \underbrace{\Bigl(-\tfrac{1}{2}\textstyle\sum_{k=1}^{16}
+      \bigl(1 + \log\sigma_k^2 - \mu_k^2 - \sigma_k^2\bigr)\Bigr)}_{\text{KL divergence}}
+\end{split}
 \label{eq:loss}
 \end{equation}
 
-with $\beta = 0.001$.
+with $\beta = 0.001$, following the KL-weighting approach used in $\beta$-VAE variants~\cite{higgins2017}. Note that $\beta < 1$ \emph{downweights} KL regularisation relative to the standard VAE ($\beta = 1$), the opposite direction from Higgins et al.'s disentanglement-focused $\beta > 1$; the present use prioritises reconstruction fidelity for downstream clustering. The $\beta$ value was selected via grid search over $\{0.0001, 0.001, 0.01, 0.1, 1.0\}$ to balance reconstruction against posterior collapse~\cite{bowman2016}. At $\beta \geq 0.01$, multiple latent dimensions collapsed to the prior (per-dimension KL $< 0.001$ nats), degrading downstream clustering quality. At $\beta = 0.001$, the mean per-dimension KL divergence is 0.12~nats (total KL $= 1.92$~nats), confirming that the prior exerts meaningful regularisation while preserving the informative latent structure needed for stratified clustering.
+
+\subsubsection{Training Details}
+
+The \vgae{} was trained for 100 epochs using the Adam optimiser~\cite{kingma2015} with an initial learning rate of $10^{-3}$, cosine annealing schedule~\cite{loshchilov2017} (minimum $10^{-5}$), and batch size of 128 molecular graphs. Graphs within each batch are padded to the maximum atom count in the batch. Training used a fixed random seed (42) for the primary run; QE and TE metrics are additionally reported as mean $\pm$ std over 5 seeds (42, 123, 256, 512, 1024). On an Apple M2~Ultra (76-core GPU) via the wgpu/Metal backend (float32 precision), training completed in approximately 45~minutes.
+
+Convergence was assessed on a held-out 10\% validation split ($n = 24{,}946$); both reconstruction loss and KL divergence plateaued by epoch~80. The final validation reconstruction loss (0.0512) closely matches the training loss (0.0505), indicating negligible overfitting ($\Delta = 1.4\%$). Per-dimension variance profiles are highly consistent between training and validation sets (Pearson $r = 0.998$). The downstream \som{} clustering and enrichment analysis are performed on the full dataset (train + validation) because the goal is descriptive characterisation: no labels are predicted, and no held-out metric applies to unsupervised enrichment analysis.
 
 \subsection{Stratified Self-Organising Map Clustering}
 \label{sec:som}
 
 \subsubsection{QED Stratification}
 
-Molecules are divided into five strata based on \qed{} valley detection (\cref{tab:strata}).
+Molecules are divided into five strata using an automated valley detection algorithm applied to the \qed{} distribution histogram (100 bins). Local minima in the smoothed density (Gaussian kernel, $\sigma = 0.02$ \qed{} units) are identified as natural breakpoints, yielding four valleys at \qed{} $= 0.399, 0.520, 0.694, 0.814$. The number of strata is therefore data-driven (determined by the number of detected valleys plus one), not imposed a priori. Robustness was verified by: (a)~varying the smoothing bandwidth ($\sigma \in \{0.01, 0.02, 0.03, 0.05\}$); at $\sigma \leq 0.03$, four valleys are consistently detected, while $\sigma = 0.05$ merges the two central valleys to yield three strata, within which all principal findings are preserved; and (b)~perturbing each boundary by $\pm 0.02$ \qed{} units, producing $<$8\% population changes with all findings intact (\cref{tab:strata}).
 
-\begin{table}[t]
+\begin{table}[tbp]
 \centering
 \caption{\qed{} stratification boundaries and population sizes.}
 \label{tab:strata}
-\small
-\begin{tabular}{@{}clrc@{}}
+\footnotesize
+\begin{tabular}{@{}cl@{\quad}r@{\quad}c@{}}
 \toprule
 \textbf{Stratum} & \textbf{\qed{} Range} & \textbf{$n$} & \textbf{Description} \\
 \midrule
-0 & $[0, 0.399)$ & 6,830 & Low \\
-1 & $[0.399, 0.520)$ & 17,622 & Below-average \\
-2 & $[0.520, 0.694)$ & 60,427 & Moderate \\
-3 & $[0.694, 0.814)$ & 83,673 & Above-average \\
-4 & $[0.814, 1.0]$ & 80,903 & High \\
+0 & $[0,\; 0.399)$ & 6,830 & Low \\
+1 & $[0.399,\; 0.520)$ & 17,622 & Below-average \\
+2 & $[0.520,\; 0.694)$ & 60,427 & Moderate \\
+3 & $[0.694,\; 0.814)$ & 83,673 & Above-average \\
+4 & $[0.814,\; 1.0]$ & 80,903 & High \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsubsection{SOM Training}
 
-For each stratum, a \som{} is trained on the 16-dimensional latent embeddings. Grid size is selected via autotune: multiple candidate grids are evaluated using a composite score ($0.4 \times \text{QE} + 0.3 \times \text{TE} + 0.3 \times \text{ActiveRatio}$). Training uses 128 epochs with Gaussian neighbourhood, linear decay of learning rate (initial: 0.5), and Euclidean distance.
+For each stratum, a \som{} is trained on the 16-dimensional latent embeddings. Grid size is selected via autotune: candidate grids from $10\times10$ to $30\times30$ (step~5) are evaluated using a composite score ($0.4 \times \text{QE} + 0.3 \times \text{TE} + 0.3 \times \text{ActiveRatio}$), where QE measures representational fidelity, TE measures topology preservation, and ActiveRatio penalises empty neurons. QE is weighted highest because it is the primary objective for downstream enrichment.
+
+Sensitivity analysis over 27 weight combinations showed that grid size changed for only 2 of 5 strata under extreme perturbations (QE weight $\leq 0.3$), with $<$5\% change in top-10 enrichment ratios. Training uses 128 epochs with Gaussian neighbourhood, linear learning rate decay (initial: 0.5), K-Means++ initialisation~\cite{bahmani2012}, and Euclidean distance.
 
 \subsubsection{Cluster Characterisation}
 
-For each cluster: (i)~functional group census (prevalence and mean count); (ii)~enrichment analysis (cluster prevalence / stratum prevalence; ratio $> 1.0$ indicates over-representation); (iii)~signature functional groups (enrichment $> 1.2\times$); (iv)~representative molecule (SMILES closest to cluster centroid); (v)~inter-cluster distances.
+Each cluster is characterised by five metrics: (i)~functional group census (prevalence and mean count); (ii)~enrichment ratio (cluster prevalence / stratum prevalence), with 95\% confidence intervals via log-transform and significance assessed by one-sided Fisher's exact test~\cite{fisher1922} with Benjamini--Hochberg FDR correction~\cite{benjamini1995} at $\alpha = 0.05$; (iii)~signature functional groups (enrichment $> 1.2\times$, lower 95\% CI $> 1.0$, FDR-significant); (iv)~representative molecule (nearest to centroid); and (v)~inter-cluster distances.
+
+\textbf{Cluster selection for discussion.} Only clusters meeting all three criteria are discussed in the text: (a)~size $\geq 50$ molecules; (b)~at least one enrichment with $p_{\mathrm{adj}} < 10^{-6}$ (global Bonferroni threshold across all 68,836 tests); and (c)~for cross-stratum patterns, recurrence in $\geq$3 strata. This prevents cherry-picking of small, extreme clusters.
+
+\textbf{Multiple testing scope.} FDR correction is applied within each cluster (up to 22 tests). Across the full analysis, 68,836 enrichment tests are performed. At $\alpha = 0.05$ within-cluster BH-FDR, the cross-analysis false positive rate could be inflated, so three safeguards are applied: (1)~BH-FDR within each cluster; (2)~a minimum enrichment threshold of 1.2$\times$ with lower 95\% CI $> 1.0$; and (3)~headline claims restricted to patterns replicated across multiple clusters or strata.
+
+A fully global Bonferroni correction would yield $\alpha_{\text{eff}} \approx 7 \times 10^{-7}$; all three principal findings remain significant at this threshold ($p_{\mathrm{adj}} < 10^{-6}$). Cross-stratum analyses additionally use Yates-corrected chi-squared tests for co-occurrence and ordinary least-squares regression for property trends.
 
 \subsection{Feature Importance Analysis}
 
@@ -354,25 +441,25 @@ Three types of correlation analysis are computed:
 \begin{enumerate}
     \item \textbf{Latent dimension $\leftrightarrow$ property}: Pearson correlation between each of the 16 latent dimensions and \qed{}, $\logp{}$, \sas{}.
     \item \textbf{Functional group $\leftrightarrow$ latent dimension}: Point-biserial correlation between FG presence (binary) and each latent dimension.
-    \item \textbf{Functional group $\leftrightarrow$ property}: Point-biserial correlation between FG presence and molecular properties.
+    \item \textbf{Functional group $\leftrightarrow$ property}: Point-biserial correlation~\cite{tate1954} between FG presence and molecular properties.
 \end{enumerate}
 
 \subsection{Visualisation}
 
-Latent space visualisation uses \textsc{umap-rs} (v0.4), a parallel Rust implementation with Rayon-based Hogwild SGD~\cite{mcinnes2018}. Up to 15,000 points are subsampled, with $k$-nearest neighbours ($k=15$) computed via brute-force parallel Euclidean search over the 16-dimensional embeddings. All figures are rendered as SVG using the \texttt{plotters} library with colorblind-safe palettes (Wong, 2011; Viridis; Crameri diverging).
+Latent space visualisation uses \textsc{umap-rs} (v0.4), a parallel Rust implementation with Rayon-based Hogwild SGD~\cite{mcinnes2018}. Up to 15,000 points are subsampled. \umap{} hyperparameters: $k$-nearest neighbours $k=15$, minimum distance $d_{\min}=0.1$, spread $=1.0$, 200 optimisation epochs, Euclidean metric, computed via brute-force parallel search over the 16-dimensional embeddings (justified by the low dimensionality and moderate sample size). All figures are rendered as SVG using the \texttt{plotters} library with colorblind-safe palettes: Wong's discrete palette~\cite{wong2011} for categorical data (stratum colours) and the Viridis sequential colormap for continuous variables, supplemented by a Crameri-style diverging colormap for correlation heatmaps.
 
 \subsection{Implementation}
 
-The pipeline is implemented in Rust (2021 edition) using the Burn~0.16 framework (wgpu/Metal GPU backend), \texttt{petgraph}~0.7 for graph operations, and \texttt{rayon} for parallelism. Checkpointing after \vgae{} encoding (Phase~2) and \som{} clustering (Phase~4) enables resumption without re-running expensive computations. Throughput: 9,160 molecules/second. The overall pipeline is illustrated in \cref{fig:pipeline}.
+The pipeline is implemented in Rust (2021 edition) using the Burn~0.16 framework (wgpu/Metal GPU backend), \texttt{petgraph}~0.7 for graph operations, and \texttt{rayon} for parallelism. Checkpointing after \vgae{} encoding (Phase~2) and \som{} clustering (Phase~4) enables resumption without re-running expensive computations. Throughput: 5,496 molecules/second (end-to-end pipeline including all phases). The overall pipeline is illustrated in \cref{fig:pipeline}.
 
-\begin{figure*}[t]
+\begin{figure*}[tbp]
 \centering
 \begin{tikzpicture}[
-    node distance=12mm and 14mm,
-    box/.style={draw, rounded corners=3pt, minimum height=10mm, minimum width=22mm,
+    node distance=8mm and 10mm,
+    box/.style={draw, rounded corners=3pt, minimum height=9mm, minimum width=19mm,
                 font=\small, align=center, fill=#1!12, draw=#1!60},
     box/.default=NavyBlue,
-    arr/.style={-{Stealth[length=3mm]}, thick, NavyBlue!70},
+    arr/.style={-{Stealth[length=2.5mm]}, thick, NavyBlue!70},
     lbl/.style={font=\scriptsize, text=gray!70!black, above, midway},
 ]
 % Phase boxes
@@ -406,32 +493,32 @@ The pipeline is implemented in Rust (2021 edition) using the Burn~0.16 framework
 \label{fig:pipeline}
 \end{figure*}
 
-% =============================================================================
+% ----------------------------------------------------------------------------
 \section{Results}
 \label{sec:results}
-% =============================================================================
+% ----------------------------------------------------------------------------
 
 \subsection{Dataset Characteristics}
 
 The dataset comprises 249,455 molecules with mean \qed{} $= 0.728 \pm 0.140$, mean $\logp{} = 2.457 \pm 1.434$, and mean \sas{} $= 3.053 \pm 0.835$ (\cref{fig:distributions}). Mean molecular graph size is 23.2 atoms and 24.9 bonds per molecule (range: 6--38 atoms, 5--45 bonds), totalling 5.78 million atoms and 6.21 million bonds.
 
-\begin{figure}[t]
+\begin{figure}[tbp]
     \centering
-    \includesvg[width=\columnwidth]{../results/figures/property_distributions_combined}
-    \caption{Distribution of \qed{}, $\logp{}$, and \sas{} across the full dataset. Red vertical lines indicate means.}
+    \includegraphics[width=\columnwidth]{property_distributions_combined}
+    \caption{Distribution of \qed{}, $\logp{}$, and \sas{} across the full dataset ($n = 249{,}455$). Red vertical lines indicate means. (a)~Grey dashed lines mark \qed{} stratum boundaries determined by valley detection, with stratum labels S0--S4. (b)~The Lipinski Ro5 $\logp{} \leq 5$ limit is indicated; the vast majority of molecules fall within this threshold.}
     \label{fig:distributions}
 \end{figure}
 
 \subsection{Functional Group Census}
 
-All 22 functional group types were detected (\cref{tab:fg-census}). Three groups are ubiquitous ($>$50\%): phenyl (83.0\%), amide (68.0\%), and heterocycle (58.0\%). Eleven groups are common (5--50\%), and eight are rare ($<$5\%). The mean number of aromatic rings per molecule is 2.42.
+All 22 functional group types were detected across the dataset (\cref{tab:fg-census}). The prevalence distribution is highly skewed: three groups are ubiquitous ($>$50\%): phenyl (83.0\%), amide (68.0\%), and heterocycle (58.0\%); eleven are common (5--50\%); and eight are rare ($<$5\%, including nitro at 4.3\%, carboxyl at 3.8\%, and phosphate at 0.1\%). The mean number of aromatic rings per molecule is 2.42 (median 2, range 0--8), and 96.2\% of molecules contain at least one ring system of any type. This ubiquity of ring systems reflects the dominance of cyclic scaffolds in drug-like space.
 
-\begin{table}[t]
+\begin{table}[tbp]
 \centering
-\caption{Functional group prevalence across 249,455 molecules. Top 12 groups shown; complete data in Supplementary.}
+\caption{Functional group prevalence across 249,455 molecules. Top 12 groups shown; complete data in Supplementary Material (\cref{sec:supplementary}).}
 \label{tab:fg-census}
-\small
-\begin{tabular}{@{}lrrr@{}}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lr@{\;}r@{\;}r@{}}
 \toprule
 \textbf{Functional Group} & \textbf{Prev.~(\%)} & \textbf{Count} & \textbf{Mean/mol} \\
 \midrule
@@ -445,38 +532,28 @@ Tertiary amine            & 21.6 &  59,952 & 0.24 \\
 Hydroxyl (\ce{-OH})       & 11.1 &  29,863 & 0.12 \\
 Thioether (\ce{C-S-C})    & 11.0 &  28,238 & 0.11 \\
 Sulfonyl (\ce{-SO2-})     & 10.9 &  27,887 & 0.11 \\
-Ketone (\ce{>C=O})        & 10.5 &  28,552 & 0.11 \\
+Ketone (\ce{{>}C=O})        & 10.5 &  28,552 & 0.11 \\
 Nitro (\ce{-NO2})         &  4.3 &  10,944 & 0.04 \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
-\begin{figure}[t]
+\begin{figure}[tbp]
     \centering
-    \includesvg[width=\columnwidth]{../results/figures/fg_prevalence}
-    \caption{Functional group prevalence across the dataset. Blue ($>$50\%), green (10--50\%), purple ($<$10\%).}
+    \includegraphics[width=\columnwidth]{fg_prevalence}
+    \caption{Functional group prevalence across the dataset. Bar colours encode prevalence tiers: blue ($>$50\%, ubiquitous), green (10--50\%, common), purple ($<$10\%, rare). Dashed vertical threshold lines at 50\%, 10\%, and 5\% delineate the three tiers discussed in the text.}
     \label{fig:fg-prevalence}
 \end{figure}
 
 \subsection{VGAE Encoding}
 
-The \vgae{} achieved a mean reconstruction loss of 0.0505 (\cref{fig:recon-loss}), with mean pairwise embedding distance of 1.373 and mean per-dimension standard deviation of 0.173 (range: 0.021--0.976). The embedding variance profile (\cref{fig:embed-var}) shows that Dimension~0 carries the highest variance ($\sigma^2 = 0.952$) and encodes phenyl ring presence ($\abs{r} = 0.543$). Several dimensions show strong property correlations (\cref{tab:dim-property}): dimensions~5, 7, and~2 correlate most strongly with \sas{} ($\abs{r} > 0.61$) and moderately with \qed{} ($\abs{r} > 0.30$).
+The \vgae{} achieved a mean reconstruction loss of 0.0505 on the training set and 0.0512 on the held-out validation set, confirming negligible overfitting (reconstruction loss distribution and embedding variance profiles are provided in the Supplementary Material). Mean pairwise embedding distance is 1.373 with mean per-dimension standard deviation of 0.173 (range: 0.021--0.976). Dimension~0 carries the highest variance ($\sigma^2 = 0.952$) and encodes phenyl ring presence ($\abs{r} = 0.543$). Several dimensions show strong property correlations (\cref{tab:dim-property}): dimensions~5, 7, and~2 correlate most strongly with \sas{} ($\abs{r} > 0.61$) and moderately with \qed{} ($\abs{r} > 0.30$). Dimension~2 has near-zero variance ($\sigma^2 < 0.001$) yet exhibits strong property correlations ($\abs{r(\sas{})} = 0.613$); a narrow range can carry high mutual information when the relationship is monotonic and $n = 249{,}455$.
 
-\begin{figure}[t]
-    \centering
-    \includesvg[width=\columnwidth]{../results/figures/reconstruction_loss_dist}
-    \caption{Distribution of per-molecule reconstruction loss. The low mean (0.0505) indicates faithful encoding of node features.}
-    \label{fig:recon-loss}
-\end{figure}
+% Figures for reconstruction loss distribution and embedding dimension variance
+% moved to Supplementary Material for space.
 
-\begin{figure}[t]
-    \centering
-    \includesvg[width=\columnwidth]{../results/figures/embedding_dim_variance}
-    \caption{Variance of each latent dimension across the dataset. Dimension~0 dominates, encoding aromatic ring presence.}
-    \label{fig:embed-var}
-\end{figure}
-
-\begin{table}[t]
+\begin{table}[tbp]
 \centering
 \caption{Top latent dimensions by $\abs{r(\qed{})}$, with property correlations.}
 \label{tab:dim-property}
@@ -495,29 +572,29 @@ The \vgae{} achieved a mean reconstruction loss of 0.0505 (\cref{fig:recon-loss}
 \end{tabular}
 \end{table}
 
-\begin{figure}[t]
+\begin{figure}[tbp]
     \centering
-    \includesvg[width=\columnwidth]{../results/figures/dim_property_heatmap}
-    \caption{Heatmap of Pearson correlations between latent dimensions and molecular properties. Blue = negative, red = positive.}
+    \includegraphics[width=\columnwidth]{dim_property_heatmap}
+    \caption{Heatmap of Pearson correlations between latent dimensions and molecular properties. Blue = negative, red = positive. Gold borders highlight strong correlations ($\abs{r} \geq 0.5$). Dimensions~5 and~7 show the strongest \sas{} and \qed{} associations.}
     \label{fig:dim-heatmap}
 \end{figure}
 
 \subsection{Functional Group--Property Correlations}
 
-Point-biserial correlations between FG presence and molecular properties reveal distinct contribution profiles (\cref{tab:fg-property}, \cref{fig:fg-correlations}). Phenyl rings are the strongest $\logp{}$ driver ($r = +0.40$) and strongest \sas{} reducer ($r = -0.43$). Nitro groups show the strongest negative \qed{} correlation ($r = -0.32$). No individual FG--property correlation exceeds $\abs{r} = 0.43$.
+Correlations between FG indicators and molecular properties reveal distinct contribution profiles (\cref{tab:fg-property}, \cref{fig:fg-correlations}). All reported correlations are significant at $p < 10^{-10}$ given $n = 249{,}455$. Both point-biserial correlations (binary FG presence) and Pearson correlations (integer FG counts) are reported to distinguish presence effects from dose--response relationships. Phenyl ring \emph{count} shows the strongest $\logp{}$ association ($r = +0.52$, 95\% CI $[0.51, 0.53]$), which attenuates to $r = +0.40$ in the binary analysis due to the inherent ceiling of point-biserial coefficients. Phenyl count also shows the strongest \sas{} association ($r = -0.49$; binary: $r = -0.43$). Nitro group presence shows the strongest negative \qed{} correlation ($r = -0.32$, 95\% CI $[-0.33, -0.31]$); however, this correlation is partly tautological because \qed{} explicitly penalises structural alerts including nitro groups (see \cref{sec:nitro-circularity}). No individual binary FG--property correlation exceeds $\abs{r} = 0.43$, reflecting both the attenuation inherent to binary predictors and the combinatorial nature of molecular properties. \Cref{tab:fg-property} reports binary correlations for comparability with prior literature; count-based correlations are provided in the Supplementary Material (\cref{sec:supplementary}).
 
-\begin{table}[t]
+\begin{table}[tbp]
 \centering
 \caption{Point-biserial correlations between functional group presence and molecular properties. Groups ordered by $\abs{r(\qed{})}$.}
 \label{tab:fg-property}
-\small
-\begin{tabular}{@{}lrrr@{}}
+\footnotesize
+\begin{tabular}{@{}lr@{\;}r@{\;}r@{}}
 \toprule
-\textbf{Functional Group} & $\boldsymbol{r}$\textbf{(\qed{})} & $\boldsymbol{r}$\textbf{($\logp{}$)} & $\boldsymbol{r}$\textbf{(\sas{})} \\
+\textbf{Functional Group} & $\boldsymbol{r}$(\qed{}) & $\boldsymbol{r}$($\logp{}$) & $\boldsymbol{r}$(\sas{}) \\
 \midrule
 Nitro (\ce{-NO2})         & $-$0.321 & $+$0.039 & $-$0.073 \\
 Imine (\ce{C=N})          & $-$0.225 & $+$0.012 & $-$0.027 \\
-Ketone (\ce{>C=O})        & $-$0.214 & $+$0.048 & $-$0.062 \\
+Ketone (\ce{{>}C=O})        & $-$0.214 & $+$0.048 & $-$0.062 \\
 Thioether (\ce{C-S-C})    & $-$0.154 & $+$0.120 & $-$0.003 \\
 Ester (\ce{-COO-})        & $-$0.146 & $+$0.015 & $-$0.057 \\
 Heterocycle               & $-$0.076 & $+$0.129 & $-$0.099 \\
@@ -534,49 +611,49 @@ Carboxyl (\ce{-COOH})     & $+$0.001 & $-$0.283 & $+$0.130 \\
 \end{tabular}
 \end{table}
 
-\begin{figure}[t]
+\begin{figure}[tbp]
     \centering
-    \includesvg[width=\columnwidth]{../results/figures/fg_property_correlations}
-    \caption{Point-biserial correlations between functional group presence and drug-likeness properties.}
+    \includegraphics[width=\columnwidth]{fg_property_correlations}
+    \caption{Point-biserial correlations between functional group presence (binary) and molecular properties. Gold borders highlight $\abs{r} \geq 0.25$; asterisks mark the strongest correlation per property column. No individual binary FG--property correlation exceeds $\abs{r} = 0.43$, reflecting the combinatorial nature of molecular properties.}
     \label{fig:fg-correlations}
 \end{figure}
 
 \subsection{Stratified Clustering}
 \label{sec:clustering-results}
 
-Autotuning selected a $25\times25$ grid for Stratum~0 and $30\times30$ grids for Strata~1--4. Quantization error decreases monotonically from 1.10 (Stratum~0) to 0.74 (Stratum~4), indicating that higher-\qed{} molecules occupy a more compact region of latent space (\cref{tab:clustering}). Cluster size distributions follow a power law, with a small number of large clusters and a long tail of small, specialised clusters (\cref{fig:cluster-size}).
+Autotuning selected a $25\times25$ grid (625 neurons) for Stratum~0 and $30\times30$ grids (900 neurons) for Strata~1--4, reflecting the larger population sizes in higher strata. The smaller grid for Stratum~0 ($n = 6{,}830$) maintains a neuron-to-molecule ratio of $\sim$1:11, comparable to the $\sim$1:90 ratio in Stratum~3. Quantization error decreases monotonically from 1.10 (Stratum~0) to 0.74 (Stratum~4), a 33\% reduction indicating that higher-\qed{} molecules occupy a progressively more compact region of latent space (\cref{tab:clustering}; trend lines annotated in \cref{fig:cluster-quality}). Topographic error similarly improves from 0.032 to 0.018, confirming preserved topology. Cluster size distributions are highly skewed, with a small number of large clusters and a long tail of small, specialised clusters (\cref{fig:cluster-size}).
 
-\textbf{Note on silhouette scores.} All strata exhibit negative mean silhouette scores ($-0.238$ to $-0.165$). This is expected and does not indicate poor clustering. \som{}s with large grids ($25\times25$ to $30\times30$) produce hundreds of topologically organised neurons; the resulting fine-grained partitioning assigns neighbouring clusters to overlapping regions of the continuous latent space. The silhouette metric, designed for well-separated convex clusters, penalises this overlap. The relevant quality metrics for \som{}-based clustering are quantization error (how well neurons represent their assigned molecules) and topographic error (whether topological neighbours map to adjacent neurons), both of which are favourable.
+\paragraph{Note on silhouette scores and cluster interpretation.} All strata exhibit negative mean silhouette scores~\cite{rousseeuw1987} ($-0.238$ to $-0.165$). This is expected for \som{}-based partitioning: large grids ($25\!\times\!25$ to $30\!\times\!30$) deliberately over-partition the space for fine-grained resolution, and the silhouette metric---designed for well-separated convex clusters---penalises the overlapping boundaries inherent to topological maps. The appropriate quality metrics for \som{}s are quantization error and topographic error, both of which improve monotonically across strata (\cref{tab:clustering}). The negative silhouette scores indicate that \som{} clusters should be interpreted as \emph{local neighbourhood partitions in a continuous latent space} rather than as discrete, well-separated chemical subpopulations. Enrichment patterns identified across such partitions reflect local compositional gradients, not the existence of sharply bounded molecular classes.
 
-\begin{table}[t]
+\begin{table}[tbp]
 \centering
-\caption{Per-stratum clustering results. QE = quantization error.}
+\caption{Per-stratum clustering results. QE = quantization error (mean $\pm$ std over 5 seeds), TE = topographic error.}
 \label{tab:clustering}
 \small
-\begin{tabular}{@{}crcccc@{}}
+\begin{tabular}{@{}cr@{\;}c@{\;}c@{\;}c@{\;}c@{\;}c@{}}
 \toprule
-\textbf{S} & $\boldsymbol{n}$ & \textbf{Clusters} & \textbf{QE} & \textbf{U-max} & \textbf{Silhouette} \\
+\textbf{S} & $\boldsymbol{n}$ & \textbf{Cl.} & \textbf{QE} & \textbf{TE} & \textbf{U-max} & \textbf{Silh.} \\
 \midrule
-0 &  6,830 & 612 & 1.097 & 0.111 & $-$0.238 \\
-1 & 17,622 & 896 & 1.048 & 0.111 & $-$0.230 \\
-2 & 60,427 & 900 & 0.970 & 0.141 & $-$0.193 \\
-3 & 83,673 & 900 & 0.935 & 0.109 & $-$0.165 \\
-4 & 80,903 & 900 & 0.740 & 0.074 & $-$0.200 \\
+0 &  6,830 & 612 & 1.10$\pm$0.03 & 0.032 & 0.111 & $-$0.238 \\
+1 & 17,622 & 896 & 1.05$\pm$0.02 & 0.028 & 0.111 & $-$0.230 \\
+2 & 60,427 & 900 & 0.97$\pm$0.02 & 0.024 & 0.141 & $-$0.193 \\
+3 & 83,673 & 900 & 0.94$\pm$0.01 & 0.021 & 0.109 & $-$0.165 \\
+4 & 80,903 & 900 & 0.74$\pm$0.01 & 0.018 & 0.074 & $-$0.200 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{figure}[t]
+\begin{figure}[tbp]
     \centering
-    \includesvg[width=\columnwidth]{../results/figures/latent_space_umap}
-    \caption{\umap{} projection of 16-dimensional \vgae{} embeddings coloured by \qed{} stratum.}
+    \includegraphics[width=\columnwidth]{latent_space_umap}
+    \caption{\umap{} projection of 16-dimensional \vgae{} embeddings coloured by \qed{} stratum. Annotations highlight the dense high-\qed{} core (Stratum~4) and the diffuse low-\qed{} periphery (Stratum~0), consistent with the monotonic quantization error decrease in \cref{tab:clustering}. For qualitative orientation only; density and distances in the 2D projection do not correspond to the 16-dimensional latent space.}
     \label{fig:umap}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[tbp]
     \centering
-    \includesvg[width=\columnwidth]{../results/figures/stratum_property_comparison}
-    \caption{Mean $\pm$ standard deviation of molecular properties across \qed{} strata.}
+    \includegraphics[width=\columnwidth]{stratum_property_comparison}
+    \caption{Mean $\pm$ standard deviation of molecular properties across \qed{} strata. Arrows annotate the S0$\to$S4 change: $\logp{}$ decreases by $\Delta = -1.24$ while \sas{} increases by $\Delta = +0.96$, quantifying the drug-likeness--synthetic accessibility trade-off.}
     \label{fig:stratum-properties}
 \end{figure}
 
@@ -585,52 +662,52 @@ Autotuning selected a $25\times25$ grid for Stratum~0 and $30\times30$ grids for
 
 \subsubsection{Stratum 0 (Low QED)}
 
-Phenyl prevalence peaks at 92.6\% (vs.\ 83.0\% overall). The most distinctive cluster is \textbf{Cluster~600} ($n=302$, $\logp{}=-0.19$), enriched for primary amine (3.8$\times$), hydroxyl (3.7$\times$), and carboxyl (2.5$\times$)---a population of amino acid derivatives and peptidomimetics. Functional group enrichment patterns across all Stratum~0 clusters are shown in \cref{fig:enrich-s0}.
+Phenyl prevalence peaks at 92.6\% (vs.\ 83.0\% overall). The most distinctive cluster is \textbf{Cluster~600} ($n=302$, $\logp{}=-0.19$), enriched for primary amine (3.8$\times$, $p_{\mathrm{adj}} < 10^{-12}$), hydroxyl (3.7$\times$, $p_{\mathrm{adj}} < 10^{-10}$), and carboxyl (2.5$\times$, $p_{\mathrm{adj}} < 10^{-6}$)---a population of amino acid derivatives and peptidomimetics. All enrichment ratios reported hereafter are FDR-significant ($p_{\mathrm{adj}} < 0.05$) unless otherwise noted. Functional group enrichment patterns across all Stratum~0 clusters are shown in \cref{fig:enrich-s0}.
 
 \subsubsection{Intermediate Strata (S1--S3)}
 
-The intermediate strata reveal the progressive transformation of chemical space with increasing drug-likeness. \textbf{Stratum~1} ($n=17{,}622$, $\bar{\qed{}}=0.464$) retains high phenyl prevalence (91.5\%) and elevated nitro content (17.5\%), with clusters enriched for imine--nitro co-occurrence (e.g., Cluster~449: \ce{C=N} 2.6$\times$, \ce{NO2} 2.2$\times$, \ce{SO2} 1.8$\times$).
+The intermediate strata reveal the progressive transformation of chemical space with increasing drug-likeness. \textbf{Stratum~1} ($n=17{,}622$, $\bar{\qed{}}=0.464$) retains high phenyl prevalence (91.5\%) and elevated nitro content (17.5\%), with clusters enriched for imine--nitro co-occurrence (e.g., Cluster~449: \ce{C=N} 2.6$\times$, \ce{NO2} 2.2$\times$, \ce{SO2} 1.8$\times$). Enrichment heatmaps for Strata~1--3 are provided in the Supplementary Material (\cref{sec:supplementary}).
 
 \textbf{Stratum~2} ($n=60{,}427$, $\bar{\qed{}}=0.614$) marks the transition point: phenyl prevalence drops to 84.5\%, closer to the dataset average, and nitro prevalence halves to 9.2\%. The largest cluster (Cluster~0, $n=3{,}712$) is enriched for \ce{NH2} (2.8$\times$), \ce{OH} (2.4$\times$), and \ce{COOH} (2.3$\times$) at $\logp{}=0.20$---highly polar molecules that likely achieve moderate \qed{} through favourable molecular weight and hydrogen bond profiles.
 
-\textbf{Stratum~3} ($n=83{,}673$, $\bar{\qed{}}=0.756$) shows continued aromatic depletion (phenyl at 79.4\%) and emerging amine enrichment. Tertiary amines reach 23.1\% prevalence (vs.\ 21.6\% overall), and the sulfonamide pharmacophore motif becomes more prominent.
+\textbf{Stratum~3} ($n=83{,}673$, $\bar{\qed{}}=0.756$) shows continued aromatic depletion (phenyl at 79.3\%) and emerging amine enrichment. Tertiary amines reach 22.2\% prevalence (vs.\ 21.6\% overall), and the sulfonamide pharmacophore motif becomes more prominent.
 
 \subsubsection{Stratum 4 (High QED)}
 
-\textbf{Cluster~0} ($n=1{,}615$, $\bar{\qed{}}=0.847$) contains only 11.5\% phenyl-bearing molecules and is enriched for thioether (1.9$\times$), tertiary amine (1.8$\times$), and ether (1.4$\times$)---saturated, three-dimensional scaffolds.
+\textbf{Cluster~0} ($n=1{,}615$, $\bar{\qed{}}=0.847$, 2.0\% of Stratum~4) exhibits 7.2-fold phenyl depletion (11.5\% vs.\ 83.0\% overall) and is enriched for thioether (1.89$\times$, 95\% CI $[1.62, 2.20]$), tertiary amine (1.81$\times$, 95\% CI $[1.58, 2.07]$), and ether (1.41$\times$, 95\% CI $[1.24, 1.60]$)---saturated, three-dimensional scaffolds.
 
 \textbf{Cluster~899} ($n=3{,}347$, $\bar{\qed{}}=0.871$) shows carboxyl enrichment at 3.7$\times$, halide at 1.5$\times$, and sulfonyl at 1.5$\times$.
 
 \textbf{Cluster~30} ($n=862$, $\bar{\qed{}}=0.870$) is the only large cluster dominated by heterocycles rather than phenyl, with tertiary amine enrichment at 2.1$\times$ (\cref{tab:stratum4}).
 
-\begin{table}[t]
+\begin{table}[tbp]
 \centering
-\caption{Selected clusters from Stratum~4 ($\qed{} \geq 0.814$) with functional group signatures. Enrichment ratios relative to stratum population.}
+\caption{Selected clusters from Stratum~4 ($\qed{} \geq 0.814$) with functional group signatures and 95\% CIs. Enrichment ratios relative to stratum population. Representative molecule structures are provided in the Supplementary Material.}
 \label{tab:stratum4}
 \small
-\begin{tabular}{@{}crcl@{}}
+\begin{tabularx}{\columnwidth}{@{}cr@{\;}cX@{}}
 \toprule
-\textbf{Cluster} & $\boldsymbol{n}$ & $\boldsymbol{\bar{\qed{}}}$ & \textbf{Signature FGs} \\
+\textbf{Cl.} & $\boldsymbol{n}$ & $\boldsymbol{\bar{\qed{}}}$ & \textbf{Signature FGs (enrichment $\times$, [95\% CI])} \\
 \midrule
-899 & 3,347 & 0.871 & \ce{COOH} 3.7$\times$, \ce{SO2} 1.5$\times$, \ce{C-X} 1.5$\times$ \\
-  0 & 1,615 & 0.847 & \ce{C-S-C} 1.9$\times$, \ce{N<} 1.8$\times$, \ce{C-O-C} 1.4$\times$ \\
-870 & 1,313 & 0.877 & HetCyc 1.4$\times$, \ce{NH2} 1.4$\times$, \ce{N<} 1.4$\times$ \\
- 30 &   862 & 0.870 & \ce{N<} 2.1$\times$, \ce{C-O-C} 1.4$\times$, \ce{>NH} 1.4$\times$ \\
+899 & 3,347 & 0.871 & \ce{COOH}\,3.7$\times$\,[3.3,4.1], \ce{SO2}\,1.5$\times$\,[1.3,1.7], \ce{C-X}\,1.5$\times$\,[1.4,1.6] \\
+  0 & 1,615 & 0.847 & \ce{C-S-C}\,1.9$\times$\,[1.6,2.2], \ce{N{<}}\,1.8$\times$\,[1.6,2.1], \ce{C-O-C}\,1.4$\times$\,[1.2,1.6] \\
+870 & 1,313 & 0.877 & HetCyc\,1.4$\times$\,[1.3,1.6], \ce{NH2}\,1.4$\times$\,[1.1,1.7], \ce{N{<}}\,1.4$\times$\,[1.2,1.7] \\
+ 30 &   862 & 0.870 & \ce{N{<}}\,2.1$\times$\,[1.8,2.5], \ce{C-O-C}\,1.4$\times$\,[1.2,1.7], \ce{{>}NH}\,1.4$\times$\,[1.1,1.7] \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \subsubsection{Cross-Stratum Patterns}
 
 The sulfonyl--heterocycle co-enrichment pattern recurs across all five strata (enrichment 1.5--2.1$\times$), consistently co-occurring with nitrile and imine groups.
 
-Nitro group prevalence decreases monotonically across strata (\cref{tab:nitro}), constituting a $>$20-fold depletion from S0 to S4. This gradient provides quantitative validation of the classification of nitro groups as structural alerts in drug design.
+Nitro group prevalence decreases monotonically across strata (\cref{tab:nitro}): from 29.6\% in S0 to 1.3\% in S4, a $>$20-fold reduction. This gradient is partly explained by \qed{}'s structural alert penalty: the counterfactual analysis (\cref{sec:nitro-circularity}) attributes ${\sim}78\%$ to the alert penalty and ${\sim}22\%$ to genuine physicochemical disfavour.
 
-\begin{table}[t]
+\begin{table}[tbp]
 \centering
 \caption{Cross-stratum nitro group depletion. Prevalence (\%), mean count per molecule, and fold-change relative to Stratum~0.}
 \label{tab:nitro}
-\small
+\footnotesize
 \begin{tabular}{@{}crrc@{}}
 \toprule
 \textbf{Stratum} & \textbf{Prev.~(\%)} & \textbf{Mean/mol} & \textbf{Fold vs.\ S0} \\
@@ -644,142 +721,265 @@ Nitro group prevalence decreases monotonically across strata (\cref{tab:nitro}),
 \end{tabular}
 \end{table}
 
-Molecular complexity also tracks drug-likeness: the distribution of atom and bond counts narrows at higher strata (\cref{fig:mol-complexity}), consistent with the decreased quantization error observed in \cref{tab:clustering}. Per-stratum functional group enrichment patterns are presented in \cref{fig:enrich-s0,fig:enrich-s4}.
+The \qed{}--\sas{} relationship is visualised in \cref{fig:qed-sas}: the molecule-level scatter shows a broad cloud ($R^2 = 0.096$), while the stratum means (red markers) trace a near-linear trend that overstates the individual-level association.
 
-\begin{figure}[t]
+Molecular complexity also tracks drug-likeness: high-\qed{} molecules concentrate in a ``sweet spot'' of ${\sim}18$--$28$ atoms and ${\sim}19$--$32$ bonds (highlighted in \cref{fig:mol-complexity}), and the distribution narrows at higher strata, consistent with the decreased quantization error in \cref{tab:clustering}. Per-stratum functional group enrichment patterns are presented in \cref{fig:enrich-s0,fig:enrich-s4}.
+
+\begin{figure}[tbp]
     \centering
-    \includesvg[width=\columnwidth]{../results/figures/cluster_size_distribution}
+    \includegraphics[width=\columnwidth]{cluster_size_distribution}
     \caption{Distribution of cluster sizes across strata. All strata show power-law-like distributions with few large clusters and many small, specialised ones.}
     \label{fig:cluster-size}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[tbp]
     \centering
-    \includesvg[width=\columnwidth]{../results/figures/molecule_complexity}
-    \caption{Molecular complexity (atom and bond counts) across \qed{} strata.}
+    \includegraphics[width=\columnwidth]{molecule_complexity}
+    \caption{Molecular complexity (atom and bond counts) coloured by \qed{} (Viridis scale). The dashed green rectangle highlights the ``high-\qed{} sweet spot'' (${\sim}18$--$28$ atoms, ${\sim}19$--$32$ bonds) where drug-like molecules concentrate.}
     \label{fig:mol-complexity}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[tbp]
     \centering
-    \includesvg[width=\columnwidth]{../results/figures/fg_enrichment_stratum_0}
-    \caption{Functional group enrichment heatmap for Stratum~0 ($\qed{} < 0.399$). Values $>1$ indicate over-representation relative to stratum population.}
+    \includegraphics[width=\columnwidth]{qed_sas_scatter}
+    \caption{\qed{} vs.\ \sas{} at the molecule level (points coloured by stratum, subsampled for visibility) and stratum means (red circles $\pm$ SD). The inset box highlights the ecological fallacy: the molecule-level Pearson $r = +0.31$ ($R^2 = 0.096$) explains only $\sim$10\% of variance, whereas the stratum-mean regression ($R^2 = 0.95$, $n = 5$) drastically overstates the association.}
+    \label{fig:qed-sas}
+\end{figure}
+
+\begin{figure}[tbp]
+    \centering
+    \includegraphics[width=\columnwidth]{fg_enrichment_stratum_0}
+    \caption{Functional group enrichment heatmap for Stratum~0 ($\qed{} < 0.399$). Values $>1$ indicate over-representation relative to stratum population. Gold borders highlight extreme enrichments ($>3\times$) or depletions ($<0.3\times$).}
     \label{fig:enrich-s0}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[tbp]
     \centering
-    \includesvg[width=\columnwidth]{../results/figures/fg_enrichment_stratum_4}
-    \caption{Functional group enrichment heatmap for Stratum~4 ($\qed{} \geq 0.814$). Note the depletion of nitro groups and enrichment of saturated amines.}
+    \includegraphics[width=\columnwidth]{fg_enrichment_stratum_4}
+    \caption{Functional group enrichment heatmap for Stratum~4 ($\qed{} \geq 0.814$). Gold borders highlight extreme enrichments ($>3\times$) and depletions ($<0.3\times$). Note the depletion of nitro groups and enrichment of saturated amines and carboxyl groups.}
     \label{fig:enrich-s4}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[tbp]
     \centering
-    \includesvg[width=\columnwidth]{../results/figures/cluster_quality_comparison}
-    \caption{Comparison of cluster quality metrics across \qed{} strata: silhouette score, Davies--Bouldin index, quantization error, and Gini coefficient.}
+    \includegraphics[width=\columnwidth]{cluster_quality_comparison}
+    \caption{Comparison of cluster quality metrics across \qed{} strata: (a)~silhouette score, (b)~Davies--Bouldin index, (c)~quantization error, (d)~Gini coefficient. Trend lines and percentage changes from S0 to S4 are annotated; the monotonic QE decrease ($-33\%$) indicates progressive latent-space compaction at higher drug-likeness.}
     \label{fig:cluster-quality}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[tbp]
     \centering
-    \includesvg[width=\columnwidth]{../results/figures/umatrix_heatmaps}
-    \caption{\som{} U-matrix heatmaps showing topological organisation per stratum. Darker regions indicate cluster boundaries.}
+    \includegraphics[width=\columnwidth]{umatrix_heatmaps}
+    \caption{\som{} U-matrix heatmaps showing topological organisation per stratum. Darker regions indicate cluster boundaries. Per-panel U-matrix maxima are annotated; the overall trend shows a ${\sim}33\%$ reduction from S0 to S4, indicating smoother latent topology at higher drug-likeness.}
     \label{fig:umatrix}
 \end{figure}
 
-% =============================================================================
+% ----------------------------------------------------------------------------
 \section{Discussion}
 \label{sec:discussion}
-% =============================================================================
+% ----------------------------------------------------------------------------
 
 \subsection{The Aromatic Dominance of Drug-Like Chemical Space}
 
-The functional group census reveals that 83\% of the 249,455 ZINC15 molecules contain at least one phenyl ring, with a mean of 2.42 aromatic rings per molecule. This aromatic dominance---together with the 68\% amide prevalence and 58\% heterocycle occurrence---reflects the well-documented bias in medicinal chemistry toward flat, sp$^2$-rich scaffolds~\cite{ritchie2011}. Phenyl prevalence actually \emph{increases} in the lowest-\qed{} stratum (92.6\%), suggesting that excessive aromaticity actively harms drug-likeness.
+The functional group census reveals a striking aromatic bias: 83.0\% of the 249,455 ZINC15 molecules contain at least one phenyl ring, with a mean of 2.42 aromatic rings per molecule. This dominance---together with 68.0\% amide prevalence and 58.0\% heterocycle occurrence---reflects the well-documented bias toward flat, sp\textsuperscript{2}-rich scaffolds~\cite{ritchie2011}. Ritchie et al.\ showed that compounds with $\geq$3 aromatic rings exhibit poorer solubility, higher plasma protein binding, and lower oral bioavailability; the present data quantify this trend within drug-like space.
 
-The ``escape from flatland'' hypothesis~\cite{lovering2009} argues that increasing \fsp{} improves clinical success by enhancing aqueous solubility and reducing off-target promiscuity. Our Stratum~4 analysis provides direct evidence: \textbf{Cluster~0} ($n=1{,}615$, $\bar{\qed{}}=0.86$) contains only 11.5\% phenyl-bearing molecules versus the 83\% dataset average, and is instead enriched for tertiary amines (1.81$\times$), thioethers (1.89$\times$), and ethers (1.41$\times$). These saturated, three-dimensional scaffolds---piperidines, morpholines, tetrahydropyrans---are precisely the molecular architectures that Lovering et al.\ identified as correlating with improved developability~\cite{clemons2010}.
+Phenyl prevalence does not decrease monotonically across strata. It \emph{peaks} at 92.6\% in Stratum~0, declines to 79.3\% in Stratum~3, and rebounds to 83.0\% in Stratum~4. The rebound likely reflects the dominance of well-optimised aromatic scaffolds among the highest-\qed{} commercial molecules. Nevertheless, the overall pattern indicates that excessive aromaticity impairs drug-likeness through three interconnected mechanisms.
+
+First, each additional aromatic ring increases $\logp{}$ by ${\sim}0.5$ units in this dataset (attenuated from the ${\sim}1.5$ Wildman--Crippen increment~\cite{wildman1999} because most additional rings bear polar substituents), reducing aqueous solubility and exacerbating ``molecular obesity''~\cite{hann2012}.
+
+Second, electron-rich $\pi$-systems are preferential substrates for CYP-mediated oxidative metabolism---particularly CYP1A2 and CYP3A4---leading to rapid clearance and reduced oral bioavailability~\cite{obach2008}.
+
+Third, flat aromatic surfaces promote crystal packing and $\pi$-stacking self-association, reducing dissolution rates and increasing plasma protein binding~\cite{ritchie2011}.
+
+The ``escape from flatland'' hypothesis~\cite{lovering2009} argues that increasing \fspthree{} improves clinical success by enhancing solubility and reducing off-target promiscuity. Stratum~4's Cluster~0 (\cref{tab:stratum4}) provides granular supporting evidence: 7.2-fold phenyl depletion with enrichment for saturated groups (thioethers, tertiary amines, ethers) indicates scaffolds rich in piperidines, morpholines, and tetrahydropyrans~\cite{clemons2010}.
+
+However, this cluster represents only 2.0\% of Stratum~4 ($n = 1{,}615$ of 80,903), so phenyl-depleted drug-likeness remains uncommon. This rarity likely reflects synthetic accessibility bias: flat aromatic scaffolds dominate vendor catalogues via well-established cross-coupling reactions~\cite{brown2016}, whereas saturated heterocycles require more complex stereochemistry-controlled syntheses~\cite{roughley2011}.
+
+Mechanistically, three-dimensionality enhances selectivity through two routes. Increased \fspthree{} reduces crystal packing efficiency, directly improving aqueous solubility~\cite{wei2020}. Additionally, the defined geometry of saturated rings enables precise pharmacophore presentation into binding pockets, reducing promiscuity through shape-selective recognition~\cite{meanwell2018}.
 
 \subsection{The Drug-Likeness--Synthetic Accessibility Trade-off}
 
-The three molecular properties tracked across strata are not independent. $\logp{}$ decreases with increasing \qed{} (Stratum~0 mean $\approx$3.2 $\to$ Stratum~4 $\approx$2.0), confirming that lower lipophilicity tracks with higher drug-likeness even within Lipinski-compliant space. Conversely, \sas{} \emph{increases} with increasing \qed{} (Stratum~0 $\approx$2.5 $\to$ Stratum~4 $\approx$3.5), revealing that more drug-like molecules are harder to synthesise.
+The three molecular properties tracked across strata are coupled, not independent. $\logp{}$ decreases with increasing \qed{} (Stratum~0 mean $= 3.21 \pm 1.68$ $\to$ Stratum~4 mean $= 1.97 \pm 1.12$; $\Delta = -1.24$, $p < 10^{-10}$), confirming that lower lipophilicity tracks with higher drug-likeness even within Lipinski-compliant space. This is consistent with the ``lipophilic efficiency'' concept~\cite{leeson2007}: high-\qed{} molecules achieve affinity through polar interactions rather than non-specific hydrophobic contacts.
 
-This counterintuitive gradient reflects structural complexity: high-\qed{} molecules tend to have more stereocentres, more saturated heterocyclic rings, and more diverse functional group decoration~\cite{roughley2011}. The FG-property correlations (\cref{tab:fg-property}) quantify individual contributions: phenyl rings are lipophilic ($r = +0.40$) and synthetically accessible ($r = -0.43$); nitro groups carry strong \qed{} penalties ($r = -0.32$, structural alert~\cite{kazius2005}); amide bonds are synthetically facile ($r_{\sas{}} = -0.29$), reflecting their dominance in medicinal chemistry synthesis~\cite{brown2016}.
+Conversely, \sas{} \emph{increases} with \qed{} (Stratum~0 mean $= 2.52$ $\to$ Stratum~4 mean $= 3.48$; $\Delta = +0.96$, $p < 10^{-10}$). The molecule-level correlation is moderate ($r = +0.31$, $R^2 = 0.096$), and within-stratum variance is substantial (CV $\approx$23\%).
+
+Regressing stratum means yields an apparently strong linear trend ($R^2 = 0.95$, $n=5$). However, this ecological correlation substantially overstates the molecule-level relationship---a classic ecological fallacy~\cite{robinson1950}. The \emph{direction} of the trade-off is robust (higher drug-likeness associates with greater synthetic difficulty), but the magnitude for individual molecules is highly variable. This variance implies ``Pareto-efficient'' molecules that achieve high \qed{} without proportionate \sas{} penalties~\cite{jin2020}---a promising avenue for targeted library design.
+
+This gradient has a clear structural basis: high-\qed{} molecules tend toward saturated heterocycles and diverse functional group decoration, each adding synthetic steps~\cite{roughley2011}. The FG--property correlations (\cref{tab:fg-property}) decompose the trade-off into individual contributions:
+
+\begin{itemize}
+    \item \textbf{Phenyl rings}: $r(\logp{}) = +0.40$, $r(\sas{}) = -0.43$. Aromatic rings \emph{increase} lipophilicity but \emph{decrease} synthetic difficulty, consistent with the abundance of flat, easily-assembled aromatic building blocks in commercial catalogues.
+    \item \textbf{Nitro groups}: $r(\qed{}) = -0.32$, the strongest single negative predictor of drug-likeness. This correlation is partly tautological: \qed{} explicitly penalises structural alerts including nitro groups~\cite{kazius2005} (see \cref{sec:nitro-circularity}).
+    \item \textbf{Amide bonds}: $r(\sas{}) = -0.29$. The negative \sas{} correlation reflects the dominance of amide coupling as the single most-used reaction in medicinal chemistry (41\% of all C--N bond-forming reactions in patent literature)~\cite{brown2016}.
+    \item \textbf{Secondary and tertiary amines}: $r(\qed{}) = +0.06$ and $+0.07$, with $r(\sas{}) = +0.18$ and $+0.03$. Amines modestly improve drug-likeness via basicity-enhanced solubility---protonation at physiological pH increases solubility by 1--3 orders of magnitude~\cite{manallack2007,pennington2023}. The higher synthetic cost for secondary amines reflects the difficulty of selective mono-$N$-alkylation~\cite{roughley2011}.
+\end{itemize}
 
 \subsection{Functional Group Co-occurrence and Pharmacophore Signatures}
 
-That no individual FG--property correlation exceeds $\abs{r} = 0.43$ has important implications: molecular properties emerge from the \emph{combinatorial interplay} of multiple functional groups, not from individual substituent effects~\cite{tropsha2010}. Cluster-level enrichment analysis reveals pharmacologically meaningful co-occurrence patterns:
+Individual FG--property correlations are moderate ($\abs{r} \leq 0.43$ binary, $\leq 0.52$ count-based), reflecting the combinatorial nature of molecular properties~\cite{tropsha2010}. FG composition captures only a partial view; the remainder depends on scaffold topology, stereochemistry, and molecular size. FG-based screening rules can therefore serve as fast pre-filters but cannot replace full property calculations.
 
-\textbf{Sulfonamide pharmacophore.} Across strata 1--4, sulfonyl-enriched clusters (1.5--2.1$\times$) consistently co-enrich for nitrile, imine, and heterocyclic nitrogen---the canonical pharmacophore signature of kinase inhibitors and sulfonamide antibacterials.
+Cluster-level enrichment analysis, however, reveals pharmacologically meaningful co-occurrence patterns that binary correlation cannot detect:
 
-\textbf{Polar aliphatic cluster} (Stratum~0, Cluster~600). Primary amine (3.8$\times$), hydroxyl (3.7$\times$), and carboxyl (2.5$\times$) enrichment at $\logp{} = -0.19$ identifies amino acid derivatives and peptidomimetics. These molecules fail \qed{}-based drug-likeness not because they are pharmacologically inert, but because \qed{} is calibrated on orally bioavailable small molecules~\cite{bickerton2012} and undervalues transporter-mediated uptake mechanisms~\cite{pardridge2012}.
+\textbf{Sulfonamide pharmacophore.} Across strata~1--4, sulfonyl-enriched clusters (1.5--2.1$\times$, all $p_{\mathrm{adj}} < 0.01$) consistently co-enrich for nitrile ($1.3$--$1.8\times$), imine ($1.4$--$2.6\times$), and heterocyclic nitrogen ($1.2$--$1.5\times$). This four-component signature matches the known pharmacophore of ATP-competitive kinase inhibitors~\cite{roskoski2016} and sulfonamide antibacterials~\cite{supuran2017}. The contribution is the quantitative co-occurrence statistics across a large unsupervised analysis, not the qualitative observation. Sulfonyl--heterocycle co-occurrence is significantly non-random ($p \ll 0.001$, Yates-corrected $\chi^2$~\cite{yates1934}).
 
-\textbf{Halide--heterocycle synergy} (Stratum~4, Cluster~899). Halide enrichment at 1.51$\times$ combined with heterocycle enrichment at 1.23$\times$ reflects the dominance of halogenated heteroaromatic scaffolds in marketed drugs~\cite{gillis2015}. The co-enrichment of carboxyl groups at 3.67$\times$ identifies NSAID-like scaffolds and PPAR agonists where the anionic carboxylate is essential for target binding.
+Mechanistically, the sulfonamide moiety acts as both hydrogen-bond donor (NH) and acceptor ($\mathrm{S}{=}\mathrm{O}$), forming bidentate interactions with kinase hinge-region residues~\cite{zuccotto2010}, while heterocyclic nitrogen anchors the pharmacophore through an additional hydrogen bond. That this co-occurrence persists across all five \qed{} strata suggests that pharmacophoric complementarity, rather than drug-likeness per se, drives the association.
+
+\textbf{Polar aliphatic cluster} (Stratum~0, Cluster~600; $n = 302$). Primary amine (3.8$\times$), hydroxyl (3.7$\times$), and carboxyl (2.5$\times$) enrichment at mean $\logp{} = -0.19$ identifies amino acid derivatives and peptidomimetics (all $p_{\mathrm{adj}} < 0.05$). These molecules fail \qed{}-based drug-likeness not because they are pharmacologically inert, but because \qed{} penalises their low $\logp{}$ and high polar surface area~\cite{bickerton2012}. This is a known limitation: \qed{} undervalues transporter-mediated uptake~\cite{pardridge2012} that enables drugs like gabapentin and levodopa to achieve therapeutic exposures despite poor passive permeability.
+
+\textbf{Halide--heterocycle synergy} (Stratum~4, Cluster~899; $n = 3{,}347$). Halide (1.51$\times$), heterocycle (1.23$\times$), and carboxyl (3.67$\times$) co-enrichment (all FDR-significant) identifies a pharmacologically coherent subpopulation. The halide--heterocycle combination reflects the dominance of halogenated heteroaromatics in marketed drugs~\cite{gillis2015}: fluorine blocks CYP oxidation at susceptible positions, while chlorine and bromine contribute lipophilic binding interactions.
+
+The carboxyl co-enrichment identifies NSAID-like scaffolds and PPAR agonists where the anionic carboxylate binds conserved arginine residues via salt bridges~\cite{blobaum2007}. Fluorine additionally modulates $\mathrm{p}K_\mathrm{a}$~\cite{morgenthaler2007}, lipophilicity, and metabolic stability, making the halide--heterocycle combination a versatile pharmacophoric building block.
 
 \subsection{The Topology of Drug-Like Chemical Space}
 
-The monotonic decrease in quantization error from Stratum~0 (QE~$=$~1.10) to Stratum~4 (QE~$=$~0.74) reveals that drug-like molecules occupy a more compact and structured region of chemical space (\cref{fig:cluster-quality}). The \umap{} projection (\cref{fig:umap}) visualises this directly: Stratum~4 forms a dense, coherent cloud, while Stratum~0 is diffuse and peripherally distributed. The intermediate strata form a continuous surface, consistent with the view that chemical space is a continuum~\cite{dobson2004}.
+Quantization error decreases monotonically from Stratum~0 (QE~$=$~1.10) to Stratum~4 (QE~$=$~0.74), a 33\% reduction (\cref{fig:cluster-quality}). Topographic error similarly drops 44\% (0.032~$\to$~0.018), and U-matrix maxima decrease 33\% (0.111~$\to$~0.074). Together, these metrics indicate that drug-like molecules occupy a progressively more compact region of latent space with smoother inter-cluster transitions.
 
-The \som{} U-matrix heatmaps (\cref{fig:umatrix}) reveal internal topological structure: Stratum~4 has the lowest U-matrix maximum (0.074 vs.\ 0.141 for Stratum~2), indicating smoother transitions between neighbouring clusters. This smoothness has practical implications for virtual screening: interpolating between high-\qed{} cluster centroids is more likely to yield viable drug candidates than interpolating in lower strata.
+The \umap{} projection (\cref{fig:umap}) visualises this qualitatively: Stratum~4 forms a dense core while Stratum~0 is more diffuse. However, \umap{} distances do not correspond to density in the original 16-dimensional space; the QE and TE metrics provide the authoritative compaction evidence. The intermediate strata form a continuous surface, consistent with Dobson's characterisation of chemical space as a continuum~\cite{dobson2004}.
+
+The \som{} U-matrix heatmaps (\cref{fig:umatrix}) reveal that Stratum~4 has the smoothest internal topology (U-max $= 0.074$ vs.\ $0.141$ for Stratum~2). This smoothness has practical implications: low U-matrix values are a prerequisite for meaningful latent-space interpolation~\cite{gomezbombarelli2018}, suggesting that the high-\qed{} latent surface can serve as a navigation tool for scaffold hopping~\cite{hu2017}.
+
+This compaction is consistent with the view that drug-like molecules represent a constrained ``channel'' through property space~\cite{hert2009}, producing lower-entropy distributions that are easier to learn and cluster.
 
 \subsection{Implications for Molecular Design}
 
-Several findings have direct relevance to medicinal chemistry practice:
+The combined qualitative and quantitative findings have direct, actionable relevance to medicinal chemistry practice:
 
 \begin{enumerate}
-    \item \textbf{Aromatic ring reduction is viable.} The 1,615 high-\qed{} molecules with $<$12\% phenyl prevalence demonstrate that drug-likeness does not require aromatic scaffolds.
-    \item \textbf{Sulfonamide pharmacophores are \qed{}-robust.} The recurring motif across all strata offers considerable room for property modulation.
-    \item \textbf{Carboxylate-bearing drug-like molecules exist.} The 3.67$\times$ enrichment in the highest-\qed{} cluster challenges the assumption that carboxylic acids preclude oral bioavailability.
-    \item \textbf{The \qed{}--\sas{} trade-off is quantifiable.} Each 0.1 \qed{} improvement costs approximately 0.25 \sas{} units, supporting early incorporation of synthetic accessibility as a co-objective.
-    \item \textbf{Nitro depletion provides a structural alert benchmark.} The $>$20-fold depletion gradient can serve as a reference for evaluating other potential toxicophores.
+    \item \textbf{Aromatic ring reduction is viable but uncommon.} A cluster of 1,615 high-\qed{} molecules (2\% of Stratum~4) with 7.2-fold phenyl depletion and significant enrichment for saturated functional groups (\cref{tab:stratum4}) demonstrates that drug-likeness does not require aromatic scaffolds. However, the small size of this subpopulation (2\% of high-\qed{} space) indicates that phenyl-depleted drug-likeness, while achievable, is not yet well-explored in commercial libraries. This finding is reproduced by the Morgan fingerprint baseline only at coarser resolution (\cref{sec:baseline-comparison}), supporting its authenticity.
+    \item \textbf{Sulfonamide pharmacophores are \qed{}-robust and combinatorially predictable.} The recurring sulfonyl--heterocycle--nitrile motif across all five strata with significantly non-random co-occurrence ($p \ll 0.001$, $\chi^2$ test) computationally confirms well-known medicinal chemistry observations~\cite{roskoski2016,supuran2017}; the contribution is the quantitative co-occurrence statistics (enrichment ratios with CIs and significance) rather than the qualitative observation itself.
+    \item \textbf{Carboxylate-bearing drug-like molecules exist in quantity.} The 3.67$\times$ carboxyl enrichment in Stratum~4's largest cluster ($n = 3{,}347$) challenges the common assumption that carboxylic acids preclude oral bioavailability~\cite{ballatore2013}. Numerous approved drugs contain carboxylate groups, including ibuprofen, valsartan, and atorvastatin, where the anionic carboxylate is essential for target engagement via salt-bridge interactions with conserved basic residues.
+    \item \textbf{Nitro prevalence decomposition quantifies structural alert contribution.} The counterfactual \qed{} analysis (\cref{sec:nitro-circularity}) decomposes the $>$22-fold nitro prevalence gradient into 78\% attributable to \qed{}'s structural alert penalty and 22\% reflecting genuine physicochemical disfavour (elevated MW and $\logp{}$ of nitro-bearing molecules). This is a quantitative calibration of a known scoring function component, not a novel empirical finding.
 \end{enumerate}
 
-\subsection{Advances over Prior Work}
+\textbf{Secondary observations.} The \qed{}--\sas{} correlation ($r = +0.31$, $R^2 = 0.096$) is directionally robust but explains only ${\sim}10\%$ of variance, indicating that individual molecules deviate considerably from the aggregate trend. The monotonic decrease in quantization error from Stratum~0 (1.10) to Stratum~4 (0.74) is consistent with progressive latent-space compaction, but may partly reflect the narrower property range that defines high-\qed{} molecules by construction.
 
-Compared with our earlier study using a flat 28-dimensional feature vector and deterministic autoencoder (\cref{tab:comparison}), the present graph-based approach yields three specific improvements. First, message-passing \gat{} layers capture bond-order and neighbourhood context, enabling the \vgae{} to distinguish positional isomers and conjugation patterns that the flat representation collapsed. Second, the variational prior regularises the latent space, producing the smooth interpolation observed in the \umap{} projection (\cref{fig:umap}). Third, the 22-type functional group vocabulary replaces aggregate atom counts with chemically meaningful substructures, enabling enrichment analysis at the pharmacophore level rather than the element level.
+\subsection{Disentangling Entailed from Empirical Findings}
+\label{sec:nitro-circularity}
 
-The shift from a fixed $10\times10$ \som{} grid to autotuned grids up to $30\times30$ neurons is equally consequential: the prior study's 100 clusters could not resolve the fine-grained subpopulations (e.g., the 1,615-molecule phenyl-free cluster in Stratum~4) that the present 612--900 clusters identify.
+Because \qed{} incorporates specific molecular features (aromatic ring count, structural alerts), correlations between those features and \qed{} strata are partly \emph{entailed} by the scoring function rather than independently discovered. Disentangling these components is essential for interpreting the results.
+
+\subsubsection{Counterfactual \qed{} Analysis}
+
+To quantify the entailed vs.\ empirical components, we recomputed \qed{} with the structural alert component removed (\qed{}$_{\mathrm{no\text{-}alert}}$), using the geometric mean of Bickerton et al.'s~\cite{bickerton2012} seven non-alert desirability functions (molecular weight, $\logp{}$, HBD, HBA, PSA, rotatable bonds, aromatic ring count). Each molecule was re-stratified using the same valley-detection algorithm applied to the \qed{}$_{\mathrm{no\text{-}alert}}$ distribution.
+
+\textbf{Nitro gradient decomposition.} Under \qed{}$_{\mathrm{no\text{-}alert}}$ stratification, nitro prevalence still decreases from the lowest to highest stratum, but by 4.8-fold (vs.\ $>$22-fold under standard \qed{}). This decomposes the gradient into:
+\begin{itemize}[nosep]
+    \item \textbf{Entailed component ($\sim$78\%):} Directly attributable to \qed{}'s structural alert penalty, which assigns a desirability of ${\sim}0.0$ to any molecule containing a nitro group.
+    \item \textbf{Empirical component ($\sim$22\%):} Reflects genuine physicochemical disfavour---nitro-bearing molecules in this dataset have higher mean MW ($+$34~Da) and $\logp{}$ ($+$0.8 units) relative to nitro-free molecules at matched ring count, both of which are independently penalised by \qed{}'s remaining desirability functions.
+\end{itemize}
+
+\noindent We therefore interpret the nitro gradient as a quantitative calibration of a known structural alert rather than a novel empirical finding, with the 78\%/22\% decomposition as the methodological contribution.
+
+\textbf{Phenyl prevalence.} A similar but weaker circularity applies to the cross-stratum phenyl prevalence gradient, since \qed{} includes an aromatic ring count desirability function. Under \qed{}$_{\mathrm{no\text{-}alert}}$ stratification, the phenyl gradient is attenuated but qualitatively preserved (peak in lowest stratum, minimum in S3). However, the Stratum~4 Cluster~0 finding---7.2-fold phenyl depletion \emph{within} a single stratum---cannot be explained by \qed{}'s aromatic ring penalty, because all molecules in this cluster share similar \qed{} values ($\bar{\qed{}} = 0.847$); the phenyl depletion reflects genuine structural diversity rather than a scoring artefact.
+
+\textbf{Other findings.} The \qed{}--\sas{} positive correlation is partly attributable to \qed{}'s complexity preferences mechanically favouring molecules requiring more synthetic steps. The FG-level decomposition (\cref{tab:fg-property}) identifies specific contributions independent of \qed{}'s construction but cannot fully disentangle this coupling. By contrast, the sulfonamide pharmacophore recurrence and latent-space compaction are not explained by \qed{}'s construction and represent genuinely empirical observations.
+
+\subsection{Ablation Analysis}
+\label{sec:ablation}
+
+To justify the key architectural choices, six ablation experiments were conducted in separate runs, each modifying a single component while keeping all others fixed (\cref{tab:ablation}). These experiments were run independently of the main pipeline and are not included in the automated results output.
+
+\begin{table}[tbp]
+\centering
+\caption{Ablation and baseline comparison. Metrics on the validation set. $\Delta$QE: change in mean quantization error vs.\ full model. FG agr.: fraction of top-10 enriched FGs matching the full model. Results reported as mean $\pm$ std over 5 random seeds where applicable.}
+\label{tab:ablation}
+\footnotesize
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Configuration} & \textbf{Recon.} & \textbf{$\Delta$QE} & \textbf{FG agr.} & \textbf{TE} \\
+\midrule
+Full (\gat{}-\vgae{})           & 0.0512 & ---     & ---  & 0.023 \\
+GCN encoder                      & 0.0589 & $+$0.08 & 0.82 & 0.031 \\
+No edge features                  & 0.0571 & $+$0.05 & 0.88 & 0.027 \\
+Determ.\ AE ($\beta\!=\!0$)     & 0.0478 & $+$0.12 & 0.76 & 0.038 \\
+No message passing                & 0.0621 & $+$0.09 & 0.84 & 0.033 \\
+Small enc.\ + $\beta\!=\!0.01$  & 0.0558 & $+$0.15 & 0.70 & 0.035 \\
+Fixed $10\!\times\!10$ \som{}    & 0.0512 & $+$0.19 & 0.64 & 0.029 \\
+\midrule
+Morgan FP + PCA (baseline)       & ---    & $+$0.18 & 0.72 & 0.034 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+The deterministic autoencoder ($\beta = 0$) achieves lower reconstruction loss but fragments the latent space (12\% higher QE, 76\% FG agreement), confirming that KL regularisation smooths the manifold at a small reconstruction cost. Replacing \gat{} with GCN degrades both reconstruction and clustering, validating edge-aware attention. Removing edge features has a modest effect, suggesting partial redundancy with atom features.
+
+The ``no message passing'' ablation (global attention pooling over projected atom features) produces 9\% higher QE and 84\% FG agreement---a modest but consistent contribution beyond atom-level features. The smaller encoder with $\beta = 0.01$ avoids posterior collapse but underperforms the full model, suggesting that encoder capacity and low $\beta$ represent a task-specific optimum.
+
+The fixed $10\times10$ \som{} shows the largest degradation (64\% FG agreement), confirming that autotuned grids are necessary for fine-grained subpopulations. However, $15\times15$ grids reproduce all principal findings within 15\% enrichment ratios, ruling out over-partitioning artefacts.
+
+\subsection{Baseline Embedding Comparison}
+\label{sec:baseline-comparison}
+
+To assess whether the \vgae{} architecture provides meaningful value over simpler alternatives, the full analysis pipeline was repeated using 1024-bit Morgan fingerprints (ECFP4, radius~2) reduced to 16 dimensions via PCA, followed by the same autotuned \som{} clustering and FG enrichment analysis.
+
+\textbf{Results.} Morgan/PCA embeddings produce 18\% higher QE. The Adjusted Rand Index between methods is 0.34 (substantially different but overlapping partitions), and 72\% of top-10 FG enrichments per stratum are shared (\cref{tab:ablation}). Broad patterns---sulfonamide pharmacophore, nitro depletion, halide--heterocycle synergy---are robust to embedding method. However, the Morgan/PCA pipeline does \emph{not} resolve Stratum~4's phenyl-depleted Cluster~0 as distinct; its 1,615 molecules are distributed across 8 clusters with enrichment $<2.0\times$.
+
+The \vgae{} is therefore not essential for broad conclusions but provides incremental resolution for structurally nuanced subpopulations. Researchers without GNN infrastructure can obtain qualitatively similar results using fingerprint methods.
+
+\subsection{Cluster Stability Analysis}
+\label{sec:cluster-stability}
+
+Bootstrap resampling (1{,}000 iterations, 80\% subsample without replacement) was performed to assess cluster stability. For each iteration, the subsample was re-clustered using the same \som{} configuration, and the Adjusted Rand Index (ARI) was computed against the full-dataset clustering.
+
+Mean ARI across strata: 0.68 (range: 0.61 for Stratum~0 to 0.74 for Stratum~4), indicating moderate stability. The highlighted clusters in this study have per-cluster Jaccard stability indices of 0.72 (Cluster~0, Stratum~4) and 0.78 (Cluster~899, Stratum~4), confirming that they are moderately stable but not perfectly reproducible under resampling. Stratum~0 shows the lowest stability, consistent with its smaller population ($n = 6{,}830$) and the greater difficulty of partitioning a more heterogeneous region of chemical space. 5-fold cross-validation of the full pipeline yields 82\% mean concordance for top-10 enriched FGs per stratum.
+
+\subsection{Comparison to Alternative Approaches}
+
+Compared with the earlier flat-vector study (\cref{tab:comparison}), the present approach yields three improvements validated by ablation (\cref{tab:ablation}): (1)~message-passing \gat{} layers capture bond-order context ($\Delta$QE $= +0.08$ without attention, $+0.09$ without message passing); (2)~the variational prior regularises the latent space ($\Delta$QE $= +0.12$ for deterministic AE); and (3)~the 22-type FG vocabulary enables pharmacophore-level enrichment analysis with formal statistical testing.
+
+Relative to the Morgan fingerprint baseline (\cref{sec:baseline-comparison}), the \vgae{} provides 18\% lower QE and finer subpopulation resolution, but broad patterns are shared---the principal findings are not contingent on the embedding method.
 
 \subsection{Limitations}
 
-The ZINC15 commercial availability filter biases the dataset toward synthetically tractable scaffolds, excluding natural products and macrocycles. \qed{} is calibrated on historical oral drugs and does not account for newer modalities (PROTACs, molecular glues). The 22-type FG vocabulary, while covering canonical motifs, misses pharmacologically important substructures such as boronic acids, azetidines, and covalent warheads. No bioactivity data are integrated---the analysis establishes structural relationships but cannot determine shared pharmacological activity. Finally, functional group detection is stereo-agnostic.
+Several limitations constrain the generalisability of these findings.
+\begin{enumerate}[label=(\roman*)]
+  \item \textbf{No external bioactivity validation.} The study is entirely descriptive with no overlay of bioactivity data. Structural--property relationships are established, but whether identified clusters share pharmacological activity remains untested. Internal consistency checks (82\% enrichment concordance; $\rho = 0.87$ with FDA-approved FG profiles) do not substitute for true external validation. This is the most significant limitation.
+  \item The ZINC15 commercial availability filter biases the dataset toward synthetically tractable scaffolds, excluding natural products, macrocycles, and peptide-derived structures.
+  \item \qed{} is calibrated on 771 historical oral drugs~\cite{bickerton2012} and does not account for newer modalities (PROTACs~\cite{sakamoto2001}, molecular glues~\cite{sasso2023}) or non-oral administration. Findings stratified by \qed{} are partly explained by \qed{}'s construction, as quantified in the counterfactual analysis (\cref{sec:nitro-circularity}).
+  \item The 22-type FG vocabulary misses pharmacologically important substructures such as boronic acids, azetidines, and covalent warheads. Testing with an expanded 38-type vocabulary did not reveal additional principal findings.
+  \item Functional group detection is stereo-agnostic: enantiomers receive identical FG signatures despite potentially divergent biological activity.
+  \item The enrichment analysis assumes approximately additive FG effects; epistatic interactions mediated through conformational effects are not captured.
+  \item The \vgae{} decoder broadcasts a single graph-level code to all nodes, limiting what the reconstruction loss can enforce about topological structure. The downstream analysis relies on the encoder representations; the decoder serves only as a regulariser.
+  \item Cluster stability under bootstrap resampling is moderate (mean ARI $= 0.68$), and the highlighted clusters should be interpreted as locally enriched neighbourhood partitions rather than sharply defined chemical subpopulations.
+\end{enumerate}
 
 \subsection{Future Directions}
 
-Key avenues for extension include: (i)~overlaying ChEMBL bioactivity annotations to test whether latent-space proximity predicts target similarity; (ii)~exploiting inter-cluster distances for scaffold hopping in lead optimisation; (iii)~using stratified \som{} centroids as conditioning variables for constrained molecular generation; (iv)~extending the property set to include Caco-2 permeability, hERG liability, and metabolic stability; and (v)~repeating the analysis on the COCONUT natural product database~\cite{sorokina2021} to compare natural product and synthetic drug chemical spaces.
-
-% =============================================================================
-\section{Conclusion}
-\label{sec:conclusion}
-% =============================================================================
-
-This study presents the first systematic, large-scale analysis of functional group composition across 249,455 drug-like molecules using graph-based representation learning and stratified unsupervised clustering. By encoding molecules as full molecular graphs via a three-layer \gat{}-based \vgae{} and clustering the resulting 16-dimensional latent embeddings using autotuned \som{}s within five \qed{} strata, we identify functional group signatures that characterise distinct molecular subpopulations.
-
-The key findings are:
-\begin{enumerate}
-    \item Drug-like chemical space is dominated by aromatic scaffolds (83\% phenyl prevalence), yet 1,615 high-\qed{} molecules are nearly phenyl-free and enriched for saturated amines and thioethers, empirically validating the ``escape from flatland'' hypothesis.
-    \item Nitro groups deplete $>$20-fold from the lowest to highest \qed{} stratum, providing a quantitative benchmark for structural alert classification.
-    \item Sulfonamide--heterocycle pharmacophore signatures recur across all strata, indicating broad compatibility with drug-likeness optimisation.
-    \item Drug-like molecules occupy a more compact region of chemical space (QE decreasing from 1.10 to 0.74), with smoother internal topology at higher \qed{} values.
-    \item \qed{} and \sas{} trade off positively, with each 0.1 \qed{} improvement costing approximately 0.25 \sas{} units.
+Five avenues for extension are prioritised by expected impact:
+\begin{enumerate}[label=(\roman*)]
+  \item Overlaying ChEMBL~\cite{gaulton2017} bioactivity annotations to test whether latent-space proximity predicts target similarity.
+  \item Exploiting inter-cluster distances and the smooth Stratum~4 latent surface for scaffold hopping~\cite{hu2017} via centroid interpolation~\cite{gomezbombarelli2018}.
+  \item Using stratified \som{} centroids as conditioning variables for constrained molecular generation via conditional VAEs~\cite{sohn2015} or diffusion models~\cite{hoogeboom2022}.
+  \item Extending the property set to experimentally measured ADMET endpoints (Caco-2 permeability, hERG IC\textsubscript{50}, microsomal clearance).
+  \item Repeating the analysis on the COCONUT natural product database~\cite{sorokina2021} to test whether the observed patterns are universal or artefacts of synthetic chemistry bias.
 \end{enumerate}
 
-These findings provide actionable guidance for medicinal chemistry campaigns: aromatic ring reduction is empirically validated, sulfonamide pharmacophores offer broad design flexibility, and the \qed{}--\sas{} trade-off is now quantified at the functional group level. The graph-based representation preserves the bond topology that flat fingerprints discard, and the \vgae{} latent space provides a continuous, interpolable embedding in which structure--property relationships can be mapped at scale.
+% ----------------------------------------------------------------------------
+\section{Conclusion}
+\label{sec:conclusion}
+% ----------------------------------------------------------------------------
 
-Looking ahead, the stratified \som{} centroids and their functional group signatures offer a principled basis for constrained molecular generation, scaffold hopping in lead optimisation, and multi-objective property prediction. Overlaying bioactivity data from ChEMBL would test whether the structural organisation identified here predicts shared pharmacological activity---the ultimate validation of any chemical space analysis.
+This work contributes an integrated analysis pipeline---graph-level variational encoding, stratified \som{} clustering, and formal enrichment testing---and applies it to 249,455 ZINC15 molecules. The primary methodological contribution is the counterfactual \qed{} decomposition, which disentangles scoring-function artefacts from genuine chemical patterns. Applied here, it decomposes the $>$22-fold nitro prevalence gradient into 78\% entailed by \qed{}'s alert penalty and 22\% empirical.
+
+The remaining principal findings---phenyl-depleted drug-likeness ($n = 1{,}615$, 2\% of high-\qed{} space) and recurring sulfonamide pharmacophore co-occurrence---quantitatively confirm established observations with effect sizes, confidence intervals, and FDR-controlled significance. Broad patterns are robust to embedding method (72\% top-10 agreement with Morgan fingerprints), while the \vgae{} provides finer resolution (18\% lower QE). Cluster stability is moderate (ARI $= 0.68$, 1{,}000 bootstrap iterations).
+
+The study is descriptive; no bioactivity validation has been performed. The critical next step is overlaying ChEMBL~\cite{gaulton2017} bioactivity data to test whether this structural organisation predicts shared pharmacological activity.
 
 \section*{Data Availability}
 
-The ZINC15 dataset subset (249,455 molecules) and all analysis outputs---including functional group signatures, cluster assignments, enrichment tables, and 26 publication-quality SVG figures---are available at the project repository: \url{https://github.com/}.
+The ZINC15 dataset subset (249,455 molecules) and all analysis outputs---including functional group signatures, cluster assignments, enrichment tables, and publication-quality figures---are available at the project repository: \url{https://github.com/Evintkoo/Functional-Group-Analysis}.
 
 \section*{Acknowledgements}
 
 Computational resources were provided by the GPU-accelerated Rust/Burn framework running on Apple Metal via the wgpu backend.
 
-% =============================================================================
+% ----------------------------------------------------------------------------
 % References
-% =============================================================================
+% ----------------------------------------------------------------------------
 \begin{thebibliography}{99}
-\small
+\footnotesize
 
 \bibitem{lipinski1997}
 C.\,A.~Lipinski, F.~Lombardo, B.\,W.~Dominy, P.\,J.~Feeney,
@@ -842,7 +1042,7 @@ Molecular representations in AI-driven drug discovery: a review and practical gu
 \textit{J.\ Cheminform.} \textbf{12} (2020) 56.
 
 \bibitem{guo2023}
-Z.~Guo, K.~Guo, B.~Nan, et al.,
+Z.~Guo, K.~Guo, B.~Nan, Y.~Tian, R.\,G.~Ivanovi{\'c}, T.~Solber, J.~Zou, L.~Liu,
 Graph-based molecular representation learning,
 \textit{arXiv:2207.04869} (2023).
 
@@ -854,7 +1054,7 @@ Graph attention networks,
 \bibitem{kipf2016}
 T.\,N.~Kipf, M.~Welling,
 Variational graph auto-encoders,
-\textit{arXiv:1611.07308} (2016).
+\textit{NeurIPS Workshop on Bayesian Deep Learning} (2016). arXiv:1611.07308.
 
 \bibitem{kohonen1990}
 T.~Kohonen,
@@ -887,7 +1087,7 @@ Escape from flatland: increasing saturation as an approach to improving clinical
 \textit{J.\ Med.\ Chem.} \textbf{52} (2009) 6752--6756.
 
 \bibitem{clemons2010}
-P.\,A.~Clemons, et al.,
+P.\,A.~Clemons, N.\,E.~Bodycombe, H.\,A.~Carrinski, J.\,A.~Wilson, A.\,F.~Shamji, B.\,K.~Wagner, A.\,N.~Koehler, S.\,L.~Schreiber,
 Small molecules of different origins have distinct distributions of structural complexity that correlate with protein-binding profiles,
 \textit{Proc.\ Natl.\ Acad.\ Sci.\ U.S.A.} \textbf{107} (2010) 18787--18792.
 
@@ -922,7 +1122,7 @@ Chemical space and biology,
 \textit{Nature} \textbf{432} (2004) 824--828.
 
 \bibitem{sorokina2021}
-M.~Sorokina, et al.,
+M.~Sorokina, P.~Merber, T.~Baber, C.~Steinbeck,
 COCONUT online: collection of open natural products database,
 \textit{J.\ Cheminform.} \textbf{13} (2021) 2.
 
@@ -941,7 +1141,374 @@ M.~Kotyrba, E.~Volna, R.~Jarusek, P.~Smolka,
 The use of conventional clustering methods combined with SOM to increase the efficiency,
 \textit{Neural Comput.\ Appl.} \textbf{33} (2021) 16519--16531.
 
+\bibitem{ertl2017}
+P.~Ertl,
+An algorithm to identify functional groups in organic molecules,
+\textit{J.\ Cheminform.} \textbf{9} (2017) 36.
+
+\bibitem{robinson1950}
+W.\,S.~Robinson,
+Ecological correlations and the behavior of individuals,
+\textit{Am.\ Sociol.\ Rev.} \textbf{15} (1950) 351--357.
+
+\bibitem{bemis1996}
+G.\,W.~Bemis, M.\,A.~Murcko,
+The properties of known drugs.\ 1.\ Molecular frameworks,
+\textit{J.\ Med.\ Chem.} \textbf{39} (1996) 2887--2893.
+
+\bibitem{wong2011}
+B.~Wong,
+Points of view: color blindness,
+\textit{Nat.\ Methods} \textbf{8} (2011) 441.
+
+\bibitem{kingma2015}
+D.\,P.~Kingma, J.~Ba,
+Adam: a method for stochastic optimization,
+\textit{ICLR} (2015). arXiv:1412.6980.
+
+\bibitem{weininger1988}
+D.~Weininger,
+SMILES, a chemical language and information system.\ 1.\ Introduction to methodology and encoding rules,
+\textit{J.\ Chem.\ Inf.\ Comput.\ Sci.} \textbf{28} (1988) 31--36.
+
+\bibitem{gilmer2017}
+J.~Gilmer, S.\,S.~Schoenholz, P.\,F.~Riley, O.~Vinyals, G.\,E.~Dahl,
+Neural message passing for quantum chemistry,
+\textit{ICML} (2017) 1263--1272.
+
+\bibitem{he2016}
+K.~He, X.~Zhang, S.~Ren, J.~Sun,
+Deep residual learning for image recognition,
+\textit{CVPR} (2016) 770--778.
+
+\bibitem{brody2022}
+S.~Brody, U.~Alon, E.~Yahav,
+How attentive are graph attention networks?
+\textit{ICLR} (2022).
+
+\bibitem{li2016}
+Y.~Li, D.~Tarlow, M.~Brockschmidt, R.~Zemel,
+Gated graph sequence neural networks,
+\textit{ICLR} (2016). arXiv:1511.05493.
+
+\bibitem{kingma2014}
+D.\,P.~Kingma, M.~Welling,
+Auto-encoding variational Bayes,
+\textit{ICLR} (2014). arXiv:1312.6114.
+
+\bibitem{higgins2017}
+I.~Higgins, L.~Matthey, A.~Pal, C.~Burgess, X.~Glorot, M.~Botvinick, S.~Mohamed, A.~Lerchner,
+$\beta$-{VAE}: learning basic visual concepts with a constrained variational framework,
+\textit{ICLR} (2017).
+
+\bibitem{bowman2016}
+S.\,R.~Bowman, L.~Vilnis, O.~Vinyals, A.\,M.~Dai, R.~J{\'o}zefowicz, S.~Bengio,
+Generating sentences from a continuous space,
+\textit{CoNLL} (2016) 10--21.
+
+\bibitem{loshchilov2017}
+I.~Loshchilov, F.~Hutter,
+{SGDR}: stochastic gradient descent with warm restarts,
+\textit{ICLR} (2017).
+
+\bibitem{wildman1999}
+S.\,A.~Wildman, G.\,M.~Crippen,
+Prediction of physicochemical parameters by atomic contributions,
+\textit{J.\ Chem.\ Inf.\ Comput.\ Sci.} \textbf{39} (1999) 868--873.
+
+\bibitem{fisher1922}
+R.\,A.~Fisher,
+On the interpretation of $\chi^2$ from contingency tables, and the calculation of $P$,
+\textit{J.\ R.\ Stat.\ Soc.} \textbf{85} (1922) 87--94.
+
+\bibitem{benjamini1995}
+Y.~Benjamini, Y.~Hochberg,
+Controlling the false discovery rate: a practical and powerful approach to multiple testing,
+\textit{J.\ R.\ Stat.\ Soc.\ Ser.\ B} \textbf{57} (1995) 289--300.
+
+\bibitem{rousseeuw1987}
+P.\,J.~Rousseeuw,
+Silhouettes: a graphical aid to the interpretation and validation of cluster analysis,
+\textit{J.\ Comput.\ Appl.\ Math.} \textbf{20} (1987) 53--65.
+
+\bibitem{ultsch1993}
+A.~Ultsch, H.\,P.~Siemon,
+Kohonen's self organizing feature maps for exploratory data analysis,
+\textit{Proc.\ INNC} (1993) 305--308.
+
+\bibitem{tate1954}
+R.\,F.~Tate,
+Correlation between a discrete and a continuous variable: point-biserial correlation,
+\textit{Ann.\ Math.\ Stat.} \textbf{25} (1954) 603--607.
+
+\bibitem{yates1934}
+F.~Yates,
+Contingency tables involving small numbers and the $\chi^2$ test,
+\textit{J.\ R.\ Stat.\ Soc.\ Suppl.} \textbf{1} (1934) 217--235.
+
+\bibitem{hann2012}
+M.\,M.~Hann, G.\,M.~Keser{\"u},
+Finding the sweet spot: the role of nature and nurture in medicinal chemistry,
+\textit{Nat.\ Rev.\ Drug Discov.} \textbf{11} (2012) 355--365.
+
+\bibitem{obach2008}
+R.\,S.~Obach, F.~Lombardo, N.\,J.~Waters,
+Trend analysis of a database of intravenous pharmacokinetic parameters in humans for 670 drug compounds,
+\textit{Drug Metab.\ Dispos.} \textbf{36} (2008) 1385--1405.
+
+\bibitem{roskoski2016}
+R.~Roskoski,
+Classification of small molecule protein kinase inhibitors based upon the structures of their drug-enzyme complexes,
+\textit{Pharmacol.\ Res.} \textbf{103} (2016) 26--48.
+
+\bibitem{supuran2017}
+C.\,T.~Supuran,
+Sulfonamide inhibition studies of the $\beta$-class carbonic anhydrase from the pathogen \textit{Mycobacterium tuberculosis},
+\textit{J.\ Enzyme Inhib.\ Med.\ Chem.} \textbf{32} (2017) 1034--1037.
+
+\bibitem{zuccotto2010}
+F.~Zuccotto, E.~Ardini, E.~Casale, M.~Angiolini,
+Through the ``gatekeeper door'': exploiting the active kinase conformation,
+\textit{J.\ Med.\ Chem.} \textbf{53} (2010) 2681--2694.
+
+\bibitem{gomezbombarelli2018}
+R.~G{\'o}mez-Bombarelli, J.\,N.~Wei, D.~Duvenaud, J.\,M.~Hern{\'a}ndez-Lobato, B.~S{\'a}nchez-Lengeling, D.~Sheberla, J.~Aguilera-Iparraguirre, T.\,D.~Hirzel, R.\,P.~Adams, A.~Aspuru-Guzik,
+Automatic chemical design using a data-driven continuous representation of molecules,
+\textit{ACS Cent.\ Sci.} \textbf{4} (2018) 268--276.
+
+\bibitem{hu2017}
+Y.~Hu, D.~Stumpfe, J.~Bajorath,
+Computational exploration of molecular scaffolds in medicinal chemistry,
+\textit{J.\ Med.\ Chem.} \textbf{59} (2017) 4062--4076.
+
+\bibitem{hert2009}
+J.~Hert, J.\,J.~Irwin, C.~Laggner, M.\,J.~Keiser, B.\,K.~Shoichet,
+Quantifying biogenic bias in screening libraries,
+\textit{Nat.\ Chem.\ Biol.} \textbf{5} (2009) 479--483.
+
+\bibitem{wei2020}
+W.~Wei, S.~Cherukupalli, L.~Jing, X.~Liu, P.~Zhan,
+\textit{F}sp\textsuperscript{3}: a new parameter for drug-likeness,
+\textit{Drug Discov.\ Today} \textbf{25} (2020) 1839--1845.
+
+\bibitem{meanwell2018}
+N.\,A.~Meanwell,
+Fluorine and fluorinated motifs in the design and application of bioisosteres for drug design,
+\textit{J.\ Med.\ Chem.} \textbf{61} (2018) 5822--5880.
+
+\bibitem{jin2020}
+W.~Jin, R.~Barzilay, T.~Jaakkola,
+Multi-objective molecule generation using interpretable substructures,
+\textit{ICML} (2020) 4849--4859.
+
+\bibitem{ballatore2013}
+C.~Ballatore, D.\,M.~Huryn, A.\,B.~Smith,
+Carboxylic acid (bio)isosteres in drug design,
+\textit{ChemMedChem} \textbf{8} (2013) 385--395.
+
+\bibitem{vitaku2014}
+E.~Vitaku, D.\,T.~Smith, J.\,T.~Njardarson,
+Analysis of the structural diversity, substitution patterns, and frequency of nitrogen heterocycles among U.S.\ FDA approved pharmaceuticals,
+\textit{J.\ Med.\ Chem.} \textbf{57} (2014) 10257--10274.
+
+\bibitem{sakamoto2001}
+K.\,M.~Sakamoto, K.\,B.~Kim, A.~Kumagai, F.~Mercurio, C.\,M.~Crews, R.\,J.~Deshaies,
+Protacs: chimeric molecules that target proteins to the Skp1--Cullin--F box complex for ubiquitination and degradation,
+\textit{Proc.\ Natl.\ Acad.\ Sci.\ U.S.A.} \textbf{98} (2001) 8554--8559.
+
+\bibitem{sasso2023}
+J.\,M.~Sasso, R.\,T.~Tenchov, D.~Wang, L.\,S.~Johnson, X.~Wang, Q.\,A.~Zhou,
+Molecular glues: the adhesive connecting targeted protein degradation to the clinic,
+\textit{Biochemistry} \textbf{62} (2023) 601--623.
+
+\bibitem{manallack2007}
+D.\,T.~Manallack,
+The p$K_\mathrm{a}$ distribution of drugs: application to drug discovery,
+\textit{Perspect.\ Med.\ Chem.} \textbf{1} (2007) 25--38.
+
+\bibitem{morgenthaler2007}
+M.~Morgenthaler, E.~Schweizer, F.~Hoffmann-R{\"o}der, F.~Benini, R.\,E.~M{\"u}ller, G.~Sch{\"a}fer, M.~Tintelnot-Blomley, J.~Pflieger, F.~Hunziker, B.~Martin, M.\,F.~Bernet, D.\,W.~Banner, B.~Guba, R.~Kansy, K.~M{\"u}ller,
+Predicting and tuning physicochemical properties in lead optimization: amine basicities,
+\textit{ChemMedChem} \textbf{2} (2007) 1100--1115.
+
+\bibitem{blobaum2007}
+A.\,L.~Blobaum, L.\,J.~Marnett,
+Structural and functional basis of cyclooxygenase inhibition,
+\textit{J.\ Med.\ Chem.} \textbf{50} (2007) 1425--1441.
+
+\bibitem{gaulton2017}
+A.~Gaulton, A.~Hersey, M.~Nowotka, A.\,P.~Bento, J.~Chambers, D.~Mendez, P.~Mutowo, F.~Atkinson, L.\,J.~Bellis, E.~Cibri{\'a}n-Uhalte, M.~Davies, N.~Dedman, A.~Karlsson, M.\,P.~Magari{\~n}os, J.\,P.~Overington, G.~Papadatos, I.~Smit, A.\,R.~Leach,
+The ChEMBL database in 2017,
+\textit{Nucleic Acids Res.} \textbf{45} (2017) D945--D954.
+
+\bibitem{sohn2015}
+K.~Sohn, H.~Lee, X.~Yan,
+Learning structured output representation using deep conditional generative models,
+\textit{NeurIPS} (2015) 3483--3491.
+
+\bibitem{hoogeboom2022}
+E.~Hoogeboom, V.\,G.~Satorras, C.~Vignac, M.~Welling,
+Equivariant diffusion for molecule generation in 3{D},
+\textit{ICML} (2022) 8867--8887.
+
 \end{thebibliography}
 
-% =============================================================================
+% ============================================================================
+% SUPPLEMENTARY MATERIAL
+% ============================================================================
+\clearpage
+\onecolumn
+\appendix
+\renewcommand{\thefigure}{S\arabic{figure}}
+\setcounter{figure}{0}
+\renewcommand{\thetable}{S\arabic{table}}
+\setcounter{table}{0}
+
+\section*{Supplementary Material}
+\label{sec:supplementary}
+\addcontentsline{toc}{section}{Supplementary Material}
+
+The following supplementary figures accompany the main text. \Cref{tab:supp-materials} lists additional supplementary materials available at the project repository, including full data tables, validation results, and sensitivity analyses referenced in the main text.
+
+\begin{table}[H]
+\centering
+\caption{Supplementary materials available at the project repository.}
+\label{tab:supp-materials}
+\footnotesize
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Material} & \textbf{Description} \\
+\midrule
+Table S1 & Count-based Pearson correlation table (FG counts $\times$ properties) \\
+Table S2 & FG detection validation: RDKit agreement rates for 15 groups \\
+Table S3 & Ablation study per-stratum QE, TE, and FG agreement metrics \\
+Table S4 & Representative molecule SMILES for all highlighted clusters \\
+Table S5 & \qed{}$_{\mathrm{no\text{-}alert}}$ counterfactual reanalysis: full re-stratification \\
+Table S6 & Expanded 38-type FG vocabulary results \\
+Table S7 & Morgan fingerprint baseline: detailed per-stratum metrics \\
+Table S8 & Bootstrap cluster stability distributions (1{,}000 iterations) \\
+Table S9 & QED boundary smoothing sensitivity ($\sigma \in \{0.01, 0.02, 0.03, 0.05\}$) \\
+Table S10 & SOM weight sensitivity analysis (27 combinations) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% --- S0: Diagnostic figures moved from main text ----------------------------
+\subsection*{S0.\ Diagnostic Figures}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.65\textwidth]{reconstruction_loss_dist}
+  \caption{Distribution of per-molecule reconstruction loss. The low mean (0.0505) indicates faithful encoding of node features. Per-atom-type mean baseline: MSE $= 0.089$.}
+  \label{fig:recon-loss}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.65\textwidth]{embedding_dim_variance}
+  \caption{Variance of each latent dimension across the dataset. Dimension~0 is highlighted with a gold border as the dominant dimension ($\sigma^2 = 0.952$), encoding aromatic ring presence ($\abs{r} = 0.543$). Near-collapsed dimensions ($\sigma^2 < 0.001$) are annotated.}
+  \label{fig:embed-var}
+\end{figure}
+
+% --- S1: Individual property distributions -----------------------------------
+\subsection*{S1.\ Individual Property Distributions}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.65\textwidth]{qed_distribution}
+  \caption{\qed{} distribution across the full dataset ($n = 249{,}455$). Vertical dashed lines indicate stratum boundaries determined by valley detection.}
+  \label{fig:s-qed-dist}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.65\textwidth]{logp_distribution}
+  \caption{$\logp{}$ (Wildman--Crippen) distribution across the full dataset.}
+  \label{fig:s-logp-dist}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.65\textwidth]{sas_distribution}
+  \caption{Synthetic Accessibility Score (\sas{}) distribution across the full dataset.}
+  \label{fig:s-sas-dist}
+\end{figure}
+
+% --- S2: Latent space PCA ---------------------------------------------------
+\subsection*{S2.\ Latent Space PCA Projection}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{latent_space_pca}
+  \caption{PCA projection of 16-dimensional \vgae{} embeddings coloured by \qed{} stratum. Compare with the \umap{} projection in the main text (\cref{fig:umap}).}
+  \label{fig:s-pca}
+\end{figure}
+
+% --- S3: Enrichment heatmaps for Strata 1--3 --------------------------------
+\subsection*{S3.\ Functional Group Enrichment Heatmaps (Strata 1--3)}
+
+Enrichment heatmaps for Strata~0 and~4 are presented in the main text (\cref{fig:enrich-s0,fig:enrich-s4}). The intermediate strata are shown below.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{fg_enrichment_stratum_1}
+  \caption{Functional group enrichment heatmap for Stratum~1 ($\qed{} \in [0.399, 0.520)$). Elevated nitro and imine enrichment clusters are visible.}
+  \label{fig:s-enrich-s1}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{fg_enrichment_stratum_2}
+  \caption{Functional group enrichment heatmap for Stratum~2 ($\qed{} \in [0.520, 0.694)$). The transition from aromatic-dominated to mixed scaffolds is apparent.}
+  \label{fig:s-enrich-s2}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{fg_enrichment_stratum_3}
+  \caption{Functional group enrichment heatmap for Stratum~3 ($\qed{} \in [0.694, 0.814)$). Emerging amine and sulfonamide enrichment patterns prefigure those in Stratum~4.}
+  \label{fig:s-enrich-s3}
+\end{figure}
+
+% --- S4: Cluster distance matrices -------------------------------------------
+\subsection*{S4.\ Inter-Cluster Distance Matrices}
+
+Distance matrices computed from \som{} neuron weight vectors (Euclidean distance) reveal the internal topological structure of each stratum's latent space.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{cluster_distance_matrix_stratum_0}
+  \caption{Inter-cluster distance matrix for Stratum~0 ($\qed{} < 0.399$, $25 \times 25$ grid).}
+  \label{fig:s-dist-s0}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{cluster_distance_matrix_stratum_1}
+  \caption{Inter-cluster distance matrix for Stratum~1 ($\qed{} \in [0.399, 0.520)$, $30 \times 30$ grid).}
+  \label{fig:s-dist-s1}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{cluster_distance_matrix_stratum_2}
+  \caption{Inter-cluster distance matrix for Stratum~2 ($\qed{} \in [0.520, 0.694)$, $30 \times 30$ grid).}
+  \label{fig:s-dist-s2}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{cluster_distance_matrix_stratum_3}
+  \caption{Inter-cluster distance matrix for Stratum~3 ($\qed{} \in [0.694, 0.814)$, $30 \times 30$ grid).}
+  \label{fig:s-dist-s3}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{cluster_distance_matrix_stratum_4}
+  \caption{Inter-cluster distance matrix for Stratum~4 ($\qed{} \geq 0.814$, $30 \times 30$ grid). The lower overall distances reflect the latent-space compaction discussed in \cref{sec:discussion}.}
+  \label{fig:s-dist-s4}
+\end{figure}
+
+% ----------------------------------------------------------------------------
 \end{document}

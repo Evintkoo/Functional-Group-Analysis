@@ -16,6 +16,7 @@ use crate::functional_groups::{self, FunctionalGroup, FGProfile, FGCensus, fg_en
 use crate::io::{self, MoleculeRecord};
 use crate::smiles;
 use crate::som::{self, Som, SomConfig, AutotuneResult};
+use crate::stats;
 use crate::visualization::{self, VisualizationData};
 
 /// GPU-accelerated backend via Metal (macOS) / Vulkan (Linux) / DX12 (Windows).
@@ -324,9 +325,27 @@ fn cluster_stats(
         let cluster_census = FGCensus::from_profiles(&cluster_fg_profiles);
         let enrichment = fg_enrichment(&cluster_census, population_census);
 
-        // Top signature FGs (enrichment > 1.5)
+        // --- Statistical enrichment with Fisher's exact test + BH-FDR ---
+        let cluster_fg_counts: HashMap<String, usize> = FunctionalGroup::ALL.iter()
+            .map(|&fg| (fg.name().to_string(), *cluster_census.prevalence.get(&fg).unwrap_or(&0)))
+            .collect();
+        let pop_fg_counts: HashMap<String, usize> = FunctionalGroup::ALL.iter()
+            .map(|&fg| (fg.name().to_string(), *population_census.prevalence.get(&fg).unwrap_or(&0)))
+            .collect();
+        let enrichment_results = stats::enrichment_with_significance(
+            &cluster_fg_counts,
+            size,
+            &pop_fg_counts,
+            population_census.num_molecules,
+            0.05, // FDR alpha
+        );
+
+        // Top signature FGs (enrichment > 1.2 AND FDR-significant)
         let signature_fgs: Vec<(FunctionalGroup, f64)> = enrichment.iter()
-            .filter(|(_, e)| *e > 1.2)
+            .filter(|(fg, e)| {
+                *e > 1.2 && enrichment_results.iter()
+                    .any(|er| er.fg_name == fg.name() && er.significant)
+            })
             .take(5)
             .cloned()
             .collect();
@@ -365,6 +384,7 @@ fn cluster_stats(
             signature_fgs,
             dominant_fg,
             representative_smiles,
+            enrichment_results,
         }
     }).collect();
 
@@ -1300,6 +1320,53 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
     log::info!("  Total: {:.2}s", total_time.as_secs_f64());
     flush_log();
 
+    // ═══════════════════════════════════════════════════
+    // Cross-stratum statistical analyses
+    // ═══════════════════════════════════════════════════
+    log::info!("Computing cross-stratum statistical tests...");
+    flush_log();
+
+    // Linear regression: SAS ~ QED and logP ~ QED across stratum means
+    let stratum_mean_qed: Vec<f64> = strata_results.iter().map(|sr| sr.stratum_property_stats.0).collect();
+    let stratum_mean_sas: Vec<f64> = strata_results.iter().map(|sr| sr.stratum_property_stats.4).collect();
+    let stratum_mean_logp: Vec<f64> = strata_results.iter().map(|sr| sr.stratum_property_stats.2).collect();
+
+    let sas_qed_regression = stats::linear_regression(&stratum_mean_qed, &stratum_mean_sas);
+    let logp_qed_regression = stats::linear_regression(&stratum_mean_qed, &stratum_mean_logp);
+
+    log::info!("  SAS ~ QED regression: R²={:.4}, slope={:.3}±{:.3}, p={:.4}",
+        sas_qed_regression.r_squared, sas_qed_regression.slope, sas_qed_regression.slope_se, sas_qed_regression.p_value);
+    log::info!("  logP ~ QED regression: R²={:.4}, slope={:.3}±{:.3}, p={:.4}",
+        logp_qed_regression.r_squared, logp_qed_regression.slope, logp_qed_regression.slope_se, logp_qed_regression.p_value);
+
+    // Chi-squared test: sulfonyl--heterocycle co-occurrence
+    let sulfonyl_presence: Vec<bool> = all_fg_profiles.iter().map(|p| p.has(FunctionalGroup::Sulfonyl)).collect();
+    let heterocycle_presence: Vec<bool> = all_fg_profiles.iter().map(|p| p.has(FunctionalGroup::Heterocycle)).collect();
+    let sulfonyl_heterocycle_chi2 = if sulfonyl_presence.len() > 10 {
+        Some(stats::cooccurrence_chi_squared(&sulfonyl_presence, &heterocycle_presence))
+    } else { None };
+
+    // Co-occurrence rate: P(heterocycle | sulfonyl)
+    let sulfonyl_count = sulfonyl_presence.iter().filter(|&&b| b).count();
+    let both_count = sulfonyl_presence.iter().zip(heterocycle_presence.iter())
+        .filter(|(&s, &h)| s && h).count();
+    let sulfonyl_heterocycle_cooccurrence = if sulfonyl_count > 0 {
+        both_count as f64 / sulfonyl_count as f64
+    } else { 0.0 };
+
+    if let Some(ref chi2) = sulfonyl_heterocycle_chi2 {
+        log::info!("  Sulfonyl-Heterocycle co-occurrence: χ²={:.1}, p={}, cooccurrence rate={:.1}%",
+            chi2.chi2, stats::format_p_value(chi2.p_value), sulfonyl_heterocycle_cooccurrence * 100.0);
+    }
+
+    let cross_stratum_stats = CrossStratumStats {
+        sas_qed_regression,
+        logp_qed_regression,
+        sulfonyl_heterocycle_chi2,
+        sulfonyl_heterocycle_cooccurrence,
+        fsp3_ttest: None, // computed per-cluster in analysis
+    };
+
     Ok(PipelineResults {
         total_molecules: total,
         processed_molecules: embeddings.len(),
@@ -1315,6 +1382,7 @@ pub fn run_pipeline(csv_path: &str, output_dir: &str) -> Result<PipelineResults,
         avg_recon_loss,
         global_fg_census,
         importance,
+        cross_stratum_stats,
         timings: Timings {
             load_secs: load_time.as_secs_f64(),
             parse_secs: parse_time.as_secs_f64(),
@@ -1413,6 +1481,8 @@ pub struct ClusterInfo {
     pub signature_fgs: Vec<(FunctionalGroup, f64)>,
     pub dominant_fg: Option<FunctionalGroup>,
     pub representative_smiles: Option<String>,
+    /// Enrichment results with Fisher's exact test p-values and BH-FDR correction.
+    pub enrichment_results: Vec<stats::EnrichmentResult>,
 }
 
 #[derive(Debug, Clone)]
@@ -1487,7 +1557,21 @@ pub struct Timings {
     pub total_secs: f64,
 }
 
+/// Cross-stratum statistical analysis results.
 #[derive(Debug)]
+pub struct CrossStratumStats {
+    /// Linear regression: SAS ~ QED across stratum means
+    pub sas_qed_regression: stats::LinearRegressionResult,
+    /// Linear regression: logP ~ QED across stratum means
+    pub logp_qed_regression: stats::LinearRegressionResult,
+    /// Chi-squared test: sulfonyl--heterocycle co-occurrence
+    pub sulfonyl_heterocycle_chi2: Option<stats::ChiSquaredResult>,
+    /// Co-occurrence rate: P(heterocycle | sulfonyl)
+    pub sulfonyl_heterocycle_cooccurrence: f64,
+    /// Welch's t-test: Fsp3 of phenyl-free cluster vs dataset
+    pub fsp3_ttest: Option<stats::WelchTTestResult>,
+}
+
 pub struct PipelineResults {
     pub total_molecules: usize,
     pub processed_molecules: usize,
@@ -1503,6 +1587,7 @@ pub struct PipelineResults {
     pub avg_recon_loss: f32,
     pub global_fg_census: FGCensus,
     pub importance: ImportanceAnalysis,
+    pub cross_stratum_stats: CrossStratumStats,
     pub timings: Timings,
     pub figures: Vec<(String, String)>,
 }
@@ -1852,17 +1937,22 @@ impl PipelineResults {
                 }
                 md.push_str("\n\n");
 
-                // FG breakdown
-                md.push_str("| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |\n");
-                md.push_str("|---|---|---|---|\n");
+                // FG breakdown with statistical significance
+                md.push_str("| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |\n");
+                md.push_str("|---|---|---|---|---|---|\n");
 
                 let cluster_sorted = ci.cluster_census.sorted_by_prevalence();
                 for (fg, _, cluster_pct) in cluster_sorted.iter().take(8) {
                     let stratum_pct = sr.stratum_census.prevalence_pct(*fg);
                     let enrichment = if stratum_pct > 0.0 { cluster_pct / stratum_pct } else { 0.0 };
                     let marker = if enrichment > 1.5 { " ⬆" } else if enrichment < 0.5 { " ⬇" } else { "" };
-                    md.push_str(&format!("| {} | {:.1} | {:.1} | {:.2}×{} |\n",
-                        fg.name(), cluster_pct, stratum_pct, enrichment, marker));
+                    // Look up p-value from enrichment_results
+                    let (p_str, sig_str) = ci.enrichment_results.iter()
+                        .find(|er| er.fg_name == fg.name())
+                        .map(|er| (stats::format_p_value(er.p_adjusted), if er.significant { "✓" } else { "" }))
+                        .unwrap_or(("—".to_string(), ""));
+                    md.push_str(&format!("| {} | {:.1} | {:.1} | {:.2}×{} | {} | {} |\n",
+                        fg.name(), cluster_pct, stratum_pct, enrichment, marker, p_str, sig_str));
                 }
                 md.push_str("\n");
             }
@@ -1915,6 +2005,53 @@ impl PipelineResults {
         md.push_str("*Figure 12: Comparison of cluster quality metrics across QED strata — silhouette score, Davies-Bouldin index, quantization error, and Gini coefficient.*\n\n");
         md.push_str("![Cluster Sizes](figures/cluster_size_distribution.svg)\n\n");
         md.push_str("*Figure 13: Distribution of cluster sizes within each QED stratum.*\n\n");
+
+        // ── 9.5. Cross-Stratum Statistical Analysis ──
+        md.push_str("## 9.5 Cross-Stratum Statistical Analysis\n\n");
+        md.push_str("### Linear Regressions Across Stratum Means\n\n");
+        md.push_str("| Regression | R² | Slope ± SE | p-value | n |\n");
+        md.push_str("|---|---|---|---|---|\n");
+        md.push_str(&format!("| SAS ~ QED | {:.4} | {:.3} ± {:.3} | {} | {} |\n",
+            self.cross_stratum_stats.sas_qed_regression.r_squared,
+            self.cross_stratum_stats.sas_qed_regression.slope,
+            self.cross_stratum_stats.sas_qed_regression.slope_se,
+            stats::format_p_value(self.cross_stratum_stats.sas_qed_regression.p_value),
+            self.cross_stratum_stats.sas_qed_regression.n));
+        md.push_str(&format!("| logP ~ QED | {:.4} | {:.3} ± {:.3} | {} | {} |\n\n",
+            self.cross_stratum_stats.logp_qed_regression.r_squared,
+            self.cross_stratum_stats.logp_qed_regression.slope,
+            self.cross_stratum_stats.logp_qed_regression.slope_se,
+            stats::format_p_value(self.cross_stratum_stats.logp_qed_regression.p_value),
+            self.cross_stratum_stats.logp_qed_regression.n));
+
+        md.push_str("**Interpretation**: Each 0.1 QED improvement costs approximately ");
+        let sas_per_01_qed = self.cross_stratum_stats.sas_qed_regression.slope * 0.1;
+        md.push_str(&format!("{:.2} SAS units of synthetic difficulty.\n\n", sas_per_01_qed));
+
+        md.push_str("### Functional Group Co-occurrence (Chi-Squared Test)\n\n");
+        if let Some(ref chi2) = self.cross_stratum_stats.sulfonyl_heterocycle_chi2 {
+            md.push_str(&format!("**Sulfonyl–Heterocycle co-occurrence**: χ² = {:.1} (df = {}, p {})\n\n",
+                chi2.chi2, chi2.df, stats::format_p_value(chi2.p_value)));
+            md.push_str(&format!("P(heterocycle | sulfonyl) = {:.1}% vs P(heterocycle) overall = {:.1}%\n\n",
+                self.cross_stratum_stats.sulfonyl_heterocycle_cooccurrence * 100.0,
+                self.global_fg_census.prevalence_pct(FunctionalGroup::Heterocycle)));
+        }
+
+        md.push_str("### Enrichment Statistical Framework\n\n");
+        md.push_str("All enrichment ratios in Section 8 are tested using **Fisher's exact test** (one-sided, right-tailed) ");
+        md.push_str("with **Benjamini-Hochberg FDR correction** at α = 0.05. Only enrichments marked ✓ are statistically significant.\n\n");
+
+        // Count significant enrichments across all strata
+        let total_tests: usize = self.strata_results.iter()
+            .flat_map(|sr| sr.cluster_infos.iter())
+            .map(|ci| ci.enrichment_results.len())
+            .sum();
+        let sig_tests: usize = self.strata_results.iter()
+            .flat_map(|sr| sr.cluster_infos.iter())
+            .map(|ci| ci.enrichment_results.iter().filter(|er| er.significant).count())
+            .sum();
+        md.push_str(&format!("Total enrichment tests performed: {}\n", total_tests));
+        md.push_str(&format!("Significant after FDR correction: {} ({:.1}%)\n\n", sig_tests, sig_tests as f64 / total_tests.max(1) as f64 * 100.0));
 
         // ── 10. Evaluation Summary ──
         md.push_str("## 10. Evaluation Summary\n\n");
@@ -2176,6 +2313,7 @@ mod tests {
             signature_fgs: vec![],
             dominant_fg: None,
             representative_smiles: None,
+            enrichment_results: vec![],
         }
     }
 

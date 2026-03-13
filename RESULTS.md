@@ -316,13 +316,13 @@ Point-biserial correlation between FG presence and drug-likeness properties.
 | 24 | 454 | 0.345±0.048 | 4.46 | 2.45 | 0.3120 | Ph | HetCyc(1.4×) | `COc1ccc2nc(N(Cc3cccnc3)C(=O)c3` |
 | 600 | 302 | 0.328±0.052 | -0.19 | 4.28 | 0.7424 | NH2 | NH2(3.8×), OH(3.7×), COOH(2.5×) | `CCC(CC)(NC(=O)N1CCCCCC1)/C(N)=` |
 | 624 | 91 | 0.347±0.052 | 4.41 | 3.02 | 0.2004 | Ph | N<(3.3×), C-O-C(1.6×), C-S-C(1.4×) | `O=C1/C(=C\c2cn(-c3ccccc3)nc2-c` |
-| 324 | 90 | 0.342±0.047 | 4.53 | 2.75 | 0.2175 | Ph | N<(1.7×), HetCyc(1.4×), C-O-C(1.3×) | `NC(=O)c1c(NC(=O)c2ccc(-c3ccccc` |
-| 12 | 79 | 0.324±0.055 | 4.11 | 2.43 | 0.1318 | Ph | COOH(1.7×), NO2(1.5×), C=O(1.3×) | `O=C(Cn1c(CCNC(=O)c2cccc(Br)c2)` |
-| 0 | 78 | 0.348±0.046 | 2.71 | 2.64 | 0.1900 | Ph | SO2(2.8×), COOH(2.6×), CN(2.0×) | `Cc1ncc(/C=C/C(=O)OCCCn2nc3cccc` |
-| 11 | 72 | 0.334±0.059 | 3.97 | 2.36 | 0.1169 | Ph | NO2(1.5×), C=N(1.3×), HetCyc(1.2×) | `CCOC(=O)c1ccc(-c2ccc(/C=N/n3c(` |
-| 275 | 68 | 0.320±0.060 | 1.82 | 2.69 | 0.2244 | Ph | C=N(2.1×), NO2(1.8×), NH2(1.7×) | `CCO/C([O-])=C(\C#N)C(=O)c1cccc` |
-| 18 | 63 | 0.324±0.063 | 4.02 | 2.42 | 0.1003 | Ph | CN(1.7×), C=O(1.5×), HetCyc(1.3×) | `CC(=O)Oc1ccc(-c2ccc(C(=O)Nc3cc` |
-| 20 | 62 | 0.326±0.056 | 3.83 | 2.54 | 0.1723 | Ph | C=O(1.4×), HetCyc(1.4×) | `O=C(Nc1ccc(C(=O)Nc2ccccc2[N-]S` |
+| 324 | 90 | 0.342±0.047 | 4.53 | 2.75 | 0.2175 | Ph | HetCyc(1.4×) | `NC(=O)c1c(NC(=O)c2ccc(-c3ccccc` |
+| 12 | 79 | 0.324±0.055 | 4.11 | 2.43 | 0.1318 | Ph | NO2(1.5×), HetCyc(1.2×) | `O=C(Cn1c(CCNC(=O)c2cccc(Br)c2)` |
+| 0 | 78 | 0.348±0.046 | 2.71 | 2.64 | 0.1900 | Ph | SO2(2.8×), NO2(1.6×) | `Cc1ncc(/C=C/C(=O)OCCCn2nc3cccc` |
+| 11 | 72 | 0.334±0.059 | 3.97 | 2.36 | 0.1169 | Ph | NO2(1.5×), HetCyc(1.2×), CONH(1.2×) | `CCOC(=O)c1ccc(-c2ccc(/C=N/n3c(` |
+| 275 | 68 | 0.320±0.060 | 1.82 | 2.69 | 0.2244 | Ph | C=N(2.1×), NO2(1.8×) | `CCO/C([O-])=C(\C#N)C(=O)c1cccc` |
+| 18 | 63 | 0.324±0.063 | 4.02 | 2.42 | 0.1003 | Ph | C=O(1.5×), HetCyc(1.3×) | `CC(=O)Oc1ccc(-c2ccc(C(=O)Nc3cc` |
+| 20 | 62 | 0.326±0.056 | 3.83 | 2.54 | 0.1723 | Ph | HetCyc(1.4×) | `O=C(Nc1ccc(C(=O)Nc2ccccc2[N-]S` |
 
 #### Inter-Cluster Distance Analysis
 
@@ -375,10 +375,10 @@ Inter-cluster distance: mean=0.885972, min=0.007301, max=4.185544, 186966 pairs
 | 479 | 191 | 0.468±0.036 | 3.94 | 2.76 | 0.2222 | Ph | N<(2.7×), HetCyc(1.4×) | `Cn1cc(C(=O)N2CCN(c3ccc(F)cc3)C` |
 | 0 | 163 | 0.470±0.034 | 2.76 | 2.52 | 0.1591 | Ph | SO2(2.1×), NO2(2.0×), C=N(1.8×) | `C=CCOC(=O)/C(=C\c1ccco1)NC(=O)` |
 | 13 | 157 | 0.469±0.036 | 3.39 | 2.42 | 0.1380 | Ph | SO2(1.9×), C=N(1.7×), HetCyc(1.3×) | `Cc1nc2cc(C(=O)OCC(=O)Nc3ccc(F)` |
-| 899 | 147 | 0.471±0.033 | 3.95 | 3.28 | 0.1921 | Ph | N<(2.6×), NH(1.4×), OH(1.3×) | `O=C(CSc1nc(=O)n(Cc2ccncc2)c2c1` |
-| 15 | 143 | 0.470±0.035 | 3.88 | 2.41 | 0.1205 | Ph | SO2(2.0×), CN(1.3×), C-X(1.2×) | `O=C(Cc1csc(-c2cccs2)n1)NCCn1cc` |
-| 885 | 139 | 0.469±0.033 | 2.42 | 3.46 | 0.2482 | Ph | N<(2.8×), NH2(1.4×), NH(1.3×) | `Cc1ccc(N2C(=O)[C@@H]([C@H]3NCC` |
-| 21 | 119 | 0.468±0.039 | 3.61 | 2.36 | 0.1520 | Ph | SO2(1.6×), C=N(1.5×), HetCyc(1.4×) | `Cc1sc2ncn3nc(Cn4cc([N+](=O)[O-` |
+| 899 | 147 | 0.471±0.033 | 3.95 | 3.28 | 0.1921 | Ph | N<(2.6×), NH(1.4×) | `O=C(CSc1nc(=O)n(Cc2ccncc2)c2c1` |
+| 15 | 143 | 0.470±0.035 | 3.88 | 2.41 | 0.1205 | Ph | SO2(2.0×), HetCyc(1.2×) | `O=C(Cc1csc(-c2cccs2)n1)NCCn1cc` |
+| 885 | 139 | 0.469±0.033 | 2.42 | 3.46 | 0.2482 | Ph | N<(2.8×), C-O-C(1.3×) | `Cc1ccc(N2C(=O)[C@@H]([C@H]3NCC` |
+| 21 | 119 | 0.468±0.039 | 3.61 | 2.36 | 0.1520 | Ph | HetCyc(1.4×) | `Cc1sc2ncn3nc(Cn4cc([N+](=O)[O-` |
 
 #### Inter-Cluster Distance Analysis
 
@@ -542,11 +542,11 @@ Inter-cluster distance: mean=1.030866, min=0.010562, max=3.993193, 404550 pairs
 | 0 | 1615 | 0.847±0.026 | 1.81 | 4.24 | 0.5733 | C-O-C | C-S-C(1.9×), N<(1.8×), C-O-C(1.4×) | `N#C[C@@H](NC(=O)N1CCCCC1)C1CCC` |
 | 870 | 1313 | 0.877±0.036 | 2.37 | 3.33 | 0.2338 | Ph | NH2(1.4×), HetCyc(1.4×), N<(1.4×) | `O=C(NC1CCSCC1)C1=NN(c2ccccc2)[` |
 | 180 | 1054 | 0.874±0.032 | 1.97 | 3.94 | 0.2486 | Ph | C-S-C(1.7×), NH2(1.6×), N<(1.6×) | `CC(C)c1ccnc(N2CCC3(CC2)C[C@@H]` |
-| 15 | 987 | 0.855±0.028 | 2.16 | 3.50 | 0.2653 | CONH | C-O-C(1.3×), NH(1.2×), COO(1.2×) | `CCC[NH+](C)C[C@@H]1CCN(C(=O)NC` |
+| 15 | 987 | 0.855±0.028 | 2.16 | 3.50 | 0.2653 | CONH | C-O-C(1.3×), NH(1.2×) | `CCC[NH+](C)C[C@@H]1CCN(C(=O)NC` |
 | 14 | 872 | 0.860±0.030 | 2.19 | 3.46 | 0.1694 | CONH | N<(1.6×), OH(1.5×), C-O-C(1.4×) | `CC(C)[C@H](C)NC(=O)C[NH+](C)C1` |
 | 30 | 862 | 0.870±0.031 | 1.75 | 4.28 | 0.2403 | HetCyc | N<(2.1×), C-O-C(1.4×), NH(1.4×) | `Cc1ccc(O)c(CN2CCC[C@@H](C[NH+]` |
 | 479 | 771 | 0.857±0.031 | 2.58 | 2.64 | 0.1412 | Ph | SO(2.0×), SO2(1.9×), COO(1.8×) | `CC[C@H](CNC(=O)c1cc(C#N)cn1C)O` |
-| 884 | 710 | 0.883±0.037 | 2.52 | 2.68 | 0.2091 | Ph | C=O(1.4×) | `CNc1nc(C(=O)N2CC=C(c3cccc(C)c3` |
+| 884 | 710 | 0.883±0.037 | 2.52 | 2.68 | 0.2091 | Ph | — | `CNc1nc(C(=O)N2CC=C(c3cccc(C)c3` |
 
 #### Inter-Cluster Distance Analysis
 
@@ -581,336 +581,336 @@ Enrichment ratio shows over-representation relative to the stratum population.
 
 **Cluster 24 (454 molecules)** — representative: `COc1ccc2nc(N(Cc3cccnc3)C(=O)c3cc(=O)c4cc`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Phenyl (aromatic ring) | 99.8 | 92.6 | 1.08× |
-| Heterocycle | 98.7 | 69.1 | 1.43× |
-| Amide (-CONH-) | 50.4 | 61.6 | 0.82× |
-| Halide (C-X) | 33.9 | 36.2 | 0.94× |
-| Ketone (>C=O) | 32.6 | 31.6 | 1.03× |
-| Thioether (C-S-C) | 32.6 | 31.4 | 1.04× |
-| Ether (C-O-C) | 18.5 | 34.1 | 0.54× |
-| Secondary Amine (>NH) | 14.5 | 19.5 | 0.74× |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Phenyl (aromatic ring) | 99.8 | 92.6 | 1.08× | < 10⁻¹⁰ | ✓ |
+| Heterocycle | 98.7 | 69.1 | 1.43× | < 10⁻⁵⁰ | ✓ |
+| Amide (-CONH-) | 50.4 | 61.6 | 0.82× | 1.0000 |  |
+| Halide (C-X) | 33.9 | 36.2 | 0.94× | 1.0000 |  |
+| Ketone (>C=O) | 32.6 | 31.6 | 1.03× | 1.0000 |  |
+| Thioether (C-S-C) | 32.6 | 31.4 | 1.04× | 1.0000 |  |
+| Ether (C-O-C) | 18.5 | 34.1 | 0.54× | 1.0000 |  |
+| Secondary Amine (>NH) | 14.5 | 19.5 | 0.74× | 1.0000 |  |
 
 **Cluster 600 (302 molecules)** — representative: `CCC(CC)(NC(=O)N1CCCCCC1)/C(N)=N/O`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Primary Amine (-NH₂) | 49.0 | 13.0 | 3.77× ⬆ |
-| Hydroxyl (-OH) | 43.4 | 11.6 | 3.75× ⬆ |
-| Amide (-CONH-) | 41.1 | 61.6 | 0.67× |
-| Imine (C=N) | 39.7 | 19.2 | 2.07× ⬆ |
-| Secondary Amine (>NH) | 34.4 | 19.5 | 1.76× ⬆ |
-| Ether (C-O-C) | 30.1 | 34.1 | 0.88× |
-| Tertiary Amine (>N<) | 21.9 | 11.6 | 1.88× ⬆ |
-| Ester (-COO-) | 16.6 | 18.5 | 0.89× |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Primary Amine (-NH₂) | 49.0 | 13.0 | 3.77× ⬆ | < 10⁻⁵⁰ | ✓ |
+| Hydroxyl (-OH) | 43.4 | 11.6 | 3.75× ⬆ | < 10⁻²⁰ | ✓ |
+| Amide (-CONH-) | 41.1 | 61.6 | 0.67× | 1.0000 |  |
+| Imine (C=N) | 39.7 | 19.2 | 2.07× ⬆ | < 10⁻¹⁰ | ✓ |
+| Secondary Amine (>NH) | 34.4 | 19.5 | 1.76× ⬆ | < 10⁻⁶ | ✓ |
+| Ether (C-O-C) | 30.1 | 34.1 | 0.88× | 1.0000 |  |
+| Tertiary Amine (>N<) | 21.9 | 11.6 | 1.88× ⬆ | < 10⁻⁶ | ✓ |
+| Ester (-COO-) | 16.6 | 18.5 | 0.89× | 1.0000 |  |
 
 **Cluster 624 (91 molecules)** — representative: `O=C1/C(=C\c2cn(-c3ccccc3)nc2-c2cccs2)SC(`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Phenyl (aromatic ring) | 98.9 | 92.6 | 1.07× |
-| Heterocycle | 86.8 | 69.1 | 1.26× |
-| Ether (C-O-C) | 56.0 | 34.1 | 1.64× ⬆ |
-| Amide (-CONH-) | 54.9 | 61.6 | 0.89× |
-| Thioether (C-S-C) | 44.0 | 31.4 | 1.40× |
-| Tertiary Amine (>N<) | 38.5 | 11.6 | 3.30× ⬆ |
-| Halide (C-X) | 30.8 | 36.2 | 0.85× |
-| Ketone (>C=O) | 29.7 | 31.6 | 0.94× |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Phenyl (aromatic ring) | 98.9 | 92.6 | 1.07× | 0.0265 | ✓ |
+| Heterocycle | 86.8 | 69.1 | 1.26× | 3.82e-4 | ✓ |
+| Ether (C-O-C) | 56.0 | 34.1 | 1.64× ⬆ | 1.14e-4 | ✓ |
+| Amide (-CONH-) | 54.9 | 61.6 | 0.89× | 1.0000 |  |
+| Thioether (C-S-C) | 44.0 | 31.4 | 1.40× | 0.0265 | ✓ |
+| Tertiary Amine (>N<) | 38.5 | 11.6 | 3.30× ⬆ | < 10⁻⁶ | ✓ |
+| Halide (C-X) | 30.8 | 36.2 | 0.85× | 1.0000 |  |
+| Ketone (>C=O) | 29.7 | 31.6 | 0.94× | 1.0000 |  |
 
 **Cluster 324 (90 molecules)** — representative: `NC(=O)c1c(NC(=O)c2ccc(-c3ccccc3)cc2)sc2c`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Phenyl (aromatic ring) | 100.0 | 92.6 | 1.08× |
-| Heterocycle | 93.3 | 69.1 | 1.35× |
-| Amide (-CONH-) | 70.0 | 61.6 | 1.14× |
-| Ether (C-O-C) | 45.6 | 34.1 | 1.33× |
-| Thioether (C-S-C) | 38.9 | 31.4 | 1.24× |
-| Ketone (>C=O) | 31.1 | 31.6 | 0.99× |
-| Halide (C-X) | 26.7 | 36.2 | 0.74× |
-| Tertiary Amine (>N<) | 20.0 | 11.6 | 1.72× ⬆ |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Phenyl (aromatic ring) | 100.0 | 92.6 | 1.08× | 0.0081 | ✓ |
+| Heterocycle | 93.3 | 69.1 | 1.35× | < 10⁻⁶ | ✓ |
+| Amide (-CONH-) | 70.0 | 61.6 | 1.14× | 0.2016 |  |
+| Ether (C-O-C) | 45.6 | 34.1 | 1.33× | 0.0667 |  |
+| Thioether (C-S-C) | 38.9 | 31.4 | 1.24× | 0.2270 |  |
+| Ketone (>C=O) | 31.1 | 31.6 | 0.99× | 1.0000 |  |
+| Halide (C-X) | 26.7 | 36.2 | 0.74× | 1.0000 |  |
+| Tertiary Amine (>N<) | 20.0 | 11.6 | 1.72× ⬆ | 0.0667 |  |
 
 **Cluster 12 (79 molecules)** — representative: `O=C(Cn1c(CCNC(=O)c2cccc(Br)c2)nc2ccccc21`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Phenyl (aromatic ring) | 100.0 | 92.6 | 1.08× |
-| Heterocycle | 83.5 | 69.1 | 1.21× |
-| Amide (-CONH-) | 49.4 | 61.6 | 0.80× |
-| Nitro (-NO₂) | 43.0 | 29.6 | 1.45× |
-| Halide (C-X) | 43.0 | 36.2 | 1.19× |
-| Ketone (>C=O) | 41.8 | 31.6 | 1.32× |
-| Thioether (C-S-C) | 24.1 | 31.4 | 0.76× |
-| Imine (C=N) | 20.3 | 19.2 | 1.06× |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Phenyl (aromatic ring) | 100.0 | 92.6 | 1.08× | 0.0217 | ✓ |
+| Heterocycle | 83.5 | 69.1 | 1.21× | 0.0217 | ✓ |
+| Amide (-CONH-) | 49.4 | 61.6 | 0.80× | 0.9999 |  |
+| Nitro (-NO₂) | 43.0 | 29.6 | 1.45× | 0.0417 | ✓ |
+| Halide (C-X) | 43.0 | 36.2 | 1.19× | 0.4292 |  |
+| Ketone (>C=O) | 41.8 | 31.6 | 1.32× | 0.1484 |  |
+| Thioether (C-S-C) | 24.1 | 31.4 | 0.76× | 0.9999 |  |
+| Imine (C=N) | 20.3 | 19.2 | 1.06× | 0.9999 |  |
 
 ### Stratum 1 ([0.399, 0.520)) — Cluster FG Signatures
 
 **Cluster 29 (982 molecules)** — representative: `O=C(NCCc1ccc(-c2ccccc2)cc1)c1cnc2cc(-c3c`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Phenyl (aromatic ring) | 99.9 | 91.5 | 1.09× |
-| Heterocycle | 98.6 | 68.5 | 1.44× |
-| Amide (-CONH-) | 47.1 | 65.7 | 0.72× |
-| Halide (C-X) | 34.6 | 36.5 | 0.95× |
-| Ketone (>C=O) | 22.6 | 24.0 | 0.94× |
-| Thioether (C-S-C) | 15.8 | 20.5 | 0.77× |
-| Ether (C-O-C) | 14.9 | 36.0 | 0.41× ⬇ |
-| Secondary Amine (>NH) | 11.1 | 21.2 | 0.52× |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Phenyl (aromatic ring) | 99.9 | 91.5 | 1.09× | < 10⁻²⁰ | ✓ |
+| Heterocycle | 98.6 | 68.5 | 1.44× | < 10⁻¹⁰⁰ | ✓ |
+| Amide (-CONH-) | 47.1 | 65.7 | 0.72× | 1.0000 |  |
+| Halide (C-X) | 34.6 | 36.5 | 0.95× | 1.0000 |  |
+| Ketone (>C=O) | 22.6 | 24.0 | 0.94× | 1.0000 |  |
+| Thioether (C-S-C) | 15.8 | 20.5 | 0.77× | 1.0000 |  |
+| Ether (C-O-C) | 14.9 | 36.0 | 0.41× ⬇ | 1.0000 |  |
+| Secondary Amine (>NH) | 11.1 | 21.2 | 0.52× | 1.0000 |  |
 
 **Cluster 870 (756 molecules)** — representative: `COC[C@@]1(C)C[NH+]=C(N)N1C`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Amide (-CONH-) | 41.3 | 65.7 | 0.63× |
-| Secondary Amine (>NH) | 38.2 | 21.2 | 1.80× ⬆ |
-| Ether (C-O-C) | 28.4 | 36.0 | 0.79× |
-| Hydroxyl (-OH) | 23.7 | 8.3 | 2.85× ⬆ |
-| Ester (-COO-) | 18.7 | 13.9 | 1.34× |
-| Tertiary Amine (>N<) | 18.1 | 15.8 | 1.14× |
-| Primary Amine (-NH₂) | 17.6 | 8.0 | 2.21× ⬆ |
-| Carboxyl (-COOH) | 12.0 | 2.8 | 4.36× ⬆ |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Amide (-CONH-) | 41.3 | 65.7 | 0.63× | 1.0000 |  |
+| Secondary Amine (>NH) | 38.2 | 21.2 | 1.80× ⬆ | < 10⁻²⁰ | ✓ |
+| Ether (C-O-C) | 28.4 | 36.0 | 0.79× | 1.0000 |  |
+| Hydroxyl (-OH) | 23.7 | 8.3 | 2.85× ⬆ | < 10⁻²⁰ | ✓ |
+| Ester (-COO-) | 18.7 | 13.9 | 1.34× | 3.90e-4 | ✓ |
+| Tertiary Amine (>N<) | 18.1 | 15.8 | 1.14× | 0.1295 |  |
+| Primary Amine (-NH₂) | 17.6 | 8.0 | 2.21× ⬆ | < 10⁻¹⁰ | ✓ |
+| Carboxyl (-COOH) | 12.0 | 2.8 | 4.36× ⬆ | < 10⁻²⁰ | ✓ |
 
 **Cluster 14 (194 molecules)** — representative: `O=C(CCNC(=O)c1c[nH]c2nc(-c3ccccc3)ccc12)`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Phenyl (aromatic ring) | 99.0 | 91.5 | 1.08× |
-| Heterocycle | 89.7 | 68.5 | 1.31× |
-| Amide (-CONH-) | 72.2 | 65.7 | 1.10× |
-| Halide (C-X) | 40.2 | 36.5 | 1.10× |
-| Ether (C-O-C) | 27.3 | 36.0 | 0.76× |
-| Ketone (>C=O) | 25.8 | 24.0 | 1.07× |
-| Secondary Amine (>NH) | 17.0 | 21.2 | 0.80× |
-| Imine (C=N) | 16.5 | 10.3 | 1.61× ⬆ |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Phenyl (aromatic ring) | 99.0 | 91.5 | 1.08× | 4.70e-5 | ✓ |
+| Heterocycle | 89.7 | 68.5 | 1.31× | < 10⁻¹⁰ | ✓ |
+| Amide (-CONH-) | 72.2 | 65.7 | 1.10× | 0.1061 |  |
+| Halide (C-X) | 40.2 | 36.5 | 1.10× | 0.4394 |  |
+| Ether (C-O-C) | 27.3 | 36.0 | 0.76× | 1.0000 |  |
+| Ketone (>C=O) | 25.8 | 24.0 | 1.07× | 0.6580 |  |
+| Secondary Amine (>NH) | 17.0 | 21.2 | 0.80× | 1.0000 |  |
+| Imine (C=N) | 16.5 | 10.3 | 1.61× ⬆ | 0.0200 | ✓ |
 
 **Cluster 479 (191 molecules)** — representative: `Cn1cc(C(=O)N2CCN(c3ccc(F)cc3)CC2)c2nn(-c`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Phenyl (aromatic ring) | 100.0 | 91.5 | 1.09× |
-| Heterocycle | 96.9 | 68.5 | 1.41× |
-| Amide (-CONH-) | 68.6 | 65.7 | 1.04× |
-| Tertiary Amine (>N<) | 42.4 | 15.8 | 2.68× ⬆ |
-| Ether (C-O-C) | 34.0 | 36.0 | 0.95× |
-| Halide (C-X) | 28.8 | 36.5 | 0.79× |
-| Ketone (>C=O) | 20.4 | 24.0 | 0.85× |
-| Secondary Amine (>NH) | 13.6 | 21.2 | 0.64× |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Phenyl (aromatic ring) | 100.0 | 91.5 | 1.09× | < 10⁻⁶ | ✓ |
+| Heterocycle | 96.9 | 68.5 | 1.41× | < 10⁻²⁰ | ✓ |
+| Amide (-CONH-) | 68.6 | 65.7 | 1.04× | 0.9303 |  |
+| Tertiary Amine (>N<) | 42.4 | 15.8 | 2.68× ⬆ | < 10⁻¹⁰ | ✓ |
+| Ether (C-O-C) | 34.0 | 36.0 | 0.95× | 1.0000 |  |
+| Halide (C-X) | 28.8 | 36.5 | 0.79× | 1.0000 |  |
+| Ketone (>C=O) | 20.4 | 24.0 | 0.85× | 1.0000 |  |
+| Secondary Amine (>NH) | 13.6 | 21.2 | 0.64× | 1.0000 |  |
 
 **Cluster 0 (163 molecules)** — representative: `C=CCOC(=O)/C(=C\c1ccco1)NC(=O)c1ccc(Br)c`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Phenyl (aromatic ring) | 95.7 | 91.5 | 1.05× |
-| Heterocycle | 78.5 | 68.5 | 1.15× |
-| Amide (-CONH-) | 68.1 | 65.7 | 1.04× |
-| Nitro (-NO₂) | 34.4 | 17.5 | 1.96× ⬆ |
-| Halide (C-X) | 27.0 | 36.5 | 0.74× |
-| Ketone (>C=O) | 25.2 | 24.0 | 1.05× |
-| Imine (C=N) | 18.4 | 10.3 | 1.79× ⬆ |
-| Ether (C-O-C) | 17.8 | 36.0 | 0.49× ⬇ |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Phenyl (aromatic ring) | 95.7 | 91.5 | 1.05× | 0.0968 |  |
+| Heterocycle | 78.5 | 68.5 | 1.15× | 0.0117 | ✓ |
+| Amide (-CONH-) | 68.1 | 65.7 | 1.04× | 0.6048 |  |
+| Nitro (-NO₂) | 34.4 | 17.5 | 1.96× ⬆ | 2.69e-6 | ✓ |
+| Halide (C-X) | 27.0 | 36.5 | 0.74× | 1.0000 |  |
+| Ketone (>C=O) | 25.2 | 24.0 | 1.05× | 0.7514 |  |
+| Imine (C=N) | 18.4 | 10.3 | 1.79× ⬆ | 0.0063 | ✓ |
+| Ether (C-O-C) | 17.8 | 36.0 | 0.49× ⬇ | 1.0000 |  |
 
 ### Stratum 2 ([0.520, 0.694)) — Cluster FG Signatures
 
 **Cluster 0 (3712 molecules)** — representative: `CC[NH2+][C@@]1(C(=O)[O-])CCC[C@@H]1CC[NH`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Secondary Amine (>NH) | 46.6 | 25.3 | 1.84× ⬆ |
-| Amide (-CONH-) | 39.8 | 68.0 | 0.59× |
-| Ether (C-O-C) | 33.0 | 35.0 | 0.94× |
-| Hydroxyl (-OH) | 24.3 | 10.2 | 2.39× ⬆ |
-| Tertiary Amine (>N<) | 23.9 | 20.0 | 1.20× |
-| Primary Amine (-NH₂) | 19.1 | 6.9 | 2.79× ⬆ |
-| Carboxyl (-COOH) | 9.9 | 4.3 | 2.29× ⬆ |
-| Ester (-COO-) | 6.7 | 10.0 | 0.67× |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Secondary Amine (>NH) | 46.6 | 25.3 | 1.84× ⬆ | < 10⁻¹⁰⁰ | ✓ |
+| Amide (-CONH-) | 39.8 | 68.0 | 0.59× | 1.0000 |  |
+| Ether (C-O-C) | 33.0 | 35.0 | 0.94× | 1.0000 |  |
+| Hydroxyl (-OH) | 24.3 | 10.2 | 2.39× ⬆ | < 10⁻¹⁰⁰ | ✓ |
+| Tertiary Amine (>N<) | 23.9 | 20.0 | 1.20× | < 10⁻⁶ | ✓ |
+| Primary Amine (-NH₂) | 19.1 | 6.9 | 2.79× ⬆ | < 10⁻¹⁰⁰ | ✓ |
+| Carboxyl (-COOH) | 9.9 | 4.3 | 2.29× ⬆ | < 10⁻²⁰ | ✓ |
+| Ester (-COO-) | 6.7 | 10.0 | 0.67× | 1.0000 |  |
 
 **Cluster 899 (3350 molecules)** — representative: `Cc1ccccc1C(=O)Nc1ccc2c(=O)oc(-c3ccccc3C)`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Phenyl (aromatic ring) | 98.6 | 84.5 | 1.17× |
-| Heterocycle | 96.4 | 61.7 | 1.56× ⬆ |
-| Amide (-CONH-) | 47.9 | 68.0 | 0.70× |
-| Halide (C-X) | 32.6 | 34.9 | 0.93× |
-| Ketone (>C=O) | 16.1 | 14.4 | 1.12× |
-| Secondary Amine (>NH) | 15.1 | 25.3 | 0.59× |
-| Ether (C-O-C) | 14.1 | 35.0 | 0.40× ⬇ |
-| Thioether (C-S-C) | 7.8 | 13.2 | 0.59× |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Phenyl (aromatic ring) | 98.6 | 84.5 | 1.17× | < 10⁻¹⁰⁰ | ✓ |
+| Heterocycle | 96.4 | 61.7 | 1.56× ⬆ | < 10⁻¹⁰⁰ | ✓ |
+| Amide (-CONH-) | 47.9 | 68.0 | 0.70× | 1.0000 |  |
+| Halide (C-X) | 32.6 | 34.9 | 0.93× | 1.0000 |  |
+| Ketone (>C=O) | 16.1 | 14.4 | 1.12× | 0.0166 | ✓ |
+| Secondary Amine (>NH) | 15.1 | 25.3 | 0.59× | 1.0000 |  |
+| Ether (C-O-C) | 14.1 | 35.0 | 0.40× ⬇ | 1.0000 |  |
+| Thioether (C-S-C) | 7.8 | 13.2 | 0.59× | 1.0000 |  |
 
 **Cluster 884 (710 molecules)** — representative: `Cc1ccccc1-n1nnnc1S[C@@H](C(=O)N1CCCC1)c1`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Phenyl (aromatic ring) | 99.6 | 84.5 | 1.18× |
-| Heterocycle | 83.2 | 61.7 | 1.35× |
-| Amide (-CONH-) | 61.0 | 68.0 | 0.90× |
-| Ether (C-O-C) | 38.2 | 35.0 | 1.09× |
-| Halide (C-X) | 38.2 | 34.9 | 1.09× |
-| Tertiary Amine (>N<) | 33.2 | 20.0 | 1.66× ⬆ |
-| Secondary Amine (>NH) | 22.7 | 25.3 | 0.89× |
-| Ketone (>C=O) | 15.9 | 14.4 | 1.10× |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Phenyl (aromatic ring) | 99.6 | 84.5 | 1.18× | < 10⁻²⁰ | ✓ |
+| Heterocycle | 83.2 | 61.7 | 1.35× | < 10⁻²⁰ | ✓ |
+| Amide (-CONH-) | 61.0 | 68.0 | 0.90× | 1.0000 |  |
+| Ether (C-O-C) | 38.2 | 35.0 | 1.09× | 0.1423 |  |
+| Halide (C-X) | 38.2 | 34.9 | 1.09× | 0.1423 |  |
+| Tertiary Amine (>N<) | 33.2 | 20.0 | 1.66× ⬆ | < 10⁻¹⁰ | ✓ |
+| Secondary Amine (>NH) | 22.7 | 25.3 | 0.89× | 1.0000 |  |
+| Ketone (>C=O) | 15.9 | 14.4 | 1.10× | 0.3978 |  |
 
 **Cluster 16 (695 molecules)** — representative: `COc1ccnc(COC(=O)/C=C(/C)C(C)(C)C)c1`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Phenyl (aromatic ring) | 80.4 | 84.5 | 0.95× |
-| Amide (-CONH-) | 68.9 | 68.0 | 1.01× |
-| Halide (C-X) | 41.4 | 34.9 | 1.19× |
-| Heterocycle | 30.9 | 61.7 | 0.50× |
-| Secondary Amine (>NH) | 30.1 | 25.3 | 1.19× |
-| Ether (C-O-C) | 26.3 | 35.0 | 0.75× |
-| Ester (-COO-) | 18.6 | 10.0 | 1.85× ⬆ |
-| Nitro (-NO₂) | 18.4 | 9.2 | 2.01× ⬆ |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Phenyl (aromatic ring) | 80.4 | 84.5 | 0.95× | 1.0000 |  |
+| Amide (-CONH-) | 68.9 | 68.0 | 1.01× | 0.4349 |  |
+| Halide (C-X) | 41.4 | 34.9 | 1.19× | 5.30e-4 | ✓ |
+| Heterocycle | 30.9 | 61.7 | 0.50× | 1.0000 |  |
+| Secondary Amine (>NH) | 30.1 | 25.3 | 1.19× | 0.0064 | ✓ |
+| Ether (C-O-C) | 26.3 | 35.0 | 0.75× | 1.0000 |  |
+| Ester (-COO-) | 18.6 | 10.0 | 1.85× ⬆ | < 10⁻¹⁰ | ✓ |
+| Nitro (-NO₂) | 18.4 | 9.2 | 2.01× ⬆ | < 10⁻¹⁰ | ✓ |
 
 **Cluster 449 (564 molecules)** — representative: `COc1ccccc1Cc1nnc(NC(=O)CN2C(=O)c3ccccc3C`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Phenyl (aromatic ring) | 96.1 | 84.5 | 1.14× |
-| Amide (-CONH-) | 69.9 | 68.0 | 1.03× |
-| Heterocycle | 65.8 | 61.7 | 1.07× |
-| Halide (C-X) | 46.3 | 34.9 | 1.33× |
-| Ether (C-O-C) | 21.3 | 35.0 | 0.61× |
-| Sulfonyl (-SO₂-) | 20.7 | 11.4 | 1.82× ⬆ |
-| Nitro (-NO₂) | 19.9 | 9.2 | 2.16× ⬆ |
-| Ketone (>C=O) | 19.3 | 14.4 | 1.34× |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Phenyl (aromatic ring) | 96.1 | 84.5 | 1.14× | < 10⁻¹⁰ | ✓ |
+| Amide (-CONH-) | 69.9 | 68.0 | 1.03× | 0.3008 |  |
+| Heterocycle | 65.8 | 61.7 | 1.07× | 0.0500 | ✓ |
+| Halide (C-X) | 46.3 | 34.9 | 1.33× | < 10⁻⁶ | ✓ |
+| Ether (C-O-C) | 21.3 | 35.0 | 0.61× | 1.0000 |  |
+| Sulfonyl (-SO₂-) | 20.7 | 11.4 | 1.82× ⬆ | < 10⁻⁶ | ✓ |
+| Nitro (-NO₂) | 19.9 | 9.2 | 2.16× ⬆ | < 10⁻¹⁰ | ✓ |
+| Ketone (>C=O) | 19.3 | 14.4 | 1.34× | 0.0023 | ✓ |
 
 ### Stratum 3 ([0.694, 0.814)) — Cluster FG Signatures
 
 **Cluster 870 (5072 molecules)** — representative: `C[C@H]1C[C@@H](C)CN(C(=O)C[NH+](C)CC2CC[`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Amide (-CONH-) | 45.6 | 68.4 | 0.67× |
-| Ether (C-O-C) | 44.2 | 36.9 | 1.20× |
-| Secondary Amine (>NH) | 39.6 | 28.2 | 1.41× |
-| Tertiary Amine (>N<) | 31.3 | 22.2 | 1.41× |
-| Hydroxyl (-OH) | 17.2 | 11.8 | 1.45× |
-| Primary Amine (-NH₂) | 13.7 | 6.6 | 2.07× ⬆ |
-| Thioether (C-S-C) | 11.5 | 9.1 | 1.27× |
-| Ester (-COO-) | 6.5 | 7.0 | 0.94× |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Amide (-CONH-) | 45.6 | 68.4 | 0.67× | 1.0000 |  |
+| Ether (C-O-C) | 44.2 | 36.9 | 1.20× | < 10⁻²⁰ | ✓ |
+| Secondary Amine (>NH) | 39.6 | 28.2 | 1.41× | < 10⁻⁵⁰ | ✓ |
+| Tertiary Amine (>N<) | 31.3 | 22.2 | 1.41× | < 10⁻⁵⁰ | ✓ |
+| Hydroxyl (-OH) | 17.2 | 11.8 | 1.45× | < 10⁻²⁰ | ✓ |
+| Primary Amine (-NH₂) | 13.7 | 6.6 | 2.07× ⬆ | < 10⁻⁵⁰ | ✓ |
+| Thioether (C-S-C) | 11.5 | 9.1 | 1.27× | < 10⁻⁶ | ✓ |
+| Ester (-COO-) | 6.5 | 7.0 | 0.94× | 1.0000 |  |
 
 **Cluster 29 (4622 molecules)** — representative: `O=C(Cc1noc(-c2ccncc2)n1)Nc1cc(Cl)cc(Cl)c`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Phenyl (aromatic ring) | 98.2 | 79.3 | 1.24× |
-| Heterocycle | 95.9 | 54.2 | 1.77× ⬆ |
-| Amide (-CONH-) | 64.6 | 68.4 | 0.94× |
-| Halide (C-X) | 38.5 | 33.0 | 1.17× |
-| Ether (C-O-C) | 18.8 | 36.9 | 0.51× |
-| Secondary Amine (>NH) | 16.8 | 28.2 | 0.60× |
-| Ketone (>C=O) | 11.2 | 9.0 | 1.24× |
-| Primary Amine (-NH₂) | 8.2 | 6.6 | 1.23× |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Phenyl (aromatic ring) | 98.2 | 79.3 | 1.24× | < 10⁻¹⁰⁰ | ✓ |
+| Heterocycle | 95.9 | 54.2 | 1.77× ⬆ | < 10⁻¹⁰⁰ | ✓ |
+| Amide (-CONH-) | 64.6 | 68.4 | 0.94× | 1.0000 |  |
+| Halide (C-X) | 38.5 | 33.0 | 1.17× | < 10⁻¹⁰ | ✓ |
+| Ether (C-O-C) | 18.8 | 36.9 | 0.51× | 1.0000 |  |
+| Secondary Amine (>NH) | 16.8 | 28.2 | 0.60× | 1.0000 |  |
+| Ketone (>C=O) | 11.2 | 9.0 | 1.24× | < 10⁻⁶ | ✓ |
+| Primary Amine (-NH₂) | 8.2 | 6.6 | 1.23× | 3.91e-5 | ✓ |
 
 **Cluster 420 (1028 molecules)** — representative: `C[C@H]1CC(C(=O)N2CCc3ccc(F)cc3C2)C[C@H](`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Phenyl (aromatic ring) | 69.4 | 79.3 | 0.87× |
-| Amide (-CONH-) | 47.2 | 68.4 | 0.69× |
-| Heterocycle | 41.1 | 54.2 | 0.76× |
-| Ether (C-O-C) | 40.6 | 36.9 | 1.10× |
-| Tertiary Amine (>N<) | 35.4 | 22.2 | 1.60× ⬆ |
-| Halide (C-X) | 27.0 | 33.0 | 0.82× |
-| Secondary Amine (>NH) | 25.2 | 28.2 | 0.89× |
-| Hydroxyl (-OH) | 12.5 | 11.8 | 1.05× |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Phenyl (aromatic ring) | 69.4 | 79.3 | 0.87× | 1.0000 |  |
+| Amide (-CONH-) | 47.2 | 68.4 | 0.69× | 1.0000 |  |
+| Heterocycle | 41.1 | 54.2 | 0.76× | 1.0000 |  |
+| Ether (C-O-C) | 40.6 | 36.9 | 1.10× | 0.0325 | ✓ |
+| Tertiary Amine (>N<) | 35.4 | 22.2 | 1.60× ⬆ | < 10⁻²⁰ | ✓ |
+| Halide (C-X) | 27.0 | 33.0 | 0.82× | 1.0000 |  |
+| Secondary Amine (>NH) | 25.2 | 28.2 | 0.89× | 1.0000 |  |
+| Hydroxyl (-OH) | 12.5 | 11.8 | 1.05× | 0.8299 |  |
 
 **Cluster 479 (923 molecules)** — representative: `COC(=O)c1ccc(=O)n(CC(=O)N(c2ccccc2)C(C)C`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Phenyl (aromatic ring) | 96.5 | 79.3 | 1.22× |
-| Amide (-CONH-) | 77.0 | 68.4 | 1.13× |
-| Heterocycle | 65.5 | 54.2 | 1.21× |
-| Halide (C-X) | 47.7 | 33.0 | 1.44× |
-| Ether (C-O-C) | 27.3 | 36.9 | 0.74× |
-| Secondary Amine (>NH) | 26.2 | 28.2 | 0.93× |
-| Sulfonyl (-SO₂-) | 24.1 | 11.3 | 2.13× ⬆ |
-| Ketone (>C=O) | 11.8 | 9.0 | 1.31× |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Phenyl (aromatic ring) | 96.5 | 79.3 | 1.22× | < 10⁻⁵⁰ | ✓ |
+| Amide (-CONH-) | 77.0 | 68.4 | 1.13× | < 10⁻⁶ | ✓ |
+| Heterocycle | 65.5 | 54.2 | 1.21× | < 10⁻¹⁰ | ✓ |
+| Halide (C-X) | 47.7 | 33.0 | 1.44× | < 10⁻¹⁰ | ✓ |
+| Ether (C-O-C) | 27.3 | 36.9 | 0.74× | 1.0000 |  |
+| Secondary Amine (>NH) | 26.2 | 28.2 | 0.93× | 1.0000 |  |
+| Sulfonyl (-SO₂-) | 24.1 | 11.3 | 2.13× ⬆ | < 10⁻²⁰ | ✓ |
+| Ketone (>C=O) | 11.8 | 9.0 | 1.31× | 0.0048 | ✓ |
 
 **Cluster 871 (855 molecules)** — representative: `CCN(C)C(=O)NCCCOC1CCOCC1`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Amide (-CONH-) | 73.3 | 68.4 | 1.07× |
-| Ether (C-O-C) | 37.0 | 36.9 | 1.00× |
-| Secondary Amine (>NH) | 35.1 | 28.2 | 1.24× |
-| Tertiary Amine (>N<) | 22.9 | 22.2 | 1.03× |
-| Hydroxyl (-OH) | 18.8 | 11.8 | 1.59× ⬆ |
-| Thioether (C-S-C) | 14.9 | 9.1 | 1.64× ⬆ |
-| Sulfonyl (-SO₂-) | 12.9 | 11.3 | 1.14× |
-| Primary Amine (-NH₂) | 12.5 | 6.6 | 1.89× ⬆ |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Amide (-CONH-) | 73.3 | 68.4 | 1.07× | 0.0023 | ✓ |
+| Ether (C-O-C) | 37.0 | 36.9 | 1.00× | 0.7618 |  |
+| Secondary Amine (>NH) | 35.1 | 28.2 | 1.24× | 2.45e-5 | ✓ |
+| Tertiary Amine (>N<) | 22.9 | 22.2 | 1.03× | 0.5169 |  |
+| Hydroxyl (-OH) | 18.8 | 11.8 | 1.59× ⬆ | < 10⁻⁶ | ✓ |
+| Thioether (C-S-C) | 14.9 | 9.1 | 1.64× ⬆ | < 10⁻⁶ | ✓ |
+| Sulfonyl (-SO₂-) | 12.9 | 11.3 | 1.14× | 0.1487 |  |
+| Primary Amine (-NH₂) | 12.5 | 6.6 | 1.89× ⬆ | < 10⁻⁶ | ✓ |
 
 ### Stratum 4 ([0.814, 1.0]) — Cluster FG Signatures
 
 **Cluster 899 (3347 molecules)** — representative: `CCOc1ccc(-c2nc(C(=O)[O-])cc(=O)[nH]2)cc1`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Phenyl (aromatic ring) | 95.6 | 83.0 | 1.15× |
-| Amide (-CONH-) | 73.0 | 68.7 | 1.06× |
-| Heterocycle | 69.2 | 56.1 | 1.23× |
-| Halide (C-X) | 55.9 | 37.1 | 1.51× ⬆ |
-| Ether (C-O-C) | 21.7 | 39.9 | 0.54× |
-| Secondary Amine (>NH) | 19.9 | 30.1 | 0.66× |
-| Sulfonyl (-SO₂-) | 16.8 | 11.0 | 1.53× ⬆ |
-| Carboxyl (-COOH) | 11.5 | 3.1 | 3.67× ⬆ |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Phenyl (aromatic ring) | 95.6 | 83.0 | 1.15× | < 10⁻¹⁰⁰ | ✓ |
+| Amide (-CONH-) | 73.0 | 68.7 | 1.06× | < 10⁻⁶ | ✓ |
+| Heterocycle | 69.2 | 56.1 | 1.23× | < 10⁻⁵⁰ | ✓ |
+| Halide (C-X) | 55.9 | 37.1 | 1.51× ⬆ | < 10⁻¹⁰⁰ | ✓ |
+| Ether (C-O-C) | 21.7 | 39.9 | 0.54× | 1.0000 |  |
+| Secondary Amine (>NH) | 19.9 | 30.1 | 0.66× | 1.0000 |  |
+| Sulfonyl (-SO₂-) | 16.8 | 11.0 | 1.53× ⬆ | < 10⁻²⁰ | ✓ |
+| Carboxyl (-COOH) | 11.5 | 3.1 | 3.67× ⬆ | < 10⁻¹⁰⁰ | ✓ |
 
 **Cluster 29 (1651 molecules)** — representative: `C[NH+](C/C=C/c1ccco1)CCC(F)(F)F`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Amide (-CONH-) | 81.6 | 68.7 | 1.19× |
-| Phenyl (aromatic ring) | 72.8 | 83.0 | 0.88× |
-| Halide (C-X) | 49.1 | 37.1 | 1.32× |
-| Ether (C-O-C) | 34.6 | 39.9 | 0.87× |
-| Heterocycle | 32.5 | 56.1 | 0.58× |
-| Secondary Amine (>NH) | 29.3 | 30.1 | 0.98× |
-| Hydroxyl (-OH) | 17.5 | 11.6 | 1.50× ⬆ |
-| Tertiary Amine (>N<) | 17.5 | 24.2 | 0.72× |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Amide (-CONH-) | 81.6 | 68.7 | 1.19× | < 10⁻²⁰ | ✓ |
+| Phenyl (aromatic ring) | 72.8 | 83.0 | 0.88× | 1.0000 |  |
+| Halide (C-X) | 49.1 | 37.1 | 1.32× | < 10⁻²⁰ | ✓ |
+| Ether (C-O-C) | 34.6 | 39.9 | 0.87× | 1.0000 |  |
+| Heterocycle | 32.5 | 56.1 | 0.58× | 1.0000 |  |
+| Secondary Amine (>NH) | 29.3 | 30.1 | 0.98× | 1.0000 |  |
+| Hydroxyl (-OH) | 17.5 | 11.6 | 1.50× ⬆ | < 10⁻¹⁰ | ✓ |
+| Tertiary Amine (>N<) | 17.5 | 24.2 | 0.72× | 1.0000 |  |
 
 **Cluster 0 (1615 molecules)** — representative: `N#C[C@@H](NC(=O)N1CCCCC1)C1CCCCC1`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Ether (C-O-C) | 56.4 | 39.9 | 1.41× |
-| Amide (-CONH-) | 48.0 | 68.7 | 0.70× |
-| Tertiary Amine (>N<) | 43.7 | 24.2 | 1.81× ⬆ |
-| Secondary Amine (>NH) | 41.1 | 30.1 | 1.37× |
-| Heterocycle | 27.1 | 56.1 | 0.48× ⬇ |
-| Hydroxyl (-OH) | 14.8 | 11.6 | 1.27× |
-| Thioether (C-S-C) | 14.0 | 7.4 | 1.89× ⬆ |
-| Phenyl (aromatic ring) | 11.5 | 83.0 | 0.14× ⬇ |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Ether (C-O-C) | 56.4 | 39.9 | 1.41× | < 10⁻²⁰ | ✓ |
+| Amide (-CONH-) | 48.0 | 68.7 | 0.70× | 1.0000 |  |
+| Tertiary Amine (>N<) | 43.7 | 24.2 | 1.81× ⬆ | < 10⁻⁵⁰ | ✓ |
+| Secondary Amine (>NH) | 41.1 | 30.1 | 1.37× | < 10⁻²⁰ | ✓ |
+| Heterocycle | 27.1 | 56.1 | 0.48× ⬇ | 1.0000 |  |
+| Hydroxyl (-OH) | 14.8 | 11.6 | 1.27× | 1.96e-4 | ✓ |
+| Thioether (C-S-C) | 14.0 | 7.4 | 1.89× ⬆ | < 10⁻¹⁰ | ✓ |
+| Phenyl (aromatic ring) | 11.5 | 83.0 | 0.14× ⬇ | 1.0000 |  |
 
 **Cluster 870 (1313 molecules)** — representative: `O=C(NC1CCSCC1)C1=NN(c2ccccc2)[C@@H](c2cc`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Phenyl (aromatic ring) | 90.8 | 83.0 | 1.09× |
-| Heterocycle | 78.4 | 56.1 | 1.40× |
-| Ether (C-O-C) | 38.4 | 39.9 | 0.96× |
-| Secondary Amine (>NH) | 34.8 | 30.1 | 1.16× |
-| Tertiary Amine (>N<) | 33.6 | 24.2 | 1.39× |
-| Amide (-CONH-) | 33.1 | 68.7 | 0.48× ⬇ |
-| Halide (C-X) | 25.4 | 37.1 | 0.68× |
-| Primary Amine (-NH₂) | 10.4 | 7.2 | 1.44× |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Phenyl (aromatic ring) | 90.8 | 83.0 | 1.09× | < 10⁻¹⁰ | ✓ |
+| Heterocycle | 78.4 | 56.1 | 1.40× | < 10⁻⁵⁰ | ✓ |
+| Ether (C-O-C) | 38.4 | 39.9 | 0.96× | 1.0000 |  |
+| Secondary Amine (>NH) | 34.8 | 30.1 | 1.16× | 3.37e-4 | ✓ |
+| Tertiary Amine (>N<) | 33.6 | 24.2 | 1.39× | < 10⁻¹⁰ | ✓ |
+| Amide (-CONH-) | 33.1 | 68.7 | 0.48× ⬇ | 1.0000 |  |
+| Halide (C-X) | 25.4 | 37.1 | 0.68× | 1.0000 |  |
+| Primary Amine (-NH₂) | 10.4 | 7.2 | 1.44× | 5.34e-5 | ✓ |
 
 **Cluster 180 (1054 molecules)** — representative: `CC(C)c1ccnc(N2CCC3(CC2)C[C@@H](O)CO3)n1`
 
-| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment |
-|---|---|---|---|
-| Phenyl (aromatic ring) | 73.0 | 83.0 | 0.88× |
-| Ether (C-O-C) | 57.6 | 39.9 | 1.44× |
-| Amide (-CONH-) | 42.5 | 68.7 | 0.62× |
-| Tertiary Amine (>N<) | 37.9 | 24.2 | 1.56× ⬆ |
-| Heterocycle | 36.8 | 56.1 | 0.66× |
-| Secondary Amine (>NH) | 35.7 | 30.1 | 1.19× |
-| Halide (C-X) | 25.8 | 37.1 | 0.70× |
-| Hydroxyl (-OH) | 15.6 | 11.6 | 1.34× |
+| Functional Group | Cluster Prev (%) | Stratum Prev (%) | Enrichment | p_adj (FDR) | Sig. |
+|---|---|---|---|---|---|
+| Phenyl (aromatic ring) | 73.0 | 83.0 | 0.88× | 1.0000 |  |
+| Ether (C-O-C) | 57.6 | 39.9 | 1.44× | < 10⁻²⁰ | ✓ |
+| Amide (-CONH-) | 42.5 | 68.7 | 0.62× | 1.0000 |  |
+| Tertiary Amine (>N<) | 37.9 | 24.2 | 1.56× ⬆ | < 10⁻²⁰ | ✓ |
+| Heterocycle | 36.8 | 56.1 | 0.66× | 1.0000 |  |
+| Secondary Amine (>NH) | 35.7 | 30.1 | 1.19× | 1.47e-4 | ✓ |
+| Halide (C-X) | 25.8 | 37.1 | 0.70× | 1.0000 |  |
+| Hydroxyl (-OH) | 15.6 | 11.6 | 1.34× | 1.93e-4 | ✓ |
 
 ## 9. Cluster Quality Analysis
 
@@ -947,6 +947,30 @@ Enrichment ratio shows over-representation relative to the stratum population.
 
 *Figure 13: Distribution of cluster sizes within each QED stratum.*
 
+## 9.5 Cross-Stratum Statistical Analysis
+
+### Linear Regressions Across Stratum Means
+
+| Regression | R² | Slope ± SE | p-value | n |
+|---|---|---|---|---|
+| SAS ~ QED | 0.9499 | 0.655 ± 0.087 | 0.0046 | 5 |
+| logP ~ QED | 0.9428 | -2.198 ± 0.313 | 0.0056 | 5 |
+
+**Interpretation**: Each 0.1 QED improvement costs approximately 0.07 SAS units of synthetic difficulty.
+
+### Functional Group Co-occurrence (Chi-Squared Test)
+
+**Sulfonyl–Heterocycle co-occurrence**: χ² = 2632.4 (df = 1, p < 10⁻¹⁰⁰)
+
+P(heterocycle | sulfonyl) = 43.5% vs P(heterocycle) overall = 58.0%
+
+### Enrichment Statistical Framework
+
+All enrichment ratios in Section 8 are tested using **Fisher's exact test** (one-sided, right-tailed) with **Benjamini-Hochberg FDR correction** at α = 0.05. Only enrichments marked ✓ are statistically significant.
+
+Total enrichment tests performed: 68836
+Significant after FDR correction: 5152 (7.5%)
+
 ## 10. Evaluation Summary
 
 | Metric | Value |
@@ -961,101 +985,20 @@ Enrichment ratio shows over-representation relative to the stratum population.
 | Functional group types detected | 22 / 22 |
 | Strongest FG-property |r| | 0.1057 (Hydroxyl (-OH)) |
 
-## 11. Discussion
-
-### 11.1 The Aromatic Dominance of Drug-Like Chemical Space
-
-The functional group census reveals that 83% of the 249,455 ZINC15 molecules contain at least one phenyl ring, with a mean of 2.42 aromatic rings per molecule. This aromatic dominance — together with the 68% prevalence of amide bonds and 58% heterocycle occurrence — reflects the well-documented bias in medicinal chemistry toward flat, sp2-rich scaffolds (Ritchie & Macdonald, 2009). Phenyl rings serve as rigid hydrophobic anchors in protein binding pockets, and their synthetic accessibility (Suzuki coupling, Buchwald–Hartwig amination) makes them the default building block in combinatorial library design.
-
-However, this structural homogeneity has been linked to high clinical attrition rates. The "escape from flatland" hypothesis (Lovering et al., 2009) argues that increasing sp3 carbon fraction (Fsp3) improves clinical success by enhancing aqueous solubility and reducing off-target promiscuity. Our Stratum 4 analysis provides direct evidence for this: **Cluster 0** (n=1,615, QED 0.86) contains only 11.5% phenyl-bearing molecules versus the 83% dataset average, and is instead enriched for tertiary amines (1.81×), thioethers (1.89×), and ethers (1.41×). These are saturated, three-dimensional scaffolds — the very molecular architectures that Lovering et al. identified as correlated with improved developability. Their co-location in the highest-QED stratum is not coincidental; it reflects the QED metric's penalisation of excessive aromaticity via the aromatic ring count descriptor.
-
-### 11.2 Lipophilicity, Synthetic Accessibility, and the Drug-Likeness Triad
-
-The three molecular properties tracked across strata — QED, logP, and SAS — are not independent. Their inter-relationships across the five QED strata illuminate fundamental tensions in drug design:
-
-**logP decreases with increasing QED** (Stratum 0 mean logP ≈ 3.2 → Stratum 4 ≈ 2.0). This reflects the Lipinski Rule of Five (Lipinski et al., 1997): molecules exceeding logP ≈ 5 are penalised by QED, driving the high-QED population toward moderate lipophilicity. The ZINC15 dataset, being pre-filtered for drug-likeness, already excludes extreme outliers, yet the gradient across strata confirms that even within Lipinski-compliant space, lower lipophilicity tracks with higher drug-likeness scores.
-
-**SAS increases with increasing QED** (Stratum 0 SAS ≈ 2.5 → Stratum 4 SAS ≈ 3.5). This is counterintuitive at first glance — why would more drug-like molecules be harder to synthesise? The explanation lies in structural complexity: high-QED molecules tend to have more stereocentres, more saturated heterocycles, and more diverse functional group decoration. They are "better designed" pharmaceutically but more demanding synthetically. This SAS–QED tension is a well-known bottleneck in lead optimisation, where improving ADMET properties often requires introducing structural motifs (e.g., chiral amines, spiro junctions) that complicate synthesis (Roughley & Jordan, 2011).
-
-The point-biserial correlations quantify how individual functional groups contribute to this triad:
-
-| Functional Group | QED Effect | logP Effect | SAS Effect | Interpretation |
-|---|---|---|---|---|
-| Phenyl | −0.07 | +0.40 | −0.43 | Lipophilic, easy to synthesise, mild QED penalty |
-| Nitro (−NO₂) | −0.32 | +0.04 | −0.07 | Strong QED penalty (structural alert), neutral elsewhere |
-| Amide (−CONH−) | +0.02 | +0.09 | −0.29 | Synthetically accessible (amide coupling), QED-neutral |
-| Carboxyl (−COOH) | 0.00 | −0.28 | +0.13 | Reduces logP (ionisation at pH 7.4), slightly increases SAS |
-| Hydroxyl (−OH) | +0.02 | −0.10 | +0.11 | Mild polarity increase, marginal QED and SAS effects |
-| Halide (C−X) | +0.01 | +0.26 | −0.16 | Increases lipophilicity, facile synthesis (halogenation) |
-
-The nitro group's strong negative QED correlation (r = −0.32) deserves particular attention. Nitroaromatics are flagged as structural alerts in multiple toxicity prediction models (Kazius et al., 2005; Benigni & Bossa, 2011) due to their propensity for metabolic reduction to reactive nitroso and hydroxylamine intermediates. QED explicitly penalises structural alerts, and our data show that 29.6% of Stratum 0 (low QED) molecules carry nitro groups compared to only 1.3% in Stratum 4 — a >20-fold depletion that empirically validates the alert classification.
-
-### 11.3 Functional Group Co-occurrence and Molecular Polypharmacology
-
-That the strongest individual FG–property correlation is only |r| = 0.43 (Phenyl → SAS) has important implications. Molecular properties are not determined by any single functional group but emerge from the **combinatorial interplay** of multiple substituents, ring systems, and stereochemistry. This is why fragment-based QSAR models plateau in predictive accuracy (Tropsha, 2010) and why whole-molecule graph representations, as used here, can capture property-determining features that additive fragment schemes miss.
-
-The cluster-level FG enrichment analysis illustrates this combinatorial logic:
-
-- **Sulfonamide pharmacophore pattern**: Across strata 1–4, clusters enriched for sulfonyl (−SO₂−, 1.5–2.1×) consistently co-enrich for nitrile (−C≡N), imine (C=N), and heterocyclic nitrogen. This is the pharmacophore signature of kinase inhibitors (e.g., vemurafenib-class RAF inhibitors) and sulfonamide antibacterials. The co-occurrence is not random; it reflects the medicinal chemistry design principle of combining a sulfonamide hydrogen-bond donor/acceptor with a heterocyclic hinge-binding motif.
-
-- **Polar aliphatic cluster** (Stratum 0, Cluster 600): The simultaneous enrichment of primary amine (3.8×), hydroxyl (3.7×), and carboxyl (2.5×) with logP = −0.19 identifies a population of amino acid derivatives, sugar-like scaffolds, and peptidomimetics. These molecules fail drug-likeness metrics not because they are inherently poor pharmacological agents, but because QED is calibrated on orally bioavailable small molecules — a design philosophy that systematically undervalues injectable biologics, prodrugs, and CNS-penetrant polar molecules that exploit transporter-mediated uptake (Pardridge, 2012).
-
-- **Halide–heterocycle synergy** (Stratum 4, Cluster 899): Halide enrichment at 1.51× combined with heterocycle enrichment at 1.23× in the highest-QED cluster reflects the dominance of halogenated heteroaromatic scaffolds in marketed drugs. Chlorine and fluorine substituents are the most common halogens in approved drugs (Gillis et al., 2015), serving dual roles: fluorine as a metabolic blocker (blocking cytochrome P450 oxidation) and chlorine as a lipophilicity modulator occupying hydrophobic binding pockets.
-
-### 11.4 The Structure of Drug-Like Chemical Space
-
-The monotonic decrease in quantization error from Stratum 0 (QE = 1.10) to Stratum 4 (QE = 0.74) reveals that drug-like molecules occupy a **more compact and structured** region of chemical space compared to non-drug-like molecules. This asymmetry has a chemical explanation: drug-likeness constraints (MW < 500, logP < 5, HBD ≤ 5, HBA ≤ 10) define a bounded hyper-rectangle in property space, and molecules optimised for oral bioavailability converge toward similar structural solutions — moderate size, balanced polarity, limited hydrogen-bonding capacity. Non-drug-like molecules, unconstrained by these boundaries, explore a far wider structural manifold.
-
-The 3D UMAP projection (Figure 9) visualises this directly: Stratum 4 (high QED) forms a dense, coherent cloud, while Stratum 0 (low QED) is diffuse and peripherally distributed. The intermediate strata (1–3) form a continuous surface connecting these extremes, consistent with the view that chemical space is a continuum rather than a collection of discrete islands (Dobson, 2004).
-
-Within each stratum, the SOM U-matrix heatmaps (Figure 11) reveal internal topological structure. Stratum 4 has the lowest U-matrix maximum (0.074 vs. 0.141 for Stratum 2), indicating smoother transitions between neighbouring clusters — molecules at the drug-likeness optimum are more structurally similar to their nearest neighbours than are molecules at intermediate QED values. This smoothness has practical implications for virtual screening: interpolating between high-QED cluster centroids is more likely to yield viable drug candidates than interpolating in lower strata, where the rugged U-matrix landscape signals abrupt structural transitions.
-
-### 11.5 Implications for Molecular Design
-
-Several findings from this analysis have direct relevance to medicinal chemistry practice:
-
-1. **Aromatic ring reduction is viable.** The existence of 1,615 high-QED molecules with <12% phenyl prevalence (Cluster 0, Stratum 4) demonstrates that drug-likeness does not require aromatic scaffolds. These sp3-rich molecules — enriched for saturated nitrogen heterocycles and thioethers — represent an under-explored design space that recent clinical data suggest has superior developability properties (Clemons et al., 2010).
-
-2. **Sulfonamide clusters span the QED spectrum.** The recurring sulfonyl + heterocyclic nitrogen motif across all five strata suggests this pharmacophore is compatible with a wide range of drug-likeness profiles. For lead optimisation, this means sulfonamide-based scaffolds offer considerable room for property modulation without abandoning the core pharmacophore.
-
-3. **Carboxylate-bearing drug-like molecules exist.** The 3.67× carboxyl enrichment in Stratum 4, Cluster 899 challenges the common assumption that carboxylic acids are undesirable in drug design (due to low membrane permeability). These high-QED carboxylates likely achieve oral bioavailability through compensating properties — low MW, moderate logP, or prodrug ester strategies — and represent underutilised design space for targets requiring an anionic pharmacophore (e.g., integrin antagonists, PPAR agonists).
-
-4. **The QED–SAS trade-off is quantifiable.** The positive SAS gradient across strata provides empirical support for prioritising synthetic accessibility early in the drug design cycle. Molecules that score well on QED but require complex, multi-step synthesis (SAS > 4) may not be practical leads. The cluster-level data can identify structural motifs that simultaneously optimise both metrics.
-
-### 11.6 Limitations and Caveats
-
-1. **ZINC15 commercial availability filter** biases the dataset toward synthetically tractable scaffolds, excluding natural products, macrocycles, and covalent warheads that represent growing areas of drug discovery. Repeating this analysis on ChEMBL or DrugBank would test whether the observed FG–property relationships generalise beyond commercial chemical space.
-
-2. **QED as a drug-likeness proxy** has known limitations (Bickerton et al., 2012). It is calibrated on a historical set of oral drugs and does not account for newer modalities (PROTACs, molecular glues, RNA-targeting molecules). The stratum boundaries used here are QED-quintiles, and alternative stratification by target class or therapeutic area might reveal different structural patterns.
-
-3. **The 22-type functional group vocabulary** covers canonical medicinal chemistry motifs but misses pharmacologically important substructures such as boronic acids, azetidines, deuterated methyl groups, and warheads for covalent inhibitors. Extending coverage to ~50–100 substructure types would provide a more complete picture.
-
-4. **No bioactivity data are integrated.** The current analysis establishes structural relationships but cannot determine whether clustered molecules share pharmacological activity. Cross-referencing with ChEMBL target annotations, screening data, or patent assignees would connect structural clusters to therapeutic hypotheses.
-
-5. **Stereochemical information is partially captured.** While the graph representation encodes E/Z and R/S stereocentres as node features, the functional group detection is stereo-agnostic. For chiral drug molecules, enantiomer-specific analysis could reveal stereo-dependent clustering patterns.
-
-### 11.7 Future Directions
-
-- **Target deconvolution**: Overlaying ChEMBL bioactivity annotations onto the SOM would reveal whether latent-space proximity predicts target similarity — enabling identification of activity cliffs (structurally similar molecules with dramatically different potency) and polypharmacology signatures.
-- **Scaffold hopping**: Inter-cluster distances identify structurally dissimilar molecules that occupy adjacent latent-space positions. These pairs are candidates for scaffold hopping in lead optimisation — replacing a core scaffold while preserving binding affinity.
-- **Generative design**: The stratified SOM provides natural conditioning variables for constrained molecular generation. Sampling from high-QED, low-SAS cluster centroids would bias generative models toward synthetically accessible drug-like candidates.
-- **ADMET property integration**: Extending the property set to include Caco-2 permeability predictions, hERG liability scores, and metabolic stability estimates would enable multi-objective stratification beyond the QED/logP/SAS triad.
-- **Natural product comparison**: Repeating the analysis on the COCONUT (Sorokina et al., 2021) or LOTUS databases would quantify how natural product chemical space differs from synthetic drug space in terms of FG distribution, ring saturation, and stereochemical complexity.
-
-## 12. Performance
+## 11. Performance
 
 | Phase | Time |
 |---|---|
-| Data loading | 0.12s |
-| Graph parsing + FG detection | 1.81s |
-| VGAE encoding | 0.10s |
-| Importance analysis | 0.35s |
-| SOM clustering + FG analysis | 14.14s |
-| **Total** | **27.23s** |
+| Data loading | 0.22s |
+| Graph parsing + FG detection | 4.01s |
+| VGAE encoding | 0.18s |
+| Importance analysis | 0.64s |
+| SOM clustering + FG analysis | 33.16s |
+| **Total** | **59.82s** |
 
-**Throughput**: 9160 molecules/second
+**Throughput**: 4170 molecules/second
 
-## 13. Methodology Comparison
+## 12. Methodology Comparison
 
 | Aspect | Previous (Python) | Current (Rust + GNN) |
 |---|---|---|
@@ -1070,7 +1013,7 @@ Several findings from this analysis have direct relevance to medicinal chemistry
 | Cluster characterization | Size + basic stats | FG signatures, enrichment, representatives |
 | Implementation | Python/PyTorch | Rust/Burn (memory-safe, zero-cost abstractions) |
 
-## 14. Output Files
+## 13. Output Files
 
 ```
 results/
@@ -1092,6 +1035,7 @@ results/
 │   ├── umatrix_heatmaps.svg  # SOM U-matrix
 │   ├── stratum_property_comparison.svg  # Stratum properties
 │   ├── molecule_complexity.svg  # Molecule complexity
+│   ├── qed_sas_scatter.svg  # QED vs SAS scatter
 │   ├── fg_enrichment_stratum_0.svg  # FG enrichment S0
 │   ├── fg_enrichment_stratum_1.svg  # FG enrichment S1
 │   ├── fg_enrichment_stratum_2.svg  # FG enrichment S2
@@ -1119,7 +1063,7 @@ results/
     └── embeddings.csv      # 16-dim latent embeddings
 ```
 
-## 15. Figure Index
+## 14. Figure Index
 
 | # | Figure | Description |
 |---|---|---|
