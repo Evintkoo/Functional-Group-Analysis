@@ -1,3 +1,50 @@
 {
-  "status": "done"
+  "status": "done",
+  "nodes": {
+    "zinc15-graph-construction": {
+      "status": "done"
+    },
+    "gat-vgae-encoder": {
+      "status": "done"
+    },
+    "reconstruction-quality": {
+      "status": "done"
+    },
+    "22-type-vocabulary": {
+      "status": "done"
+    },
+    "two-pass-priority-matching": {
+      "status": "done"
+    },
+    "rdkit-agreement": {
+      "status": "done"
+    },
+    "five-qed-strata": {
+      "status": "done"
+    },
+    "autotuned-som": {
+      "status": "done"
+    },
+    "fdr-corrected-enrichment-testing": {
+      "status": "done"
+    },
+    "alert-free-rescoring": {
+      "status": "done"
+    },
+    "entailed-vs-empirical": {
+      "status": "done"
+    },
+    "phenyl-depleted-cluster-0": {
+      "status": "done"
+    },
+    "sulfonamide-heterocycle-nitrile-signature": {
+      "status": "done"
+    },
+    "carboxylate-bearing-cluster-899": {
+      "status": "done"
+    },
+    "nitro-depletion-gradient": {
+      "status": "done"
+    }
+  }
 }
