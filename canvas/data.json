@@ -2,81 +2,131 @@
   "status": "testing",
   "title": "Functional Group Analysis",
   "description": "A <inode id=\"gat-vgae-encoder\">GAT-VGAE</inode> and stratified SOM pipeline maps functional group enrichment across 249,455 ZINC15 molecules, using <inode id=\"alert-free-rescoring\">counterfactual QED analysis</inode> to <inode id=\"entailed-vs-empirical\">separate genuine chemistry from scoring-formula artefacts</inode>.",
-  "nodes": {
-    "zinc15-graph-construction": {
-      "status": "done",
-      "title": "ZINC15 Graph Construction",
-      "description": "249,455 Lipinski-compliant molecules become undirected graphs with 29-dimensional node features and 9-dimensional edge features, averaging 23.2 atoms and 24.9 bonds per molecule."
+  "branches": [
+    {
+      "label": "Molecular Graph Encoding",
+      "nodes": [
+        {
+          "id": "zinc15-graph-construction",
+          "title": "ZINC15 Graph Construction",
+          "status": "done",
+          "description": "249,455 Lipinski-compliant molecules become undirected graphs with 29-dimensional node features and 9-dimensional edge features, averaging 23.2 atoms and 24.9 bonds per molecule."
+        },
+        {
+          "id": "gat-vgae-encoder",
+          "title": "GAT-VGAE Encoder",
+          "status": "done",
+          "description": "Three graph attention layers with edge-aware attention and global attention pooling compress each graph into a 16-dimensional latent embedding, trained with a beta-weighted KL term (beta = 0.001) to avoid posterior collapse.",
+          "path": "src/gnn/mod.rs"
+        },
+        {
+          "id": "reconstruction-quality",
+          "title": "Reconstruction Quality",
+          "status": "testing",
+          "description": "The encoder reaches a validation MSE of 0.0512 with only a 1.4% train/validation gap, and its latent dimension 0 strongly encodes phenyl presence (|r| = 0.543)."
+        }
+      ],
+      "description": "Each of 249,455 ZINC15 molecules is <inode id=\"zinc15-graph-construction\">converted into a graph</inode> and <inode id=\"gat-vgae-encoder\">compressed into a 16-dimensional embedding</inode> for downstream clustering.",
+      "path": "src/gnn/mod.rs"
     },
-    "gat-vgae-encoder": {
-      "status": "done",
-      "title": "GAT-VGAE Encoder",
-      "description": "Three graph attention layers with edge-aware attention and global attention pooling compress each graph into a 16-dimensional latent embedding, trained with a beta-weighted KL term (beta = 0.001) to avoid posterior collapse."
+    {
+      "label": "Functional Group Detection",
+      "nodes": [
+        {
+          "id": "22-type-vocabulary",
+          "title": "22-Type Vocabulary",
+          "status": "done",
+          "description": "Substructure pattern matching covers six categories - oxygen-, nitrogen-, sulfur-containing groups, halogens, ring systems, and phosphate - spanning 22 functional group types."
+        },
+        {
+          "id": "two-pass-priority-matching",
+          "title": "Two-Pass Priority Matching",
+          "status": "done",
+          "description": "A priority-based two-pass algorithm resolves overlapping substructures so structures like rings are not double-counted as separate bonds."
+        },
+        {
+          "id": "rdkit-agreement",
+          "title": "RDKit Agreement",
+          "status": "planned",
+          "description": "Detected functional groups agree with the RDKit reference tool 96.3% of the time on average, ranging from 91.8% for ketones to 99.7% for nitro groups."
+        }
+      ],
+      "description": "A rule-based substructure matcher labels each molecule's functional group composition before any clustering happens.",
+      "path": "src/functional_groups/mod.rs"
     },
-    "reconstruction-quality": {
-      "status": "testing",
-      "title": "Reconstruction Quality",
-      "description": "The encoder reaches a validation MSE of 0.0512 with only a 1.4% train/validation gap, and its latent dimension 0 strongly encodes phenyl presence (|r| = 0.543)."
+    {
+      "label": "QED-Stratified SOM Clustering",
+      "nodes": [
+        {
+          "id": "five-qed-strata",
+          "title": "Five QED Strata",
+          "status": "done",
+          "description": "Automated valley detection on the QED distribution splits the dataset into five strata (S0-S4) at breakpoints 0.399, 0.520, 0.694, and 0.814, ranging from 6,830 to 83,673 molecules per stratum."
+        },
+        {
+          "id": "autotuned-som",
+          "title": "Autotuned Self-Organizing Maps",
+          "status": "done",
+          "description": "A separate SOM is trained per stratum on <inode id=\"gat-vgae-encoder\">the 16-dimensional latent embeddings</inode>, with grid size auto-selected between 10x10 and 30x30 using a composite quantization/topographic error score."
+        },
+        {
+          "id": "fdr-corrected-enrichment-testing",
+          "title": "FDR-Corrected Enrichment Testing",
+          "status": "done",
+          "description": "Cluster-level functional group enrichment is tested with Fisher's exact test across 68,836 comparisons, controlled with Benjamini-Hochberg FDR correction at alpha = 0.05.",
+          "path": "src/stats/mod.rs"
+        }
+      ],
+      "description": "Molecules are <inode id=\"five-qed-strata\">grouped by drug-likeness score</inode>, then <inode id=\"autotuned-som\">clustered within each group</inode> to reveal structure invisible in the pooled dataset.",
+      "path": "src/som/mod.rs"
     },
-    "22-type-vocabulary": {
-      "status": "done",
-      "title": "22-Type Vocabulary",
-      "description": "Substructure pattern matching covers six categories - oxygen-, nitrogen-, sulfur-containing groups, halogens, ring systems, and phosphate - spanning 22 functional group types."
+    {
+      "label": "Counterfactual QED Analysis",
+      "nodes": [
+        {
+          "id": "alert-free-rescoring",
+          "title": "Alert-Free Rescoring",
+          "status": "planned",
+          "description": "QED is recalculated as the geometric mean of seven non-alert desirability functions, dropping the structural-alert term entirely, and molecules are re-stratified using <inode id=\"five-qed-strata\">the same valley-detection method</inode>."
+        },
+        {
+          "id": "entailed-vs-empirical",
+          "title": "Entailed vs. Empirical Decomposition",
+          "status": "planned",
+          "description": "Comparing standard and alert-free QED strata splits an observed pattern into a component built into the scoring formula and a component reflecting real chemistry, applied to the nitro depletion gradient to yield a 78%/22% split."
+        }
+      ],
+      "description": "The study's core methodological contribution <inode id=\"alert-free-rescoring\">recomputes drug-likeness with the structural-alert penalty removed</inode>, <inode id=\"entailed-vs-empirical\">isolating genuine chemistry from scoring artefacts</inode>."
     },
-    "two-pass-priority-matching": {
-      "status": "done",
-      "title": "Two-Pass Priority Matching",
-      "description": "A priority-based two-pass algorithm resolves overlapping substructures so structures like rings are not double-counted as separate bonds."
-    },
-    "rdkit-agreement": {
-      "status": "planned",
-      "title": "RDKit Agreement",
-      "description": "Detected functional groups agree with the RDKit reference tool 96.3% of the time on average, ranging from 91.8% for ketones to 99.7% for nitro groups."
-    },
-    "five-qed-strata": {
-      "status": "done",
-      "title": "Five QED Strata",
-      "description": "Automated valley detection on the QED distribution splits the dataset into five strata (S0-S4) at breakpoints 0.399, 0.520, 0.694, and 0.814, ranging from 6,830 to 83,673 molecules per stratum."
-    },
-    "autotuned-som": {
-      "status": "done",
-      "title": "Autotuned Self-Organizing Maps",
-      "description": "A separate SOM is trained per stratum on <inode id=\"gat-vgae-encoder\">the 16-dimensional latent embeddings</inode>, with grid size auto-selected between 10x10 and 30x30 using a composite quantization/topographic error score."
-    },
-    "fdr-corrected-enrichment-testing": {
-      "status": "done",
-      "title": "FDR-Corrected Enrichment Testing",
-      "description": "Cluster-level functional group enrichment is tested with Fisher's exact test across 68,836 comparisons, controlled with Benjamini-Hochberg FDR correction at alpha = 0.05."
-    },
-    "alert-free-rescoring": {
-      "status": "planned",
-      "title": "Alert-Free Rescoring",
-      "description": "QED is recalculated as the geometric mean of seven non-alert desirability functions, dropping the structural-alert term entirely, and molecules are re-stratified using <inode id=\"five-qed-strata\">the same valley-detection method</inode>."
-    },
-    "entailed-vs-empirical": {
-      "status": "planned",
-      "title": "Entailed vs. Empirical Decomposition",
-      "description": "Comparing standard and alert-free QED strata splits an observed pattern into a component built into the scoring formula and a component reflecting real chemistry, applied to the nitro depletion gradient to yield a 78%/22% split."
-    },
-    "phenyl-depleted-cluster-0": {
-      "status": "testing",
-      "title": "Phenyl-Depleted Cluster 0",
-      "description": "A high-QED cluster of 1,615 molecules (2.0% of Stratum 4) shows 7.2-fold phenyl depletion \u2014 separable in the first place because <inode id=\"reconstruction-quality\">the latent space strongly encodes phenyl presence</inode> \u2014 alongside enrichment for thioether, tertiary amine, and ether groups, evidencing drug-likeness achieved without aromatic dominance."
-    },
-    "sulfonamide-heterocycle-nitrile-signature": {
-      "status": "testing",
-      "title": "Sulfonamide-Heterocycle-Nitrile Signature",
-      "description": "Sulfonyl-enriched clusters consistently co-enrich for nitrile and heterocyclic nitrogen across all five QED strata, a non-random co-occurrence matching known kinase-inhibitor and sulfonamide-antibacterial pharmacophores."
-    },
-    "carboxylate-bearing-cluster-899": {
-      "status": "testing",
-      "title": "Carboxylate-Bearing Cluster 899",
-      "description": "The largest high-QED cluster (n=3,347) shows 3.67-fold carboxyl enrichment, challenging the assumption that carboxylic acids preclude oral bioavailability."
-    },
-    "nitro-depletion-gradient": {
-      "status": "testing",
-      "title": "Nitro Depletion Gradient",
-      "description": "Nitro prevalence falls monotonically from 29.6% in the lowest QED stratum to 1.3% in the highest, a greater than 22-fold reduction that <inode id=\"entailed-vs-empirical\">the counterfactual analysis</inode> splits into a 78% scoring-formula effect and a 22% genuine chemical effect."
+    {
+      "label": "Headline Enrichment Findings",
+      "nodes": [
+        {
+          "id": "phenyl-depleted-cluster-0",
+          "title": "Phenyl-Depleted Cluster 0",
+          "status": "testing",
+          "description": "A high-QED cluster of 1,615 molecules (2.0% of Stratum 4) shows 7.2-fold phenyl depletion — separable in the first place because <inode id=\"reconstruction-quality\">the latent space strongly encodes phenyl presence</inode> — alongside enrichment for thioether, tertiary amine, and ether groups, evidencing drug-likeness achieved without aromatic dominance."
+        },
+        {
+          "id": "sulfonamide-heterocycle-nitrile-signature",
+          "title": "Sulfonamide-Heterocycle-Nitrile Signature",
+          "status": "testing",
+          "description": "Sulfonyl-enriched clusters consistently co-enrich for nitrile and heterocyclic nitrogen across all five QED strata, a non-random co-occurrence matching known kinase-inhibitor and sulfonamide-antibacterial pharmacophores."
+        },
+        {
+          "id": "carboxylate-bearing-cluster-899",
+          "title": "Carboxylate-Bearing Cluster 899",
+          "status": "testing",
+          "description": "The largest high-QED cluster (n=3,347) shows 3.67-fold carboxyl enrichment, challenging the assumption that carboxylic acids preclude oral bioavailability."
+        },
+        {
+          "id": "nitro-depletion-gradient",
+          "title": "Nitro Depletion Gradient",
+          "status": "testing",
+          "description": "Nitro prevalence falls monotonically from 29.6% in the lowest QED stratum to 1.3% in the highest, a greater than 22-fold reduction that <inode id=\"entailed-vs-empirical\">the counterfactual analysis</inode> splits into a 78% scoring-formula effect and a 22% genuine chemical effect."
+        }
+      ],
+      "description": "Applying the pipeline surfaces four concrete patterns in drug-like chemical space, each validated with enrichment ratios and significance testing."
     }
-  }
+  ]
 }
