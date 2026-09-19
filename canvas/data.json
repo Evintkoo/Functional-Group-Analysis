@@ -1,5 +1,5 @@
 {
-  "status": "done",
+  "status": "testing",
   "nodes": {
     "zinc15-graph-construction": {
       "status": "done"
@@ -8,7 +8,7 @@
       "status": "done"
     },
     "reconstruction-quality": {
-      "status": "done"
+      "status": "testing"
     },
     "22-type-vocabulary": {
       "status": "done"
@@ -17,7 +17,7 @@
       "status": "done"
     },
     "rdkit-agreement": {
-      "status": "done"
+      "status": "planned"
     },
     "five-qed-strata": {
       "status": "done"
@@ -29,22 +29,22 @@
       "status": "done"
     },
     "alert-free-rescoring": {
-      "status": "done"
+      "status": "planned"
     },
     "entailed-vs-empirical": {
-      "status": "done"
+      "status": "planned"
     },
     "phenyl-depleted-cluster-0": {
-      "status": "done"
+      "status": "testing"
     },
     "sulfonamide-heterocycle-nitrile-signature": {
-      "status": "done"
+      "status": "testing"
     },
     "carboxylate-bearing-cluster-899": {
-      "status": "done"
+      "status": "testing"
     },
     "nitro-depletion-gradient": {
-      "status": "done"
+      "status": "testing"
     }
   }
 }
